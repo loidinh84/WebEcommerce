@@ -7,7 +7,6 @@ const Header = () => {
     // Bao bọc toàn bộ bằng thẻ <header>
     <header className="bg-[#4A44F2] text-white font-sans shadow-md">
       {/* --- 1. THANH TOP BAR TRÊN CÙNG --- */}
-      {/* Đổi text-xs thành text-sm để chữ to hơn */}
       <div className="text-sm py-2">
         <div className="container mx-auto px-4 flex justify-between items-center">
           {/* Cụm cam kết bên trái */}
@@ -69,13 +68,24 @@ const Header = () => {
 
       {/* --- 2. THANH HEADER CHÍNH --- */}
       <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
-        {/* Logo shop (Đã thay bằng thẻ <img> dạng hình) */}
-        <div className="flex-shrink-0 cursor-pointer bg-white px-2 py-1.5 rounded-full shadow-lg">
+        <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-2 py-1.5 rounded-full shadow-lg">
           <img
             src={Logo}
             alt="LTL Shop Logo"
-            className="h-10 w-auto object-contain"
-          />
+            className="h-15 w-auto object-contain"
+          />{" "}
+          <span className="text-red-500 font-extrabold text-2xl justify-center items-center flex">
+            L
+          </span>
+          <span className="text-purple-700 font-extrabold text-2xl justify-center items-center flex">
+            T
+          </span>
+          <span className="text-cyan-400  font-extrabold text-2xl justify-center items-center flex">
+            L
+          </span>
+          <span className="text-red-300 font-extrabold text-2xl justify-center items-center flex">
+            Shop
+          </span>
         </div>
 
         {/* Hai nút Dropdown */}

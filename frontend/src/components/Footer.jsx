@@ -39,7 +39,7 @@ const Footer = () => {
             <img
               src={Logo}
               alt="LTL Shop Logo"
-              className="mt-6 w-56 object-contain cursor-pointer hover:opacity-90 transition"
+              className="mt-6 w-40 object-contain cursor-pointer hover:opacity-90 transition"
             />
           </div>
 

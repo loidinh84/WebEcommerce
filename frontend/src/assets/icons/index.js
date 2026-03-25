@@ -8,6 +8,19 @@ import ArrowDown from "./ArrowDown.svg";
 import Delivery from "./Delivery.svg";
 import ChinhHang from "./ChinhHang.svg";
 import Build from "./Build.svg";
+import Home from "./Home.svg";
+import Laptop from "./Laptop.svg";
+import PC from "./Devices.svg";
+import Keyboard from "./Keyboard.svg";
+import Headphone from "./Headphone.svg";
+import News from "./News.svg";
+import Compare from "./Compare.svg";
+import Phone from "./Phone.svg";
+import Box from "./Box.svg";
+import Discount from "./Discount.svg";
+import ArrowForward from "./ArrowForward.svg";
+import School from "./School.svg";
+import Mouse from "./Mouse.svg";
 
 export {
   Bill,
@@ -20,4 +33,17 @@ export {
   Delivery,
   ChinhHang,
   Build,
+  Home,
+  Laptop,
+  PC,
+  Keyboard,
+  Headphone,
+  News,
+  Compare,
+  Phone,
+  Box,
+  Discount,
+  ArrowForward,
+  School,
+  Mouse,
 };

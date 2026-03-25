@@ -8,7 +8,6 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        {/* Các route khác sẽ được thêm vào đây */}
       </Routes>
     </Router>
   );
