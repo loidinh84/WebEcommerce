@@ -4,16 +4,12 @@ import Logo from "../assets/images/logo.png";
 
 const Header = () => {
   return (
-    // Bao bọc toàn bộ bằng thẻ <header>
     <header className="bg-[#4A44F2] text-white font-sans shadow-md">
       {/* --- 1. THANH TOP BAR TRÊN CÙNG --- */}
       <div className="text-sm py-2">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          {/* Cụm cam kết bên trái */}
-          {/* Thêm gap để các icon không dính nhau, hidden lg:flex để Responsive */}
           <div className="flex items-center gap-6 hidden lg:flex">
             <span className="flex items-center gap-1.5 hover:text-gray-200">
-              {/* Thêm brightness-0 invert để icon SVG đen biến thành trắng */}
               <img
                 src={Icons.ChinhHang}
                 alt="Chính hãng"
@@ -41,7 +37,6 @@ const Header = () => {
             </span>
           </div>
 
-          {/* Cụm thông tin bên phải */}
           <div className="flex items-center gap-3 ml-auto">
             <span className="cursor-pointer hover:text-gray-200 flex items-center gap-1.5 text-white/90">
               <img
@@ -67,24 +62,15 @@ const Header = () => {
       </div>
 
       {/* --- 2. THANH HEADER CHÍNH --- */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
-        <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-2 py-1.5 rounded-full shadow-lg">
+      <div className="container mx-auto flex items-center px-4 py-4 justify-start gap-4">
+        <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-4 py-1.5 rounded-full shadow-lg">
           <img
             src={Logo}
             alt="LTL Shop Logo"
-            className="h-15 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />{" "}
-          <span className="text-red-500 font-extrabold text-2xl justify-center items-center flex">
-            L
-          </span>
-          <span className="text-purple-700 font-extrabold text-2xl justify-center items-center flex">
-            T
-          </span>
-          <span className="text-cyan-400  font-extrabold text-2xl justify-center items-center flex">
-            L
-          </span>
-          <span className="text-red-300 font-extrabold text-2xl justify-center items-center flex">
-            Shop
+          <span className="brightness font-extrabold pl-1.5  text-2xl justify-center items-center flex">
+            LTLShop
           </span>
         </div>
 
