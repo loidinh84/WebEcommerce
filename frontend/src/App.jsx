@@ -5,6 +5,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/register";
+import Product from "./pages/admin/Product";
 
 function App() {
   return (
@@ -16,7 +17,9 @@ function App() {
         {/* Nhánh Admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
+          <Route path="products" element={<Product />} /> 
         </Route>
+        
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register />}/>
       
