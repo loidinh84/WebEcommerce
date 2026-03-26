@@ -3,6 +3,8 @@ import React from "react";
 import Home from "./pages/Home";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
+import Login from "./pages/Login";
+import Register from "./pages/register";
 
 function App() {
   return (
@@ -15,6 +17,9 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
         </Route>
+        <Route path="/login" element={<Login />}/>
+        <Route path="/register" element={<Register />}/>
+      
       </Routes>
     </Router>
   );
