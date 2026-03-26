@@ -4,16 +4,12 @@ import Logo from "../assets/images/logo.png";
 
 const Header = () => {
   return (
-    // Bao bọc toàn bộ bằng thẻ <header>
     <header className="bg-[#4A44F2] text-white font-sans shadow-md">
       {/* --- 1. THANH TOP BAR TRÊN CÙNG --- */}
       <div className="text-sm py-2">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          {/* Cụm cam kết bên trái */}
-          {/* Thêm gap để các icon không dính nhau, hidden lg:flex để Responsive */}
           <div className="flex items-center gap-6 hidden lg:flex">
             <span className="flex items-center gap-1.5 hover:text-gray-200">
-              {/* Thêm brightness-0 invert để icon SVG đen biến thành trắng */}
               <img
                 src={Icons.ChinhHang}
                 alt="Chính hãng"
@@ -41,7 +37,6 @@ const Header = () => {
             </span>
           </div>
 
-          {/* Cụm thông tin bên phải */}
           <div className="flex items-center gap-3 ml-auto">
             <span className="cursor-pointer hover:text-gray-200 flex items-center gap-1.5 text-white/90">
               <img

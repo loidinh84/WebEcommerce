@@ -21,6 +21,12 @@ import Discount from "./Discount.svg";
 import ArrowForward from "./ArrowForward.svg";
 import School from "./School.svg";
 import Mouse from "./Mouse.svg";
+import Dashboard from "./Dashboard.svg";
+import Transaction from "./Transaction.svg";
+import Setting from "./Setting.svg";
+import Product from "./Product.svg";
+import Inventory from "./Inventory.svg";
+import Customers from "./Customers.svg";
 
 export {
   Bill,
@@ -46,4 +52,10 @@ export {
   ArrowForward,
   School,
   Mouse,
+  Dashboard,
+  Product,
+  Inventory,
+  Setting,
+  Transaction,
+  Customers,
 };
