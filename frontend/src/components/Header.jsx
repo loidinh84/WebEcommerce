@@ -1,6 +1,7 @@
 import React from "react";
 import * as Icons from "../assets/icons/index";
 import Logo from "../assets/images/logo.png";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
@@ -63,16 +64,18 @@ const Header = () => {
 
       {/* --- 2. THANH HEADER CHÍNH --- */}
       <div className="container mx-auto flex items-center px-4 py-4 justify-start gap-4">
-        <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-4 py-1.5 rounded-full shadow-lg">
-          <img
-            src={Logo}
-            alt="LTL Shop Logo"
-            className="h-12 w-auto object-contain"
-          />{" "}
-          <span className="brightness font-extrabold pl-1.5  text-2xl justify-center items-center flex">
-            LTLShop
-          </span>
-        </div>
+        <Link to="/">
+          <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-4 py-1.5 rounded-full shadow-lg">
+            <img
+              src={Logo}
+              alt="LTL Shop Logo"
+              className="h-12 w-auto object-contain"
+            />{" "}
+            <span className="brightness font-extrabold pl-1.5  text-2xl justify-center items-center flex">
+              LTLShop
+            </span>
+          </div>
+        </Link>
 
         {/* Hai nút Dropdown */}
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -135,24 +138,28 @@ const Header = () => {
           </button>
 
           {/* Nút Đăng Ký */}
-          <button className="flex cursor-pointer items-center gap-1 text-xl  hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-            <img
-              src={Icons.User}
-              alt="User"
-              className="w-7 h-7 brightness-0 invert"
-            />
-            <span>Đăng Ký</span>
-          </button>
+          <Link to="/register">
+            <button className="flex cursor-pointer items-center gap-1 text-xl  hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
+              <img
+                src={Icons.User}
+                alt="User"
+                className="w-7 h-7 brightness-0 invert"
+              />
+              <span>Đăng Ký</span>
+            </button>
+          </Link>
 
           {/* Nút Đăng Nhập */}
-          <button className="flex cursor-pointer items-center gap-1 text-xl  hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-            <img
-              src={Icons.User}
-              alt="User"
-              className="w-7 h-7 brightness-0 invert"
-            />
-            <span>Đăng nhập</span>
-          </button>
+          <Link to="/login">
+            <button className="flex cursor-pointer items-center gap-1 text-xl  hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
+              <img
+                src={Icons.User}
+                alt="User"
+                className="w-7 h-7 brightness-0 invert"
+              />
+              <span>Đăng nhập</span>
+            </button>
+          </Link>
         </div>
       </div>
     </header>

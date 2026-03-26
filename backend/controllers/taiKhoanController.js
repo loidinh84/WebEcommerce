@@ -1,6 +1,7 @@
 const TaiKhoan = require("../models/TaiKhoan");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -76,11 +77,18 @@ exports.loginTaiKhoan = async (req, res) => {
     const { email, mat_khau } = req.body;
 
     // Kiểm tra xem email có tồn tại trong CSDL
-    const user = await TaiKhoan.findOne({ where: { email: email } });
+    const user = await TaiKhoan.findOne({
+      where: {
+        [Op.or]: [{ email: email }, { so_dien_thoai: email }],
+      },
+    });
+
     if (!user) {
       return res
         .status(404)
-        .json({ message: " Email không tồn tại trong hệ thống!" });
+        .json({
+          message: " Email hoặc số điện thoại không tồn tại trong hệ thống!",
+        });
     }
 
     // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa
@@ -104,6 +112,7 @@ exports.loginTaiKhoan = async (req, res) => {
         id: user.id,
         ho_ten: user.ho_ten,
         email: user.email,
+        vai_tro: user.vai_tro,
       },
     });
   } catch (error) {
