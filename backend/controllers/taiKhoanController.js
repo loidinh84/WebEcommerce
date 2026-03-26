@@ -84,11 +84,9 @@ exports.loginTaiKhoan = async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(404)
-        .json({
-          message: " Email hoặc số điện thoại không tồn tại trong hệ thống!",
-        });
+      return res.status(404).json({
+        message: " Email hoặc số điện thoại không tồn tại trong hệ thống!",
+      });
     }
 
     // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa
@@ -113,6 +111,8 @@ exports.loginTaiKhoan = async (req, res) => {
         ho_ten: user.ho_ten,
         email: user.email,
         vai_tro: user.vai_tro,
+        so_dien_thoai: user.so_dien_thoai,
+        anh_dai_dien: user.anh_dai_dien,
       },
     });
   } catch (error) {
