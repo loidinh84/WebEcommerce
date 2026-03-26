@@ -56,7 +56,7 @@ function Home() {
         {/* Tầng 2: Banner ngang */}
         <HorizontalBanner />
 
-        {/* TẦNG 3: Khu vực Sản phẩm (Đã được đóng gói siêu chuẩn) */}
+        {/* TẦNG 3: Khu vực Sản phẩm */}
         <ProductSection
           tab1="Laptop"
           tab2="Màn hình"

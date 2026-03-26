@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Register from "./pages/register";
 
 function App() {
   return (
