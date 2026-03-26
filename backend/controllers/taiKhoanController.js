@@ -1,5 +1,6 @@
 const TaiKhoan = require("../models/TaiKhoan");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -66,5 +67,47 @@ exports.createTaiKhoan = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi khi tạo tài khoản!" });
+  }
+};
+
+// Đăng nhập
+exports.loginTaiKhoan = async (req, res) => {
+  try {
+    const { email, mat_khau } = req.body;
+
+    // Kiểm tra xem email có tồn tại trong CSDL
+    const user = await TaiKhoan.findOne({ where: { email: email } });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: " Email không tồn tại trong hệ thống!" });
+    }
+
+    // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa
+    const isMatch = await bcrypt.compare(mat_khau, user.mat_khau);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Mật khẩu không chính xác!" });
+    }
+
+    // Tạo mã Token để người dùng không phải đăng nhập lại
+    // Lưu chuỗi vào .env
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      "MAT_KHAU_BI_MAT",
+      { expiresIn: "1d" }, // token hết hạn sau 1 ngày
+    );
+
+    res.status(200).json({
+      message: "Đăng nhập thành công!",
+      token: token,
+      user: {
+        id: user.id,
+        ho_ten: user.ho_ten,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi đăng nhập!" });
   }
 };
