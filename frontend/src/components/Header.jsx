@@ -125,7 +125,16 @@ const Header = () => {
       {/* --- 2. THANH HEADER CHÍNH --- */}
       <div className="container mx-auto flex items-center px-4 py-4 justify-start gap-4">
         <Link to="/">
-          <div className="flex gap-1 bg-white/10 shadow cursor-pointer px-4 py-1.5 rounded-full shadow-lg">
+          <div
+            className="flex gap-1 bg-white/10 shadow cursor-pointer px-4 py-1.5 rounded-full shadow-lg "
+            onClick={() => {
+              if (window.location.pathname === "/") {
+                window.location.reload();
+              } else {
+                navigate("/");
+              }
+            }}
+          >
             <img
               src={Logo}
               alt="LTL Shop Logo"
