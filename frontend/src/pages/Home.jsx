@@ -16,7 +16,7 @@ const phuKienData = [
 ];
 
 const hangCuData = [
-  { name: "Điện thoại cũ", icon: <img src={Images.DienThoaiCu} alt="ĐT cũ" /> }, // Lợi tự import ảnh nhé
+  { name: "Điện thoại cũ", icon: <img src={Images.DienThoaiCu} alt="ĐT cũ" /> },
   {
     name: "Máy tính bảng cũ",
     icon: <img src={Images.TabletCu} alt="Tablet cũ" />,
