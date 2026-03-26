@@ -7,6 +7,7 @@ import HorizontalBanner from "../components/HorizontalBanner";
 import ProductSection from "../components/ProductSection";
 import AccessoryBar from "../components/AccessoryBar";
 import * as Images from "../assets/images/index";
+import ContactSupport from "../components/ContactSupport";
 
 const phuKienData = [
   { name: "Tai nghe", icon: <img src={Images.TayNghe} alt="Tai nghe" /> },
@@ -40,7 +41,9 @@ const listDienThoai = Array(12).fill({
 
 function Home() {
   return (
-    <div className="bg-[#F3F4F6] min-h-screen font-sans">
+    <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
+      {" "}
+      {/* Thêm relative để an toàn */}
       <Header />
       <main className="flex-grow container mx-auto px-4 mt-4 mb-10">
         {/* Tầng 1: Hero */}
@@ -121,11 +124,13 @@ function Home() {
             "VGA",
             "Mainboard",
             "RAM",
+            "RAM",
           ]}
           products={listDienThoai}
         />
       </main>
       <Footer />
+      <ContactSupport /> {/* <-- Đã thêm component ở đây */}
     </div>
   );
 }

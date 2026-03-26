@@ -27,6 +27,9 @@ import Setting from "./Setting.svg";
 import Product from "./Product.svg";
 import Inventory from "./Inventory.svg";
 import Customers from "./Customers.svg";
+import ChatAI from "./ChatAI.svg";
+import KhieuNai from "./KhieuNai.svg";
+import Support from "./Support.svg";
 
 export {
   Bill,
@@ -58,4 +61,7 @@ export {
   Setting,
   Transaction,
   Customers,
+  ChatAI,
+  KhieuNai,
+  Support,
 };
