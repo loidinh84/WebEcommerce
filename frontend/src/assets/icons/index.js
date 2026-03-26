@@ -30,6 +30,8 @@ import Customers from "./Customers.svg";
 import ChatAI from "./ChatAI.svg";
 import KhieuNai from "./KhieuNai.svg";
 import Support from "./Support.svg";
+import EyeOn from "./Eyeon.svg";
+import EyeOff from "./Eyeoff.svg";
 
 export {
   Bill,
@@ -64,4 +66,6 @@ export {
   ChatAI,
   KhieuNai,
   Support,
+  EyeOff,
+  EyeOn,
 };
