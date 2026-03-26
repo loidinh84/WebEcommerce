@@ -16,7 +16,7 @@ const phuKienData = [
 ];
 
 const hangCuData = [
-  { name: "Điện thoại cũ", icon: <img src={Images.DienThoaiCu} alt="ĐT cũ" /> }, // Lợi tự import ảnh nhé
+  { name: "Điện thoại cũ", icon: <img src={Images.DienThoaiCu} alt="ĐT cũ" /> },
   {
     name: "Máy tính bảng cũ",
     icon: <img src={Images.TabletCu} alt="Tablet cũ" />,
@@ -56,7 +56,7 @@ function Home() {
         {/* Tầng 2: Banner ngang */}
         <HorizontalBanner />
 
-        {/* TẦNG 3: Khu vực Sản phẩm (Đã được đóng gói siêu chuẩn) */}
+        {/* TẦNG 3: Khu vực Sản phẩm */}
         <ProductSection
           tab1="Laptop"
           tab2="Màn hình"
