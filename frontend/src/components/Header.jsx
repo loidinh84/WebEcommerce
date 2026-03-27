@@ -219,7 +219,7 @@ const Header = () => {
               <img
                 src={
                   user.anh_dai_dien ||
-                  https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random
+                  `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
                 }
                 alt="Avatar"
                 className="w-9 h-9 rounded-full border border-white object-cover"
