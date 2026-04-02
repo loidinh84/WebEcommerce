@@ -8,43 +8,70 @@ const ContactSupport = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: "bot",
-      text: "Chào bạn nhé! Tôi là trợ lý của LTLShop đây. Bạn đang cần tôi tư vấn món đồ công nghệ nào không?",
-    },
-  ]);
+
+  // Khởi tạo mảng rỗng, dữ liệu sẽ được đổ vào từ useEffect
+  const [messages, setMessages] = useState([]);
 
   const chatEndRef = useRef(null);
+
+  // 1. Tự động cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Hàm gọi API AI đã sửa đúng Route mới
+  // 2. LẤY LỊCH SỬ TỪ DATABASE KHI VỪA LOAD TRANG (GIỐNG SHOPEE)
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/ai/history");
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          setMessages(data);
+        } else {
+          // Nếu DB trống, hiện câu chào mặc định
+          setMessages([
+            {
+              role: "bot",
+              text: "Chào bạn nhé! Tôi là trợ lý của LTLShop đây. Bạn đang cần tôi tư vấn món đồ công nghệ nào không?",
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Không thể lấy lịch sử chat:", error);
+      }
+    };
+
+    fetchHistory();
+  }, []);
+
+  // 3. Hàm gửi tin nhắn
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMsg = input.trim();
+    // Cập nhật giao diện ngay lập tức cho người dùng thấy
     setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
     setInput("");
     setIsLoading(true);
 
     try {
-      // ĐỔI THÀNH: /api/ai/chat (Vì server.js dùng app.use("/api/ai", aiRoutes))
       const response = await fetch("http://localhost:5000/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, history: messages }),
+        // Chỉ cần gửi tin nhắn hiện tại, Backend sẽ tự lục DB lấy history
+        body: JSON.stringify({ message: userMsg }),
       });
 
       const data = await response.json();
+      // Thêm câu trả lời của AI vào danh sách hiển thị
       setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
         {
           role: "bot",
-          text: "Bạn ơi, tôi bị mất kết nối với server rồi. Bạn kiểm tra lại backend nhé!",
+          text: "Bạn ơi, tôi hơi lag, đợi tôi tí nhé!",
         },
       ]);
     } finally {
