@@ -10,7 +10,7 @@ const sequelize = new Sequelize(
     dialect: "mssql",
     dialectOptions: {
       option: {
-        encrypt: false, //để false khi chạy trên máy cá nhân
+        encrypt: false,
         trustSeverCertificate: true,
       },
     },
