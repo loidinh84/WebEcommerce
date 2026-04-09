@@ -35,11 +35,6 @@ import EyeOff from "./Eyeoff.svg";
 import Add from "./Add.svg";
 import ArrowLeftLong from "./ArrowLeftLong.svg";
 import ArrowRightLong from "./ArrowRightLong.svg";
-import Favorite from "./Favorite.svg";
-import Star from "./Star.svg";
-import Memory from "./Memory.svg";
-import Comment from "./Comment.svg";
-import Share from "./Share.svg";
 
 export {
   Bill,
@@ -79,9 +74,4 @@ export {
   Add,
   ArrowLeftLong,
   ArrowRightLong,
-  Favorite,
-  Comment,
-  Memory,
-  Star,
-  Share,
 };
