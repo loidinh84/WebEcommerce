@@ -1,5 +1,5 @@
 import React from "react";
-import Product from "./Product";
+import * as Icons from "../../assets/icons/index";
 
 const tabs = [
   { id: 1, name: "1. Thông tin chung" },
@@ -20,7 +20,10 @@ const ProductModal = ({
   removeRow,
   handleSaveProduct,
   editingProduct,
+  categories, 
+  suppliers,  
 }) => {
+
   if (!isModalOpen) return null;
 
   return (
@@ -35,7 +38,7 @@ const ProductModal = ({
           </h3>
           <button
             onClick={() => setIsModalOpen(false)}
-            className="text-gray-400 hover:text-red-500 text-3xl leading-none"
+            className="text-gray-400 hover:text-red-500 text-3xl leading-none cursor-pointer"
           >
             &times;
           </button>
@@ -48,7 +51,7 @@ const ProductModal = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-5 py-3 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
+                className={`px-5 py-3 text-sm font-semibold rounded-t-lg border-b-2 transition-colors cursor-pointer ${
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600 bg-blue-50/50"
                     : "border-transparent text-gray-500 hover:bg-gray-50"
@@ -96,21 +99,43 @@ const ProductModal = ({
                       placeholder="VD: Apple"
                     />
                   </div>
+                  
+                  {/* DANH MỤC (Đã bỏ dấu +) */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block font-semibold text-gray-700 mb-2">
                       Danh mục
                     </label>
                     <select
                       name="danh_muc_id"
-                      value={formData.danh_muc_id}
+                      value={formData.danh_muc_id || ""}
                       onChange={handleBasicChange}
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
                     >
                       <option value="">-- Chọn danh mục --</option>
-                      <option value="DM001">Điện thoại</option>
-                      <option value="DM002">Laptop</option>
+                      {categories?.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
                     </select>
                   </div>
+
+                  {/* NHÀ CUNG CẤP (Đã bỏ dấu +) */}
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className="block font-semibold text-gray-700 mb-2">
+                      Nhà cung cấp
+                    </label>
+                    <select
+                      name="nha_cung_cap_id"
+                      value={formData.nha_cung_cap_id || ""}
+                      onChange={handleBasicChange}
+                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
+                    >
+                      <option value="">-- Chọn nhà cung cấp --</option>
+                      {suppliers?.map((sup) => (
+                        <option key={sup.id} value={sup.id}>{sup.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block font-semibold text-gray-700 mb-2">
                       Trạng thái
@@ -119,7 +144,7 @@ const ProductModal = ({
                       name="trang_thai"
                       value={formData.trang_thai}
                       onChange={handleBasicChange}
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
                     >
                       <option value="active">Đang kinh doanh</option>
                       <option value="inactive">Ngừng kinh doanh</option>
@@ -127,7 +152,7 @@ const ProductModal = ({
                   </div>
                   <div className="col-span-2">
                     <label className="block font-semibold text-gray-700 mb-2">
-                      Mô tả ngắn
+                      Mô tả
                     </label>
                     <textarea
                       name="mo_ta_ngan"
@@ -135,20 +160,7 @@ const ProductModal = ({
                       onChange={handleBasicChange}
                       rows="2"
                       className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Đoạn văn tóm tắt..."
-                    ></textarea>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block font-semibold text-gray-700 mb-2">
-                      Mô tả chi tiết (Nội dung HTML)
-                    </label>
-                    <textarea
-                      name="mo_ta_day_du"
-                      value={formData.mo_ta_day_du}
-                      onChange={handleBasicChange}
-                      rows="4"
-                      className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Bài viết đánh giá sản phẩm..."
+                      placeholder="Mô tả"
                     ></textarea>
                   </div>
                 </div>
@@ -193,7 +205,7 @@ const ProductModal = ({
                     />
                     <button
                       onClick={() => removeRow("thuoc_tinh", index)}
-                      className="text-red-500 hover:bg-red-50 p-2.5 rounded-lg text-lg transition"
+                      className="text-red-500 hover:bg-red-50 p-2.5 rounded-lg text-lg transition cursor-pointer"
                     >
                       🗑️
                     </button>
@@ -208,7 +220,7 @@ const ProductModal = ({
                       thu_tu: formData.thuoc_tinh.length + 1,
                     })
                   }
-                  className="mt-2 px-4 py-2 text-sm text-blue-600 font-semibold border border-blue-600 rounded-lg hover:bg-blue-50 transition"
+                  className="mt-2 px-4 py-2 text-sm text-blue-600 font-semibold border border-blue-600 rounded-lg hover:bg-blue-50 transition cursor-pointer"
                 >
                   + Thêm dòng thông số
                 </button>
@@ -241,119 +253,56 @@ const ProductModal = ({
                           <td className="p-2">
                             <input
                               value={item.sku}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "sku",
-                                  e.target.value,
-                                )
-                              }
-                              type="text"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="SKU..."
+                              onChange={(e) => handleArrayChange("bien_the", index, "sku", e.target.value)}
+                              type="text" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="SKU..."
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.mau_sac}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "mau_sac",
-                                  e.target.value,
-                                )
-                              }
-                              type="text"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="Màu..."
+                              onChange={(e) => handleArrayChange("bien_the", index, "mau_sac", e.target.value)}
+                              type="text" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Màu..."
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.dung_luong}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "dung_luong",
-                                  e.target.value,
-                                )
-                              }
-                              type="text"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="Bộ nhớ..."
+                              onChange={(e) => handleArrayChange("bien_the", index, "dung_luong", e.target.value)}
+                              type="text" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Bộ nhớ..."
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.ram}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "ram",
-                                  e.target.value,
-                                )
-                              }
-                              type="text"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="RAM..."
+                              onChange={(e) => handleArrayChange("bien_the", index, "ram", e.target.value)}
+                              type="text" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="RAM..."
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.gia_goc}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "gia_goc",
-                                  e.target.value,
-                                )
-                              }
-                              type="number"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="0"
+                              onChange={(e) => handleArrayChange("bien_the", index, "gia_goc", e.target.value)}
+                              type="number" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0"
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.gia_ban}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "gia_ban",
-                                  e.target.value,
-                                )
-                              }
-                              type="number"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="0"
+                              onChange={(e) => handleArrayChange("bien_the", index, "gia_ban", e.target.value)}
+                              type="number" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0"
                             />
                           </td>
                           <td className="p-2">
                             <input
                               value={item.ton_kho}
-                              onChange={(e) =>
-                                handleArrayChange(
-                                  "bien_the",
-                                  index,
-                                  "ton_kho",
-                                  e.target.value,
-                                )
-                              }
-                              type="number"
-                              className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none"
-                              placeholder="0"
+                              onChange={(e) => handleArrayChange("bien_the", index, "ton_kho", e.target.value)}
+                              type="number" className="w-full border px-3 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0"
                             />
                           </td>
                           <td className="p-2 text-center">
                             <button
                               onClick={() => removeRow("bien_the", index)}
-                              className="text-red-500 hover:text-red-700 font-bold"
+                              className="text-red-500 hover:text-red-700 font-bold cursor-pointer"
                             >
                               ✕
                             </button>
@@ -366,16 +315,10 @@ const ProductModal = ({
                 <button
                   onClick={() =>
                     addRow("bien_the", {
-                      sku: "",
-                      mau_sac: "",
-                      dung_luong: "",
-                      ram: "",
-                      gia_goc: 0,
-                      gia_ban: 0,
-                      ton_kho: 0,
+                      sku: "", mau_sac: "", dung_luong: "", ram: "", gia_goc: 0, gia_ban: 0, ton_kho: 0,
                     })
                   }
-                  className="mt-2 px-4 py-2 text-sm text-green-600 font-semibold border border-green-600 rounded-lg hover:bg-green-50 transition"
+                  className="mt-2 px-4 py-2 text-sm text-green-600 font-semibold border border-green-600 rounded-lg hover:bg-green-50 transition cursor-pointer"
                 >
                   + Thêm biến thể mới
                 </button>
@@ -389,64 +332,34 @@ const ProductModal = ({
                   Quản lý Hình ảnh
                 </h4>
 
-                {/* Khu vực kéo thả Up ảnh mới */}
                 <div className="border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-xl p-8 text-center cursor-pointer hover:bg-blue-50 transition">
                   <div className="text-4xl mb-3">📸</div>
-                  <p className="font-semibold text-blue-700">
-                    Click hoặc kéo thả hình ảnh vào đây để tải lên
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Hỗ trợ JPG, PNG. Tối đa 5MB/ảnh.
-                  </p>
+                  <p className="font-semibold text-blue-700">Click hoặc kéo thả hình ảnh vào đây để tải lên</p>
+                  <p className="text-xs text-gray-500 mt-1">Hỗ trợ JPG, PNG. Tối đa 5MB/ảnh.</p>
                 </div>
 
-                {/* Khung sắp xếp ảnh hiện có */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  {/* Giả lập 3 tấm ảnh đã upload để bạn thấy UI sắp xếp */}
                   {[1, 2, 3].map((imgOrder) => (
                     <div
                       key={imgOrder}
                       className={`relative border rounded-lg p-2 flex flex-col items-center gap-2 ${imgOrder === 1 ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
                     >
                       {imgOrder === 1 && (
-                        <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg rounded-tl-lg z-10 font-bold">
-                          Ảnh chính
-                        </span>
+                        <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg rounded-tl-lg z-10 font-bold">Ảnh chính</span>
                       )}
-
                       <div className="w-full h-24 bg-gray-200 rounded object-cover flex items-center justify-center text-gray-400 text-xs">
                         [Preview Ảnh {imgOrder}]
                       </div>
-
-                      {/* Bộ công cụ điều hướng thứ tự */}
                       <div className="flex w-full justify-between items-center px-1">
-                        <button
-                          className="text-gray-400 hover:text-blue-600 text-lg leading-none"
-                          title="Dịch sang trái"
-                        >
-                          ←
-                        </button>
-                        <span className="text-xs font-semibold text-gray-600">
-                          Thứ tự: {imgOrder}
-                        </span>
-                        <button
-                          className="text-gray-400 hover:text-blue-600 text-lg leading-none"
-                          title="Dịch sang phải"
-                        >
-                          →
-                        </button>
+                        <button className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer" title="Dịch sang trái">←</button>
+                        <span className="text-xs font-semibold text-gray-600">Thứ tự: {imgOrder}</span>
+                        <button className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer" title="Dịch sang phải">→</button>
                       </div>
-
-                      {/* Nút tác vụ */}
                       <div className="flex w-full gap-2 mt-1">
                         {imgOrder !== 1 && (
-                          <button className="flex-1 bg-white border border-gray-300 text-xs py-1 rounded hover:bg-gray-100">
-                            Set Chính
-                          </button>
+                          <button className="flex-1 bg-white border border-gray-300 text-xs py-1 rounded hover:bg-gray-100 cursor-pointer">Set Chính</button>
                         )}
-                        <button className="flex-1 bg-white border border-red-200 text-red-500 text-xs py-1 rounded hover:bg-red-50">
-                          Xóa
-                        </button>
+                        <button className="flex-1 bg-white border border-red-200 text-red-500 text-xs py-1 rounded hover:bg-red-50 cursor-pointer">Xóa</button>
                       </div>
                     </div>
                   ))}
@@ -456,13 +369,13 @@ const ProductModal = ({
           </div>
         </div>
 
-        {/* Footer Modal */}
+        {/* Footer Modal - NÚT LƯU LUÔN HIỂN THỊ Ở MỌI TAB */}
         <div className="bg-white px-6 py-4 border-t border-gray-200 flex justify-between items-center shrink-0">
           <div>
             {activeTab > 1 && (
               <button
                 onClick={() => setActiveTab(activeTab - 1)}
-                className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded transition font-medium"
+                className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded transition font-medium cursor-pointer"
               >
                 &larr; Quay lại
               </button>
@@ -471,27 +384,31 @@ const ProductModal = ({
           <div className="flex gap-3">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="px-5 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition font-medium"
+              className="px-5 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition font-medium cursor-pointer"
             >
               Hủy bỏ
             </button>
-            {activeTab < 4 ? (
+            
+            {/* Nút LƯU luôn xuất hiện bên cạnh */}
+            <button
+              onClick={handleSaveProduct}
+              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold transition shadow-sm cursor-pointer"
+            >
+              {editingProduct ? "Lưu thay đổi" : "Lưu"}
+            </button>
+
+            {/* Nút TIẾP TỤC chỉ hiện nếu chưa ở Tab cuối */}
+            {activeTab < 4 && (
               <button
                 onClick={() => setActiveTab(activeTab + 1)}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium shadow-sm"
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium shadow-sm cursor-pointer"
               >
                 Tiếp tục &rarr;
-              </button>
-            ) : (
-              <button
-                onClick={handleSaveProduct}
-                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold transition shadow-sm"
-              >
-                {editingProduct ? "Lưu thay đổi" : "Lưu toàn bộ dữ liệu"}
               </button>
             )}
           </div>
         </div>
+
       </div>
     </div>
   );
