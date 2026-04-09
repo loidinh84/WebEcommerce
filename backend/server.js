@@ -2,7 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const sequelize = require("./config/db");
-require("./models/index");
+const {
+  TaiKhoan,
+  DonHang,
+  ChiTietDonHang,
+  TheThanhVien,
+} = require("./models/index");
 const sanPhamRoutes = require("./routers/sanPhamRoutes");
 const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");

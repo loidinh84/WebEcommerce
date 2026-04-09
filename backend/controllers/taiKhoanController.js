@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
 const TheThanhVien = require("../models/TheThanhVien");
 const DonHang = require("../models/DonHang");
+const ChiTietDonHang = require("../models/ChiTietDonHang");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -142,5 +143,28 @@ exports.loginTaiKhoan = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi server khi đăng nhập!" });
+  }
+};
+
+exports.getOrderDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await DonHang.findByPk(id, {
+      include: [
+        {
+          model: ChiTietDonHang,
+          as: "chi_tiet", 
+        },
+      ],
+    });
+
+    if (!order)
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin đơn hàng!" });
+    res.json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi Server khi lấy chi tiết đơn hàng" });
   }
 };

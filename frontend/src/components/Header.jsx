@@ -50,14 +50,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    setUser(null);
-    navigate("/login");
-  };
 
   return (
     <header className="bg-[#4A44F2] text-white font-sans shadow-md sticky top-0 z-50">

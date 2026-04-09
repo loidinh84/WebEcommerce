@@ -29,7 +29,7 @@ const hangCuData = [
   },
 ];
 
-const listDienThoai = Array(12).fill({
+const listDienThoai = Array(8).fill({
   ten_san_pham: "iPhone 16 Pro Max 256GB Chính Hãng VN/A",
   gia_cu: 34990000,
   gia_moi: 29490000,
