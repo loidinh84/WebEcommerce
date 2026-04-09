@@ -1,6 +1,6 @@
 import React from "react";
 
-// Nhận title và data từ Home.jsx truyền vào
+
 const AccessoryBar = ({ title, data }) => {
   return (
     <div className="mt-8 mb-4">

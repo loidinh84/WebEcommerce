@@ -8,5 +8,8 @@ router.post("/", sanPhamController.createSanPham);
 router.put("/:id/status", sanPhamController.toggleTrangThai);
 router.delete("/:id", sanPhamController.deleteSanPham);
 router.put("/:id", sanPhamController.updateSanPham);
+router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
+router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);
+router.post("/:id/danh-gia", sanPhamController.createDanhGia);
 
 module.exports = router;
