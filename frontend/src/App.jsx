@@ -8,6 +8,8 @@ import Register from "./pages/register";
 import Product from "./pages/admin/Product";
 import Cart from "./pages/Cart";
 import AiBuilder from "./pages/AiBuilder";
+import HangKhuyenMai from "./pages/HangKhuyenMai";
+import SoSanhSanPham from "./pages/SoSanhSanPham";
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/aibuilder" element={<AiBuilder />} />
+        <Route path="/hangkhuyenmai" element={<HangKhuyenMai />} />
+        <Route path="/sosanhsanpham" element={<SoSanhSanPham />} />
 
         {/* Nhánh Admin */}
         <Route path="/admin" element={<AdminLayout />}>

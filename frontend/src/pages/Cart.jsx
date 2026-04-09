@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index";
-import { Link } from "react-router-dom"; // Thêm Link để điều hướng sang trang Thanh toán sau này
+import { Link } from "react-router-dom";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([
@@ -13,7 +13,7 @@ const Cart = () => {
       specs: "CPU: i5 12400F | RAM: 16GB DDR4 | SSD: 500GB",
       price: 23680000,
       quantity: 1,
-      image: Images.Logo, // Ông chủ thay bằng ảnh SP thật
+      image: Images.Logo,
       selected: true,
     },
     {
@@ -22,7 +22,7 @@ const Cart = () => {
       specs: "CPU: i5 12600KF | RAM: 16GB DDR4 | SSD: 500GB",
       price: 23180000,
       quantity: 1,
-      image: Images.Logo, // Ông chủ thay bằng ảnh SP thật
+      image: Images.Logo,
       selected: false,
     },
   ]);
@@ -205,7 +205,6 @@ const Cart = () => {
           )}
         </div>
 
-        {/* THANH CÔNG CỤ BOTTOM (Nút Xóa chung & Chốt Đơn) */}
         {cartItems.length > 0 && (
           <div className="bg-white rounded shadow-sm p-4 flex justify-between items-center sticky bottom-0 z-10 border-t-2 border-gray-100">
             <div className="flex items-center gap-6">
