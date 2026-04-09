@@ -3,7 +3,6 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Images from "../assets/images/index";
 
-// --- MOCK DATA: KHO SẢN PHẨM MẪU ---
 const productDatabase = [
   {
     id: 1,
@@ -58,7 +57,6 @@ const productDatabase = [
   },
 ];
 
-// Danh sách các trường thông số cần so sánh
 const specKeys = [
   { key: "screen", label: "Màn hình" },
   { key: "os", label: "Hệ điều hành" },
@@ -71,7 +69,6 @@ const specKeys = [
 ];
 
 const SoSanhSanPham = () => {
-  // Mặc định lấy 2 sản phẩm đầu tiên vào bảng so sánh
   const [compareList, setCompareList] = useState([
     productDatabase[0],
     productDatabase[1],
@@ -85,7 +82,6 @@ const SoSanhSanPham = () => {
     }).format(price);
   };
 
-  // Thêm sản phẩm vào bảng so sánh (Tối đa 3 sản phẩm)
   const handleAddProduct = (product) => {
     if (compareList.find((p) => p.id === product.id)) {
       alert("Sản phẩm này đã có trong bảng so sánh!");
@@ -98,12 +94,10 @@ const SoSanhSanPham = () => {
     setCompareList([...compareList, product]);
   };
 
-  // Xóa sản phẩm khỏi bảng so sánh
   const handleRemoveProduct = (id) => {
     setCompareList(compareList.filter((p) => p.id !== id));
   };
 
-  // Hàm kiểm tra xem một thông số có khác biệt giữa các sản phẩm đang so sánh hay không
   const isDifferent = (key) => {
     if (compareList.length < 2) return false;
     const firstValue = compareList[0].specs[key];
@@ -145,9 +139,6 @@ const SoSanhSanPham = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* =======================================================
-              CỘT TRÁI: BẢNG SO SÁNH (CHIẾM 3/4)
-              ======================================================= */}
           <div className="w-full lg:w-3/4 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             {compareList.length === 0 ? (
               <div className="p-12 text-center text-gray-500">
@@ -162,7 +153,6 @@ const SoSanhSanPham = () => {
             ) : (
               <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300">
                 <table className="w-full min-w-[600px] border-collapse text-sm">
-                  {/* HEADER BẢNG: HÌNH ẢNH & TÊN & NÚT XÓA */}
                   <thead className="bg-white sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="w-1/4 p-4 border-b border-r border-gray-100 text-left align-bottom bg-gray-50/50">
@@ -176,7 +166,6 @@ const SoSanhSanPham = () => {
                           key={product.id}
                           className="p-4 border-b border-gray-100 text-center relative group min-w-[200px]"
                         >
-                          {/* Nút Xóa */}
                           <button
                             onClick={() => handleRemoveProduct(product.id)}
                             className="absolute top-2 right-2 bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-600 rounded-full w-7 h-7 flex items-center justify-center transition-colors shadow-sm"
@@ -204,7 +193,6 @@ const SoSanhSanPham = () => {
                     </tr>
                   </thead>
 
-                  {/* BODY BẢNG: SO SÁNH THÔNG SỐ */}
                   <tbody>
                     {specKeys.map((spec, index) => {
                       const diff = highlightDiff && isDifferent(spec.key);
@@ -233,9 +221,6 @@ const SoSanhSanPham = () => {
             )}
           </div>
 
-          {/* =======================================================
-              CỘT PHẢI: KHO SẢN PHẨM GỢI Ý THÊM (CHIẾM 1/4)
-              ======================================================= */}
           <div className="w-full lg:w-1/4 bg-white rounded-xl shadow-md border border-gray-200 p-5 h-fit sticky top-24">
             <h2 className="text-lg font-bold text-[#201D8A] border-b pb-3 mb-4 flex items-center gap-2">
               <span className="text-xl"></span> Thêm sản phẩm vào so sánh
