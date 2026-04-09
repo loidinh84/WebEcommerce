@@ -52,8 +52,10 @@ exports.chatWithAI = async (req, res) => {
 
     // --- BƯỚC 3: TẠO PROMPT ---
     const prompt = `
-      Bạn là trợ lý AI thông minh của LTLShop. Hôm nay là ${homNay}.
-      Sản phẩm có sẵn: ${chuoiSanPham}
+      Bạn là trợ lý AI thông minh của LTLShop.Chỉ trả lời hôm nay là ${homNay} khi được hỏi về ngày hôm đó không tự nói cho khách.
+      lấy sản phẩm có sẵn: ${chuoiSanPham} để làm dữ liệu trả lời khách, không tự nói sản phẩm cho khách nếu khách không hỏi về sản phẩm nào đó, 
+      hãy dựa vào danh sách trên để trả lời có hay không, hoặc gợi ý sản phẩm tương tự nếu có.
+      Nếu khách hỏi về giá cả, hãy nói rằng "Giá cả đang được cập nhật, bạn vui lòng liên hệ trực tiếp để biết thêm chi tiết nhé!".
       
       === LỊCH SỬ CHAT VỪA QUA (LẤY TỪ DATABASE) ===
       ${lichSu}

@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import Register from "./pages/register";
 import Product from "./pages/admin/Product";
 import Cart from "./pages/Cart";
+import AiBuilder from "./pages/AiBuilder";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         {/* Nhánh khách hàng */}
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/aibuilder" element={<AiBuilder />} />
 
         {/* Nhánh Admin */}
         <Route path="/admin" element={<AdminLayout />}>

@@ -5,7 +5,7 @@ const sequelize = require("./config/db");
 const sanPhamRoutes = require("./routers/sanPhamRoutes");
 const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");
-const ChatHistory = require("./models/ChatHistory"); // Import để Sequelize biết đường tạo bảng
+const ChatHistory = require("./models/ChatHistory");
 
 app.use(cors());
 app.use(express.json());
@@ -15,7 +15,6 @@ app.use("/api/taiKhoan", TaiKhoanRoutes);
 app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
 
-// --- PHẦN QUAN TRỌNG NHẤT: ĐỒNG BỘ DATABASE ---
 sequelize
   .authenticate()
   .then(() => {
