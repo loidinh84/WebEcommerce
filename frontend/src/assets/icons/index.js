@@ -35,6 +35,7 @@ import EyeOff from "./Eyeoff.svg";
 import Add from "./Add.svg";
 import ArrowLeftLong from "./ArrowLeftLong.svg";
 import ArrowRightLong from "./ArrowRightLong.svg";
+import Trash from "./Trash.svg";
 
 export {
   Bill,
@@ -74,4 +75,5 @@ export {
   Add,
   ArrowLeftLong,
   ArrowRightLong,
+  Trash,
 };

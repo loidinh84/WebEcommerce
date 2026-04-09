@@ -6,6 +6,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/register";
 import Product from "./pages/admin/Product";
+import Cart from "./components/Cart";
 
 function App() {
   return (
@@ -13,16 +14,16 @@ function App() {
       <Routes>
         {/* Nhánh khách hàng */}
         <Route path="/" element={<Home />} />
+        <Route path="/cart" element={<Cart />} />
 
         {/* Nhánh Admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="products" element={<Product />} /> 
+          <Route path="products" element={<Product />} />
         </Route>
-        
-        <Route path="/login" element={<Login />}/>
-        <Route path="/register" element={<Register />}/>
-      
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );
