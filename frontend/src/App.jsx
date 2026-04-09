@@ -6,25 +6,32 @@ import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/register";
 import Product from "./pages/admin/Product";
+import ProductDetail from "./pages/ProductDetail";
+import { AuthContext, AuthProvider } from "./context/AuthContext";
+import UserProfile from "./pages/UserProfile";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Nhánh khách hàng */}
-        <Route path="/" element={<Home />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Nhánh khách hàng */}
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/orders" element={<ProductDetail />} />
 
-        {/* Nhánh Admin */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="products" element={<Product />} /> 
-        </Route>
-        
-        <Route path="/login" element={<Login />}/>
-        <Route path="/register" element={<Register />}/>
-      
-      </Routes>
-    </Router>
+          {/* Nhánh Admin */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="products" element={<Product />} />
+          </Route>
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

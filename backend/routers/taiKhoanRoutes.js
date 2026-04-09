@@ -6,5 +6,6 @@ router.get("/", taiKhoanController.getAllRTaiKhoan);
 router.post("/", taiKhoanController.createTaiKhoan);
 router.get("/:id", taiKhoanController.getProfile);
 router.post("/login", taiKhoanController.loginTaiKhoan);
+router.get("/dashboard/:id", taiKhoanController.getUserFullDashboard);
 
 module.exports = router;

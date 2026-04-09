@@ -43,6 +43,8 @@ const TaiKhoan = sequelize.define(
     gioi_tinh: {
       type: DataTypes.STRING(10),
     },
+    the_thanh_vien_id: { type: DataTypes.BIGINT, allowNull: true },
+    tong_chi_tieu: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0 },
   },
   {
     tableName: "TaiKhoan",

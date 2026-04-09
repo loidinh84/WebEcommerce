@@ -2,6 +2,8 @@ const TaiKhoan = require("../models/TaiKhoan");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
+const TheThanhVien = require("../models/TheThanhVien");
+const DonHang = require("../models/DonHang");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -16,14 +18,37 @@ exports.getAllRTaiKhoan = async (req, res) => {
 // Lấy thông tin 1 người dùng
 exports.getProfile = async (req, res) => {
   try {
-    const id = req.params.id;
-    const user = await TaiKhoan.findByPk(id);
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy tài khoản!" });
-    }
+    const user = await TaiKhoan.findByPk(req.params.id, {
+      attributes: { exclude: ["mat_khau"] },
+    });
+    if (!user) return res.status(404).json({ message: "Không tìm thấy!" });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.getUserFullDashboard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await TaiKhoan.findByPk(id, {
+      attributes: { exclude: ["mat_khau"] },
+      include: [{ model: TheThanhVien, as: "hang_thanh_vien" }],
+    });
+
+    const allOrders = await DonHang.findAll({
+      where: { tai_khoan_id: id },
+      include: [{ model: ChiTietDonHang, as: "chi_tiet", limit: 1 }],
+      order: [["created_at", "DESC"]],
+    });
+
+    res.json({
+      userInfo: user,
+      orderCount: allOrders.length,
+      allOrders: allOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi lấy dữ liệu dashboard" });
   }
 };
 
@@ -96,11 +121,10 @@ exports.loginTaiKhoan = async (req, res) => {
     }
 
     // Tạo mã Token để người dùng không phải đăng nhập lại
-    // Lưu chuỗi vào .env
     const token = jwt.sign(
       { id: user.id, email: user.email },
       "MAT_KHAU_BI_MAT",
-      { expiresIn: "1d" }, // token hết hạn sau 1 ngày
+      { expiresIn: "1d" },
     );
 
     res.status(200).json({

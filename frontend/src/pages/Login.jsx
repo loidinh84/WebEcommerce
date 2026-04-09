@@ -3,17 +3,19 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const Login = () => {
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // HÀM XỬ LÝ ĐĂNG NHẬP GỌI API BACKEND
   const handleLogin = async (e) => {
-    e.preventDefault(); // Ngăn trang bị load lại khi bấm submit
+    e.preventDefault();
 
     try {
       const response = await fetch("http://localhost:5000/api/taikhoan/login", {
@@ -25,7 +27,7 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Lưu vé thông hành và thông tin user vào trình duyệt
+        login(data.user, data.token, rememberMe);
         if (rememberMe) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));

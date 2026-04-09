@@ -2,21 +2,24 @@ const SanPham = require("../models/SanPham");
 const BienTheSanPham = require("../models/BienTheSanPham");
 const ThuocTinhSanPham = require("../models/ThuocTinhSanPham");
 const HinhAnhSanPham = require("../models/HinhAnhSanPham");
+const DanhGiaSanPham = require("../models/DanhGiaSanPham");
+const TaiKhoan = require("../models/TaiKhoan");
+const { Op } = require("sequelize");
 
 const generateSlug = (text) => {
   if (!text) return "";
   return text
     .toString()
     .toLowerCase()
-    .normalize("NFD") // Chuẩn hóa chuỗi Unicode
-    .replace(/[\u0300-\u036f]/g, "") // Xóa các dấu phụ
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
-    .replace(/Đ/g, "D") // Đổi chữ đ
-    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
-    .replace(/[^\w\-]+/g, "") // Xóa các ký tự đặc biệt
-    .replace(/\-\-+/g, "-") // Xóa các dấu gạch ngang liên tiếp
-    .replace(/^-+/, "") // Xóa gạch ngang ở đầu
-    .replace(/-+$/, ""); // Xóa gạch ngang ở cuối
+    .replace(/Đ/g, "D")
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 };
 
 // 1. Lấy danh sách toàn bộ sản phẩm
@@ -154,6 +157,7 @@ exports.createSanPham = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi thêm sản phẩm!" });
   }
 };
+
 exports.toggleTrangThai = async (req, res) => {
   try {
     const { id } = req.params;
@@ -278,5 +282,81 @@ exports.updateSanPham = async (req, res) => {
     await t.rollback();
     console.error("Lỗi khi cập nhật sản phẩm:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật sản phẩm!" });
+  }
+};
+
+// API Lấy 4 sản phẩm tương tự
+exports.getSanPhamTuongTu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sanPhamHienTai = await SanPham.findByPk(id);
+
+    if (!sanPhamHienTai)
+      return res.status(404).json({ message: "Không tìm thấy" });
+
+    const sanPhamTuongTu = await SanPham.findAll({
+      where: {
+        danh_muc_id: sanPhamHienTai.danh_muc_id,
+        id: { [Op.ne]: id },
+      },
+      include: [
+        { model: require("../models/BienTheSanPham"), as: "bien_the" },
+        { model: require("../models/HinhAnhSanPham"), as: "hinh_anh" },
+      ],
+      limit: 4,
+      order: [["created_at", "DESC"]],
+    });
+
+    res.status(200).json(sanPhamTuongTu);
+  } catch (error) {
+    console.error("Lỗi lấy SP tương tự:", error);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};
+
+// API Lấy danh sách đánh giá của 1 sản phẩm
+exports.getDanhGiaBySanPham = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const danhGia = await DanhGiaSanPham.findAll({
+      where: { san_pham_id: id, trang_thai: "approved" },
+      include: [
+        {
+          model: TaiKhoan,
+          as: "nguoi_dung",
+          attributes: ["ho_ten", "anh_dai_dien"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+    res.status(200).json(danhGia);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi lấy đánh giá!" });
+  }
+};
+
+// API Thêm đánh giá mới
+exports.createDanhGia = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tai_khoan_id, so_sao, noi_dung } = req.body;
+
+    if (!tai_khoan_id || !so_sao || !noi_dung) {
+      return res.status(400).json({ message: "Vui lòng điền đủ thông tin!" });
+    }
+
+    const danhGiaMoi = await DanhGiaSanPham.create({
+      san_pham_id: id,
+      tai_khoan_id: tai_khoan_id,
+      so_sao: so_sao,
+      noi_dung: noi_dung,
+      don_hang_id: null,
+      trang_thai: "approved",
+    });
+
+    res.status(201).json({ message: "Đánh giá thành công!", data: danhGiaMoi });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi thêm đánh giá!" });
   }
 };

@@ -1,58 +1,61 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import * as Icons from "../assets/icons/index";
 
 const menuItems = [
   {
-    icon: <img src={Icons.Home} alt="Trang chủ" className="w-7 h-7" />,
+    icon: <img src={Icons.Home} alt="Trang chủ" className="w-6 h-6" />,
     label: "Trang chủ",
   },
   {
     icon: (
-      <img src={Icons.Phone} alt="Điện thoại, Tablet" className="w-7 h-7" />
+      <img src={Icons.Phone} alt="Điện thoại, Tablet" className="w-6 h-6" />
     ),
     label: "Điện thoại, Tablet",
   },
   {
-    icon: <img src={Icons.Laptop} alt="Laptop" className="w-7 h-7" />,
+    icon: <img src={Icons.Laptop} alt="Laptop" className="w-6 h-6" />,
     label: "Laptop",
   },
   {
-    icon: <img src={Icons.PC} alt="PC, Màn hình" className="w-7 h-7" />,
+    icon: <img src={Icons.PC} alt="PC, Màn hình" className="w-6 h-6" />,
     label: "PC, Màn hình",
   },
   {
     icon: (
-      <img src={Icons.Keyboard} alt="Bàn phím, chuột" className="w-7 h-7" />
+      <img src={Icons.Keyboard} alt="Bàn phím, chuột" className="w-6 h-6" />
     ),
     label: "Bàn phím, chuột",
   },
   {
     icon: (
-      <img src={Icons.Headphone} alt="Củ sạc, tai nghe" className="w-7 h-7" />
+      <img src={Icons.Headphone} alt="Củ sạc, tai nghe" className="w-6 h-6" />
     ),
     label: "Củ sạc, tai nghe",
   },
   {
-    icon: <img src={Icons.Box} alt="Hàng cũ" className="w-7 h-7" />,
+    icon: <img src={Icons.Box} alt="Hàng cũ" className="w-6 h-6" />,
     label: "Hàng cũ",
   },
   {
     icon: (
-      <img src={Icons.Compare} alt="So sánh thiết bị" className="w-7 h-7" />
+      <img src={Icons.Compare} alt="So sánh thiết bị" className="w-6 h-6" />
     ),
     label: "So sánh thiết bị",
   },
   {
-    icon: <img src={Icons.Discount} alt="Khuyến mãi" className="w-7 h-7" />,
+    icon: <img src={Icons.Discount} alt="Khuyến mãi" className="w-6 h-6" />,
     label: "Khuyến mãi",
   },
   {
-    icon: <img src={Icons.News} alt="Tin công nghệ" className="w-7 h-7" />,
+    icon: <img src={Icons.News} alt="Tin công nghệ" className="w-6 h-6" />,
     label: "Tin công nghệ",
   },
 ];
 
 const SidebarMenu = () => {
+
   return (
     <div className="flex flex-col gap-4 w-full h-full">
       {/* 1. KHỐI MENU DANH MỤC */}
@@ -68,14 +71,14 @@ const SidebarMenu = () => {
                   <span className="text-lg opacity-70 group-hover:opacity-100 text-[#4A44F2]">
                     {item.icon}
                   </span>
-                  <span className="text-gray-700 font-medium text-xl group-hover:text-[#4A44F2] transition-colors">
+                  <span className="text-gray-800 font-medium text-sm group-hover:text-[#4A44F2] transition-colors">
                     {item.label}
                   </span>
                 </div>
                 <img
                   src={Icons.ArrowForward}
                   alt="Forward"
-                  className="h-7 w-5"
+                  className="h-6 w-4 brightness-100 invert"
                 />
               </a>
             </li>

@@ -19,7 +19,7 @@ const ContactSupport = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 2. LẤY LỊCH SỬ TỪ DATABASE KHI VỪA LOAD TRANG (GIỐNG SHOPEE)
+  // 2. LẤY LỊCH SỬ TỪ DATABASE KHI VỪA LOAD TRANG 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
