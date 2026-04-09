@@ -8,9 +8,14 @@ import Register from "./pages/register";
 import Product from "./pages/admin/Product";
 import Cart from "./pages/Cart";
 import AiBuilder from "./pages/AiBuilder";
+import Order from "./pages/admin/Order";
+import Customer from "./pages/admin/Customer";
+import Inventory from "./pages/admin/Inventory";
+import Profile from "./pages/admin/Profile";
+import Categories from "./pages/admin/Categories";
 
 function App() {
-  return (
+  return (  
     <Router>
       <Routes>
         {/* Nhánh khách hàng */}
@@ -21,7 +26,12 @@ function App() {
         {/* Nhánh Admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="products" element={<Product />} />
+          <Route path="orders" element={<Order />} />
+          <Route path="customers" element={<Customer />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="categories" element={<Categories />} />
         </Route>
 
         <Route path="/login" element={<Login />} />
