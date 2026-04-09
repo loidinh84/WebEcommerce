@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Header from "./Header";
-import Footer from "./Footer";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index"; // Đảm bảo import đúng đường dẫn ảnh
 

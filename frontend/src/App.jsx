@@ -6,7 +6,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/register";
 import Product from "./pages/admin/Product";
-import Cart from "./components/Cart";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
