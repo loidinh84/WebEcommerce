@@ -11,6 +11,14 @@ import ProductDetail from "./pages/ProductDetail";
 import UserProfile from "./pages/UserProfile";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
+import Category from "./pages/admin/Categories"
+import Categories from "./pages/admin/Categories";
+import Order from "./pages/admin/Order";
+import Customer from "./pages/admin/Customer";
+import Inventory from "./pages/admin/Inventory";
+import InventoryCheck from "./pages/admin/InventoryCheck";
+
+
 
 function App() {
   return (
@@ -30,6 +38,11 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Product />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="orders" element={<Order />} />
+            <Route path="customers" element={<Customer />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="inventory-check" element={<InventoryCheck />} />
           </Route>
         </Routes>
       </Router>
