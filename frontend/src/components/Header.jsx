@@ -156,7 +156,10 @@ const Header = () => {
 
         {/* --- CỤM NÚT BẤM BÊN PHẢI ĐÃ ĐƯỢC GẮN LOGIC --- */}
         <div className="flex items-center gap-1 text-sm flex-shrink-0 font-medium">
-          <button className="flex cursor-pointer hover:bg-white/10 hover:border-white px-4 py-2 rounded-lg text-sm items-center gap-1 hover:text-gray-200 transition">
+          <button
+            onClick={() => navigate("/cart")}
+            className="flex cursor-pointer hover:bg-white/10 hover:border-white px-4 py-2 rounded-lg text-sm items-center gap-1 hover:text-gray-200 transition"
+          >
             <span>Giỏ hàng</span>
             <Icons.ShoppingCart className="w-5 h-5 brightness-0 invert" />
           </button>

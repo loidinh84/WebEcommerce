@@ -90,8 +90,8 @@ const Cart = () => {
     <div className="bg-[#f5f5f5] min-h-screen font-sans text-gray-800 pb-12">
       <Header />
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <h1 className="text-2xl font-bold text-[#e30019] mb-6">Giỏ hàng</h1>
+      <main className="container mx-auto p-4 max-w-6xl">
+        <h1 className="text-2xl font-bold text-gray-700 mb-2">Giỏ hàng</h1>
 
         {/* THANH TIÊU ĐỀ CỘT */}
         <div className="bg-white rounded shadow-sm flex items-center p-4 mb-4 text-sm text-gray-500 font-medium">

@@ -1,20 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import ProductCard from "./ProductCard";
 
 const ProductSection = ({
   tab1,
   tab2,
   sideWidget,
-  filters,
-  products,
+  filters = [],
   isLoading,
+  danhMucId,
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [activeFilter, setActiveFilter] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+
+        const selectedBrand =
+          activeFilter !== null ? filters[activeFilter] : "";
+
+        let url = `http://localhost:5000/api/sanpham?danhMucId=${danhMucId}`;
+
+        if (selectedBrand) {
+          url += `&thuongHieu=${selectedBrand}`;
+        }
+
+        const res = await axios.get(url);
+        setProducts(res.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Lỗi lọc sản phẩm:", error);
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [danhMucId, activeFilter]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4A44F2]"></div>
+        <span className="ml-3 text-gray-600">Đang tải sản phẩm...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mt-6">
-      {/* === CỘT TRÁI: Widget thông minh === */}
+      {/* === CỘT TRÁI: Widget === */}
       {sideWidget && (
         <div className="hidden lg:block lg:w-1/4 xl:w-1/5 flex-shrink-0">
           {sideWidget}
@@ -42,7 +79,6 @@ const ProductSection = ({
             </button>
           ))}
 
-          {/* Nút "Xem tất cả" đẩy sang phải */}
           <button className="ml-auto text-sm text-[#4A44F2] font-medium hover:underline flex items-center gap-1 pr-1 cursor-pointer">
             Xem tất cả
           </button>
@@ -77,8 +113,7 @@ const ProductSection = ({
 
         {/* 3. Grid sản phẩm */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {isLoading ? (
-            // Hiển thị khung xương (Skeleton) khi đang tải dữ liệu
+          {loading ? (
             Array(8)
               .fill(0)
               .map((_, i) => (
@@ -88,7 +123,6 @@ const ProductSection = ({
                 ></div>
               ))
           ) : products && products.length > 0 ? (
-            // Dữ liệu đã tải xong
             products
               .slice(0, 8)
               .map((prod, idx) => <ProductCard key={idx} product={prod} />)
