@@ -514,7 +514,7 @@ const UserProfile = () => {
                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                       <Icons.Location /> Sổ địa chỉ
                     </h2>
-                    <button className="flex text-sm text-red-500 font-medium hover:underline">
+                    <button className="flex text-sm text-red-500 font-medium hover:underline gap-1.5">
                       <Icons.Plus />
                       Thêm địa chỉ
                     </button>
@@ -523,11 +523,6 @@ const UserProfile = () => {
                   {/* Giao diện khi trống địa chỉ */}
                   <div className="flex flex-col items-center justify-center py-10">
                     <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                      <img
-                        src="https://cellphones.com.vn/smember/_nuxt/img/address-empty.8290333.png"
-                        alt="empty"
-                        className="w-16 opacity-50"
-                      />
                     </div>
                     <p className="text-gray-400 text-sm italic">
                       Bạn chưa có địa chỉ nào được tạo.
@@ -535,7 +530,7 @@ const UserProfile = () => {
                   </div>
                 </div>
 
-                {/* Khối 3: Bảo mật & Liên kết (Chia 2 cột) */}
+                {/* Khối 3: Bảo mật & Liên kết */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Mật khẩu */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

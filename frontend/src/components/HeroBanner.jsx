@@ -74,11 +74,9 @@ const HeroBanner = () => {
             alt={slide.title}
             className="w-full h-full object-cover"
           />
-          {/* Overlay gradient tối ở góc trái để text dễ đọc */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/20 to-transparent" />
         </div>
 
-        {/* Text overlay */}
         <div
           className={`absolute inset-0 flex flex-col justify-end p-6 transition-all duration-300 ${
             animating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
@@ -188,10 +186,10 @@ const HeroBanner = () => {
           </div>
           <ul className="p-3 space-y-1">
             {[
-              { icon: "🔥", text: "Đăng ký nhận ưu đãi" },
-              { icon: "🔥", text: "Deal hot học sinh sinh viên" },
-              { icon: "💻", text: "Laptop ưu đãi khủng" },
-              { icon: "🎁", text: "Quà tặng kèm hấp dẫn" },
+              { text: "Đăng ký nhận ưu đãi" },
+              { text: "Deal hot học sinh sinh viên" },
+              { text: "Laptop ưu đãi khủng" },
+              { text: "Quà tặng kèm hấp dẫn" },
             ].map((item, i) => (
               <li
                 key={i}

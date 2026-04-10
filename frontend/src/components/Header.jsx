@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
@@ -50,6 +51,12 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
 
   return (
     <header className="bg-[#4A44F2] text-white font-sans shadow-md sticky top-0 z-50">
@@ -199,27 +206,53 @@ const Header = () => {
             />
           </button>
 
-          {/* KIỂM TRA ĐIỀU KIỆN TẠI ĐÂY */}
           {user ? (
-            /* 1. NẾU ĐÃ ĐĂNG NHẬP: HIỆN AVATAR VÀ TÊN */
-            <div className="flex items-center gap-3 hover:bg-white/10 transition bg-black/10 px-4 py-1.5 rounded-lg cursor-pointer">
-              {/* Tên hiển thị bên trái */}
-              <span className="text-white text-base font-bold truncate max-w-[150px] text-right">
-                {user.ho_ten || user.so_dien_thoai}
-              </span>
+            <div
+              className="relative group py-2"
+              onMouseEnter={() => setShowDropdown(true)}
+              onMouseLeave={() => setShowDropdown(false)}
+            >
+              <div className="flex items-center gap-3 hover:bg-white/10 transition bg-black/10 px-4 py-1.5 rounded-lg cursor-pointer">
+                <span className="text-white text-base font-bold truncate max-w-[150px] text-right">
+                  {user.ho_ten || user.so_dien_thoai}
+                </span>
+                <img
+                  src={
+                    user.anh_dai_dien ||
+                    `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
+                  }
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full border border-white object-cover"
+                />
+              </div>
+              {showDropdown && (
+                <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-50 animate-in fade-in zoom-in duration-200">
+                  <button
+                    onClick={() => navigate("/profile")}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-[#4A44F2] transition flex items-center gap-3 cursor-pointer"
+                  >
+                    Hồ sơ tài khoản
+                  </button>
 
-              {/* Avatar hiển thị bên phải */}
-              <img
-                src={
-                  user.anh_dai_dien ||
-                  `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
-                }
-                alt="Avatar"
-                className="w-8 h-8 rounded-full border border-white object-cover"
-              />
+                  <button
+                    onClick={() => navigate("/orders")}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-[#4A44F2] transition flex items-center gap-3 cursor-pointer"
+                  >
+                    Đơn hàng của tôi
+                  </button>
+
+                  <div className="border-t border-gray-50 mt-1 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3 font-medium"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            /* 2. NẾU CHƯA ĐĂNG NHẬP: HIỆN 2 NÚT */
             <>
               {/* Nút Đăng Ký */}
               <Link to="/register">

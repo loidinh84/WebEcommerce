@@ -73,7 +73,7 @@ const DealCountdownWidget = () => {
       {/* Countdown */}
       <div className="bg-gradient-to-br from-[#4A44F2] to-[#7C78FF] rounded-xl p-4 text-white">
         <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">
-          ⚡ Flash Sale
+          Flash Sale
         </p>
         <p className="text-sm font-bold mb-3">Kết thúc sau</p>
         <div className="flex items-center gap-2 justify-center">
@@ -93,7 +93,7 @@ const DealCountdownWidget = () => {
       {/* Đang xem nhiều */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1">
-          🔥 Đang xem nhiều
+          Đang xem nhiều
         </p>
         {[
           { name: "iPhone 16 Pro Max", views: "1.2k" },
@@ -161,21 +161,21 @@ const AINeedsWidget = () => {
 const PCConfigWidget = () => {
   const configs = [
     {
-      label: "🎮 Gaming",
+      label: "Gaming",
       cpu: "i7-13700K",
       gpu: "RTX 4070",
       ram: "32GB",
       price: "28.5tr",
     },
     {
-      label: "🎨 Đồ hoạ",
+      label: "Đồ hoạ",
       cpu: "Ryzen 9 7900X",
       gpu: "RX 7900 XT",
       ram: "64GB",
       price: "42tr",
     },
     {
-      label: "🖥 Văn phòng",
+      label: "Văn phòng",
       cpu: "i5-13400",
       gpu: "Intel UHD",
       ram: "16GB",

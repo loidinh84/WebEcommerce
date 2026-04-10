@@ -41,6 +41,7 @@ const ProductDetail = () => {
     const fetchProductData = async () => {
       setIsLoading(true);
       try {
+        if (!id || id === "undefined") return;
         // 1. Fetch Chi tiết sản phẩm
         const resDetail = await fetch(
           `http://localhost:5000/api/sanpham/${id}`,
@@ -681,7 +682,7 @@ const ProductDetail = () => {
               </h3>
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className="text-gray-400 hover:text-red-500 text-2xl leading-none"
+                className="text-gray-400 hover:text-red-500 text-3xl leading-none  cursor-pointer"
               >
                 &times;
               </button>
@@ -698,19 +699,13 @@ const ProductDetail = () => {
                 className="w-12 h-12 bg-sky-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
                 title="Twitter"
               >
-                t
+                M
               </button>
               <button
                 className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
                 title="Zalo"
               >
                 Z
-              </button>
-              <button
-                className="w-12 h-12 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
-                title="Instagram"
-              >
-                in
               </button>
             </div>
 
@@ -726,7 +721,7 @@ const ProductDetail = () => {
               />
               <button
                 onClick={handleCopyLink}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 h-full font-semibold text-sm transition"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 h-full font-semibold text-sm transition  cursor-pointer"
               >
                 Sao chép
               </button>

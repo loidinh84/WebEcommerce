@@ -95,7 +95,7 @@ const ProductCard = ({ product }) => {
 
         {/* Khuyến mãi Sinh viên */}
         <div className="mb-3">
-          <span className="bg-purple-50 text-purple-600 text-[9px] px-1.5 py-0.5 rounded-sm">
+          <span className="bg-purple-50 text-purple-600 text-[10px] px-1.5 py-0.5 rounded-sm">
             Student giảm thêm 500.000đ
           </span>
         </div>
