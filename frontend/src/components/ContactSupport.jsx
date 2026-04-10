@@ -96,11 +96,7 @@ const ContactSupport = () => {
             }}
             className="bg-white px-4 py-2.5 rounded-lg shadow-lg border border-gray-100 hover:bg-gray-100 flex items-center gap-2 text-sm font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 group"
           >
-            <img
-              src={Icons.KhieuNai}
-              className="w-6 h-6 brightness-50 opacity-80 group-hover:opacity-100"
-              alt="support"
-            />
+            <Icons.KhieuNai className="w-6 h-6 text-red-400" />
             Khiếu nại | Góp ý
           </button>
           <button
@@ -121,11 +117,7 @@ const ContactSupport = () => {
             }}
             className="bg-white px-4 py-2.5 rounded-lg shadow-lg border border-gray-100 hover:bg-gray-100 flex items-center gap-2 text-sm font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 group"
           >
-            <img
-              src={Icons.ChatAI}
-              className="w-6 h-6 brightness-50 opacity-80 group-hover:opacity-100"
-              alt="chat"
-            />
+            <Icons.ChatAI className="w-6 h-6 text-indigo-600" />
             Chat với AI
           </button>
         </div>
@@ -138,12 +130,7 @@ const ContactSupport = () => {
         }}
         className={`bg-red-500 hover:bg-red-600 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center gap-2 font-bold transition-all cursor-pointer active:scale-95 ${showMenu ? "ring-4 ring-red-200" : ""}`}
       >
-        Liên hệ{" "}
-        <img
-          src={Icons.Support}
-          className="w-6 h-6 brightness-0"
-          alt="Support"
-        />
+        Liên hệ <Icons.Support className="w-6 h-6 text-white" />
       </button>
 
       {/* ... (Phần form Feedback giữ nguyên) ... */}

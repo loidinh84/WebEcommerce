@@ -41,6 +41,7 @@ const ProductDetail = () => {
     const fetchProductData = async () => {
       setIsLoading(true);
       try {
+        if (!id || id === "undefined") return;
         // 1. Fetch Chi tiết sản phẩm
         const resDetail = await fetch(
           `http://localhost:5000/api/sanpham/${id}`,
@@ -168,7 +169,7 @@ const ProductDetail = () => {
         toast.error(errData.message || "Lỗi khi gửi đánh giá!");
       }
     } catch (error) {
-      toast.error("Không thể kết nối đến máy chủ!");
+      toast.error("Không thể kết nối đến máy chủ!", error);
     }
   };
 
@@ -189,6 +190,41 @@ const ProductDetail = () => {
     if (diffInSeconds < 86400)
       return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
     return mailDate.toLocaleDateString("vi-VN");
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedVariant) {
+      return toast.error("Vui lòng chọn phân loại sản phẩm!");
+    }
+
+    // 1. Lấy giỏ hàng hiện tại từ localStorage
+    const currentCart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    // 2. Tạo đối tượng item mới
+    const cartItem = {
+      id: product.id,
+      variantId: selectedVariant.id,
+      ten_san_pham: product.ten_san_pham,
+      hinh_anh: mainImage,
+      gia_ban: selectedVariant.gia_ban || selectedVariant.gia_goc,
+      dung_luong: selectedVariant.dung_luong,
+      mau_sac: selectedVariant.mau_sac,
+      so_luong: quantity,
+    };
+    // 3. Kiểm tra xem sản phẩm (cùng variant) đã có trong giỏ chưa
+    const existingIndex = currentCart.findIndex(
+      (item) => item.variantId === selectedVariant.id,
+    );
+
+    if (existingIndex > -1) {
+      currentCart[existingIndex].so_luong += quantity;
+    } else {
+      currentCart.push(cartItem);
+    }
+    // 4. Lưu lại vào localStorage
+    localStorage.setItem("cart", JSON.stringify(currentCart));
+
+    toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
   };
 
   if (isLoading) {
@@ -260,15 +296,18 @@ const ProductDetail = () => {
               {/* 2. Sao và Đánh giá */}
               <div className="flex flex-wrap items-center gap-2 text-sm mt-1">
                 <div className="flex text-yellow-400">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i}>★</span>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Icons.Star
+                      key={i}
+                      className={`w-5 h-5 ${i < Math.round(reviews.reduce((acc, curr) => acc + curr.so_sao, 0) / (reviews.length || 5)) ? "fill-yellow-400" : "fill-gray-300"}`}
+                    />
                   ))}
                 </div>
                 <span
                   className="text-blue-600 hover:underline cursor-pointer font-medium"
                   onClick={scrollToReview}
                 >
-                  (0 đánh giá)
+                  ({reviews.length} đánh giá)
                 </span>
                 <span className="text-gray-300 mx-1">|</span>
                 <span className="text-gray-500">
@@ -280,45 +319,44 @@ const ProductDetail = () => {
               <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-gray-600 mb-3 border-b border-gray-100 pb-4">
                 <button
                   onClick={handleWishlist}
-                  className={`flex items-center gap-1.5 cursor-pointer transition ${isWishlisted ? "text-red-500" : "hover:text-blue-600"}`}
+                  className={`flex items-center gap-1.5 text-blue-600 cursor-pointer transition ${isWishlisted ? "text-red-500" : "hover:text-blue-400"}`}
                 >
-                  <span className="text-lg">{isWishlisted ? "❤️" : "🤍"}</span>{" "}
+                  <Icons.Favorite />
                   Yêu thích
                 </button>
                 <button
                   onClick={scrollToReview}
-                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
+                  className="flex items-center gap-1.5 hover:text-blue-400 transition cursor-pointer text-blue-600"
                 >
-                  <img src={Icons.Comment} alt="Đánh giá" /> Đánh giá
+                  <Icons.Comment className="w-5 h-5" /> Đánh giá
                 </button>
                 <button
                   onClick={() => setIsSpecsModalOpen(true)}
-                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
+                  className="flex items-center gap-1.5 hover:text-blue-400 transition cursor-pointer text-blue-600"
                 >
-                  <img src={Icons.Memory} alt="Thông số" />
+                  <Icons.Memory />
                   Thông số
                 </button>
                 <button
                   onClick={() => setIsCompareModalOpen(true)}
-                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
+                  className="flex items-center gap-1 hover:text-blue-400 transition cursor-pointer text-blue-600"
                 >
-                  <img src={Icons.Compare} alt="So sánh" /> So sánh
+                  <Icons.Compare /> So sánh
                 </button>
               </div>
 
               {/* Hình ảnh và Nút Chia sẻ */}
               <div className="border border-gray-100 rounded-xl p-4 flex justify-center items-center h-[360px] bg-white relative mt-2 group">
-                {/* NÚT CHIA SẺ */}
                 <button
                   onClick={() => setIsShareModalOpen(true)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 shadow-sm transition opacity-70 group-hover:opacity-100"
+                  className="absolute top-4 right-4 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 shadow-sm transition opacity-70 group-hover:opacity-100 cursor-pointer"
                   title="Chia sẻ sản phẩm này"
                 >
-                  <img src={Icons.Share} alt="Chia sẻ" />
+                  <Icons.Share />
                 </button>
 
                 <img
-                  src={mainImage}
+                  src={getImageUrl(mainImage)}
                   alt="Main"
                   className="max-h-full object-contain"
                 />
@@ -343,7 +381,6 @@ const ProductDetail = () => {
 
             {/* --- CỘT PHẢI: GIÁ, BIẾN THỂ, KHUYẾN MÃI VÀ NÚT MUA --- */}
             <div className="w-full md:w-1/2 flex flex-col">
-              {/* Khu vực Giá (Đã nằm ngang hàng với Tên SP bên cột trái) */}
               <div className="flex items-end gap-3 mb-6">
                 <span className="text-3xl font-bold text-red-600">
                   {giaBan > 0 ? formatPrice(giaBan) : "Liên hệ"}
@@ -371,7 +408,7 @@ const ProductDetail = () => {
                       <button
                         key={bt.id}
                         onClick={() => setSelectedVariant(bt)}
-                        className={`py-2 px-2 border rounded-lg text-sm font-medium flex flex-col items-center gap-1 transition ${selectedVariant?.id === bt.id ? "border-red-600 text-red-600 bg-red-50" : "border-gray-300 text-gray-700 hover:border-gray-400"}`}
+                        className={`py-2 px-2 border rounded-lg text-sm cursor-pointer font-medium flex flex-col items-center gap-1 transition ${selectedVariant?.id === bt.id ? "border-red-600 text-red-600 bg-red-50" : "border-gray-300 text-gray-700 hover:border-gray-400"}`}
                       >
                         <span>
                           {bt.dung_luong || ""}{" "}
@@ -388,28 +425,43 @@ const ProductDetail = () => {
               {/* KHUYẾN MÃI ĐI KÈM */}
               <div className="border border-red-200 rounded-xl overflow-hidden mb-6">
                 <div className="bg-red-50 text-red-600 font-bold px-4 py-2.5 flex items-center gap-2 border-b border-red-100">
-                  <img
-                    src={Icons.Box}
-                    alt="Khuyến mãi"
-                    className="w-6 h-6 brightness-200 invert"
-                  />
+                  <Icons.Box className="w-6 h-6" />
                   Khuyến mãi đi kèm
                 </div>
                 <div className="p-4 bg-white text-sm text-gray-700 flex flex-col gap-2.5">
-                  <div className="flex items-start gap-2">
-                    <span className="bg-green-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px] mt-0.5 shrink-0">
-                      ✓
-                    </span>
-                    <span>Tặng gói bảo hành độc quyền LTL Care+ 12 tháng</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="bg-green-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px] mt-0.5 shrink-0">
-                      ✓
-                    </span>
-                    <span>
-                      Trợ giá thêm 2.000.000đ khi bán lại máy cũ cho LTL Shop.
-                    </span>
-                  </div>
+                  {(() => {
+                    let promos = [];
+                    if (product.danh_muc_id === 5) {
+                      // Khuyến mãi cho Điện thoại
+                      promos = [
+                        "Tặng gói bảo hành độc quyền LTL Care+ 12 tháng",
+                        "Trợ giá thêm 2.000.000đ khi thu cũ đổi mới",
+                        "Tặng ốp lưng và dán cường lực cao cấp",
+                      ];
+                    } else if (product.danh_muc_id === 4) {
+                      // Khuyến mãi cho Laptop
+                      promos = [
+                        "Tặng Balo Laptop LTL cao cấp",
+                        "Tặng chuột không dây chính hãng",
+                        "Giảm 20% khi mua kèm tai nghe hoặc phần mềm Office",
+                      ];
+                    } else {
+                      // Khuyến mãi chung cho Phụ kiện / PC
+                      promos = [
+                        "Giảm giá 5% cho thành viên LTLShop",
+                        "Miễn phí giao hàng toàn quốc cho đơn từ 300K",
+                      ];
+                    }
+                    // Render mảng thành các dòng HTML
+                    return promos.map((promo, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <span className="bg-green-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px] mt-0.5 shrink-0">
+                          ✓
+                        </span>
+                        <span>{promo}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
 
@@ -441,19 +493,24 @@ const ProductDetail = () => {
               {/* Nút Mua */}
               <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                 <button
-                  onClick={() =>
-                    toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`)
-                  }
+                  onClick={() => {
+                    handleAddToCart();
+                    navigate("/cart");
+                  }}
                   disabled={!selectedVariant || selectedVariant.ton_kho === 0}
-                  className={`flex-1 text-white h-12 rounded-lg font-bold transition shadow-md leading-tight ${!selectedVariant || selectedVariant.ton_kho === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"}`}
+                  className={`flex-1 text-white cursor-pointer h-12 rounded-lg font-bold transition shadow-md leading-tight ${
+                    !selectedVariant || selectedVariant.ton_kho === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
+                  }`}
                 >
                   <span className="text-[16px]">Mua ngay</span>
                 </button>
                 <div className="flex gap-2 w-full sm:w-1/3">
                   <button
                     disabled={!selectedVariant || selectedVariant.ton_kho === 0}
-                    onClick={() => toast.success(`Đã thêm vào giỏ hàng!`)}
-                    className={`flex-1 text-white h-12 rounded-lg font-bold transition ${!selectedVariant || selectedVariant.ton_kho === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
+                    onClick={handleAddToCart}
+                    className={`flex-1 text-white h-12 rounded-lg cursor-pointer font-bold transition ${!selectedVariant || selectedVariant.ton_kho === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
                   >
                     <span className="text-[16px]">Thêm vào giỏ</span>
                   </button>
@@ -681,7 +738,7 @@ const ProductDetail = () => {
               </h3>
               <button
                 onClick={() => setIsShareModalOpen(false)}
-                className="text-gray-400 hover:text-red-500 text-2xl leading-none"
+                className="text-gray-400 hover:text-red-500 text-3xl leading-none  cursor-pointer"
               >
                 &times;
               </button>
@@ -689,28 +746,40 @@ const ProductDetail = () => {
 
             <div className="flex gap-4 justify-center mb-6 border-y border-gray-100 py-6">
               <button
-                className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
-                title="Facebook"
+                onClick={() =>
+                  window.open(
+                    `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`,
+                    "_blank",
+                  )
+                }
+                className="w-12 h-12 bg-[#1877F2] text-white rounded-full flex items-center justify-center font-bold text-2xl hover:opacity-80 transition cursor-pointer"
+                title="Chia sẻ lên Facebook"
               >
                 f
               </button>
               <button
-                className="w-12 h-12 bg-sky-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
-                title="Twitter"
+                onClick={() =>
+                  window.open(
+                    `https://zalo.me/share?url=${window.location.href}`,
+                    "_blank",
+                  )
+                }
+                className="w-12 h-12 bg-[#0068FF] text-white rounded-full flex items-center justify-center font-bold text-[14px] hover:opacity-80 transition cursor-pointer"
+                title="Chia sẻ qua Zalo"
               >
-                t
+                Zalo
               </button>
               <button
-                className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
-                title="Zalo"
+                onClick={() =>
+                  window.open(
+                    `https://twitter.com/intent/tweet?url=${window.location.href}`,
+                    "_blank",
+                  )
+                }
+                className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold text-xl hover:opacity-80 transition cursor-pointer"
+                title="Chia sẻ lên X"
               >
-                Z
-              </button>
-              <button
-                className="w-12 h-12 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white rounded-full flex items-center justify-center text-xl hover:opacity-80 transition"
-                title="Instagram"
-              >
-                in
+                X
               </button>
             </div>
 
@@ -726,7 +795,7 @@ const ProductDetail = () => {
               />
               <button
                 onClick={handleCopyLink}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 h-full font-semibold text-sm transition"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 h-full font-semibold text-sm transition  cursor-pointer"
               >
                 Sao chép
               </button>

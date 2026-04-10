@@ -6,11 +6,11 @@ import { Link, useNavigate } from "react-router-dom";
 const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
 
-  // Load trang và kiểm tra có user trong kho lưu trữ không
   useEffect(() => {
     const loggedInUser =
       localStorage.getItem("user") || sessionStorage.getItem("user");
@@ -50,6 +50,12 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
 
   return (
     <header className="bg-[#4A44F2] text-white font-sans shadow-md sticky top-0 z-50">
@@ -62,51 +68,31 @@ const Header = () => {
         <div className="container mx-auto px-4 py-2 flex justify-between items-center">
           <div className="flex items-center gap-6 hidden lg:flex">
             <span className="flex items-center text-sm gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.ChinhHang}
-                alt="Chính hãng"
-                className=" w-4 h-4 brightness-0 invert"
-              />
+              <Icons.ChinhHang className=" w-4 h-4 brightness-0 invert" />
               Sản phẩm chính hãng - Xuất hóa đơn đầy đủ
             </span>
 
             <span className="flex items-center text-sm  gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.Delivery}
-                alt="Giao hàng"
-                className="w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Delivery className="w-4 h-4 brightness-0 invert" />
               Giao nhanh - miễn phí cho hóa đơn 300k
             </span>
 
             <span className="flex items-center text-sm gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.Build}
-                alt="Lắp đặt"
-                className=" w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Build className=" w-4 h-4 brightness-0 invert" />
               Lắp đặt tại nhà - Giao hàng tận tay
             </span>
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
             <span className="cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90">
-              <img
-                src={Icons.Bill}
-                alt="Bill"
-                className="w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Bill className="w-4 h-4 brightness-0 invert" />
               Tra cứu đơn hàng
             </span>
 
             <span className="text-white/40">|</span>
 
             <span className="font-semibold cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90">
-              <img
-                src={Icons.Call}
-                alt="Call"
-                className="w-4 h-4 gap-2 brightness-0 invert"
-              />
+              <Icons.Call className="w-4 h-4 gap-2 brightness-0 invert" />
               055.956.9340
             </span>
           </div>
@@ -140,46 +126,26 @@ const Header = () => {
         {/* Hai nút Dropdown */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button className="flex cursor-pointer items-center gap-2 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition">
-            <img
-              src={Icons.DanhMuc}
-              alt="Shop Info"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.DanhMuc className="w-5 h-5 brightness-0" />
             <span className="font-medium text-[15px] text-gray-900">
               Thông tin shop
             </span>
-            <img
-              src={Icons.ArrowDown}
-              alt="Arrow Down"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.ArrowDown className="w-5 h-5 text-gray-600" />
           </button>
 
           <button className="flex cursor-pointer items-center gap-1 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition ">
-            <img
-              src={Icons.DanhMuc}
-              alt="Category"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.DanhMuc className="w-5 h-5 brightness-0" />
             <span className="font-medium text-[15px] text-gray-900">
               Danh mục
             </span>
-            <img
-              src={Icons.ArrowDown}
-              alt="Arrow Down"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.ArrowDown className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
         {/* Thanh tìm kiếm */}
         <div className="flex-1 relative">
           <button className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <img
-              src={Icons.Search}
-              alt="Search"
-              className="w-6 h-6 brightness-0 cursor-pointer"
-            />
+            <Icons.Search className="w-6 h-6 brightness-0 cursor-pointer" />
           </button>
           <input
             type="text"
@@ -190,45 +156,66 @@ const Header = () => {
 
         {/* --- CỤM NÚT BẤM BÊN PHẢI ĐÃ ĐƯỢC GẮN LOGIC --- */}
         <div className="flex items-center gap-1 text-sm flex-shrink-0 font-medium">
-          <button className="flex cursor-pointer hover:bg-white/10 hover:border-white px-4 py-2 rounded-lg text-sm items-center gap-1 hover:text-gray-200 transition">
+          <button
+            onClick={() => navigate("/cart")}
+            className="flex cursor-pointer hover:bg-white/10 hover:border-white px-4 py-2 rounded-lg text-sm items-center gap-1 hover:text-gray-200 transition"
+          >
             <span>Giỏ hàng</span>
-            <img
-              src={Icons.ShoppingCart}
-              alt="Cart"
-              className="w-5 h-5 brightness-0 invert"
-            />
+            <Icons.ShoppingCart className="w-5 h-5 brightness-0 invert" />
           </button>
 
-          {/* KIỂM TRA ĐIỀU KIỆN TẠI ĐÂY */}
           {user ? (
-            /* 1. NẾU ĐÃ ĐĂNG NHẬP: HIỆN AVATAR VÀ TÊN */
-            <div className="flex items-center gap-3 hover:bg-white/10 transition bg-black/10 px-4 py-1.5 rounded-lg cursor-pointer">
-              {/* Tên hiển thị bên trái */}
-              <span className="text-white text-base font-bold truncate max-w-[150px] text-right">
-                {user.ho_ten || user.so_dien_thoai}
-              </span>
+            <div
+              className="relative group py-2"
+              onMouseEnter={() => setShowDropdown(true)}
+              onMouseLeave={() => setShowDropdown(false)}
+            >
+              <div className="flex items-center gap-3 hover:bg-white/10 transition bg-black/10 px-4 py-1.5 rounded-lg cursor-pointer">
+                <span className="text-white text-base font-bold truncate max-w-[150px] text-right">
+                  {user.ho_ten || user.so_dien_thoai}
+                </span>
+                <img
+                  src={
+                    user.anh_dai_dien ||
+                    `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
+                  }
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full border border-white object-cover"
+                />
+              </div>
+              {showDropdown && (
+                <div className="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-50 animate-in fade-in zoom-in duration-200">
+                  <button
+                    onClick={() => navigate("/profile")}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-[#4A44F2] transition flex items-center gap-3 cursor-pointer"
+                  >
+                    Hồ sơ tài khoản
+                  </button>
 
-              {/* Avatar hiển thị bên phải */}
-              <img
-                src={
-                  user.anh_dai_dien ||
-                  `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
-                }
-                alt="Avatar"
-                className="w-8 h-8 rounded-full border border-white object-cover"
-              />
+                  <button
+                    onClick={() => navigate("/orders")}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-[#4A44F2] transition flex items-center gap-3 cursor-pointer"
+                  >
+                    Đơn hàng của tôi
+                  </button>
+
+                  <div className="border-t border-gray-50 mt-1 pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3 font-medium"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            /* 2. NẾU CHƯA ĐĂNG NHẬP: HIỆN 2 NÚT */
             <>
               {/* Nút Đăng Ký */}
               <Link to="/register">
                 <button className="flex text-[16px] cursor-pointer items-center gap-1 text-xl hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-                  <img
-                    src={Icons.User}
-                    alt="User"
-                    className="w-7 h-7 brightness-0 invert"
-                  />
+                  <Icons.User className="w-7 h-7 brightness-0 invert" />
                   <span>Đăng Ký</span>
                 </button>
               </Link>
@@ -236,11 +223,7 @@ const Header = () => {
               {/* Nút Đăng Nhập */}
               <Link to="/login">
                 <button className="flex cursor-pointer items-center gap-1 text-[16px] hover:bg-[#4A44F2] transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-                  <img
-                    src={Icons.User}
-                    alt="User"
-                    className="w-7 h-7 brightness-0 invert"
-                  />
+                  <Icons.User className="w-7 h-7 brightness-0 invert" />
                   <span>Đăng nhập</span>
                 </button>
               </Link>

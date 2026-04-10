@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import HeroBanner from "../components/HeroBanner";
@@ -29,15 +29,6 @@ const hangCuData = [
   },
 ];
 
-const listDienThoai = Array(8).fill({
-  ten_san_pham: "iPhone 16 Pro Max 256GB Chính Hãng VN/A",
-  gia_cu: 34990000,
-  gia_moi: 29490000,
-  hinh_anh_url:
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQThZbSgSNsN6qNtFww5jpvV6B_BlWxowjyDQ&s",
-  danh_gia: 5,
-  da_ban: 23,
-});
 
 // Widget bên trái cho từng ProductSection
 const DealCountdownWidget = () => {
@@ -73,7 +64,7 @@ const DealCountdownWidget = () => {
       {/* Countdown */}
       <div className="bg-gradient-to-br from-[#4A44F2] to-[#7C78FF] rounded-xl p-4 text-white">
         <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">
-          ⚡ Flash Sale
+          Flash Sale
         </p>
         <p className="text-sm font-bold mb-3">Kết thúc sau</p>
         <div className="flex items-center gap-2 justify-center">
@@ -90,10 +81,9 @@ const DealCountdownWidget = () => {
         </div>
       </div>
 
-      {/* Đang xem nhiều */}
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1">
-          🔥 Đang xem nhiều
+          Đang xem nhiều
         </p>
         {[
           { name: "iPhone 16 Pro Max", views: "1.2k" },
@@ -161,21 +151,21 @@ const AINeedsWidget = () => {
 const PCConfigWidget = () => {
   const configs = [
     {
-      label: "🎮 Gaming",
+      label: "Gaming",
       cpu: "i7-13700K",
       gpu: "RTX 4070",
       ram: "32GB",
       price: "28.5tr",
     },
     {
-      label: "🎨 Đồ hoạ",
+      label: "Đồ hoạ",
       cpu: "Ryzen 9 7900X",
       gpu: "RX 7900 XT",
       ram: "64GB",
       price: "42tr",
     },
     {
-      label: "🖥 Văn phòng",
+      label: "Văn phòng",
       cpu: "i5-13400",
       gpu: "Intel UHD",
       ram: "16GB",
@@ -216,24 +206,7 @@ const PCConfigWidget = () => {
 };
 
 function Home() {
-  const [realProducts, setRealProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/sanpham");
-        const data = await response.json();
-
-        setRealProducts(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Lỗi khi tải sản phẩm:", error);
-        setIsLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
 
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
@@ -250,7 +223,7 @@ function Home() {
           </div>
         </div>
 
-        {/* TẦNG 3: Điện thoại — widget Countdown + Hot */}
+        {/* TẦNG 3: Điện thoại */}
         <ProductSection
           tab1="Điện thoại"
           tab2="Tablet"
@@ -266,14 +239,13 @@ function Home() {
             "TECNO",
             "ASUS",
           ]}
-          products={realProducts}
-          isLoading={isLoading}
+          danhMucId={5}
         />
 
         {/* TẦNG 4: Phụ kiện */}
         <AccessoryBar title="Sắm thêm phụ kiện chất lượng" data={phuKienData} />
 
-        {/* TẦNG 5: Laptop — widget AI gợi ý */}
+        {/* TẦNG 5: Laptop */}
         <ProductSection
           tab1="Laptop"
           tab2="Màn hình"
@@ -288,13 +260,13 @@ function Home() {
             "HP",
             "Gigabyte",
           ]}
-          products={listDienThoai}
+          danhMucId={4}
         />
 
         {/* TẦNG 6: Hàng cũ */}
         <AccessoryBar title="Hàng cũ giá tốt" data={hangCuData} />
 
-        {/* TẦNG 8: PC & Linh kiện — widget cấu hình gợi ý */}
+        {/* TẦNG 8: PC & Linh kiện */}
         <ProductSection
           tab1="PC"
           tab2="Linh kiện máy tính"
@@ -307,7 +279,7 @@ function Home() {
             "Mainboard",
             "RAM",
           ]}
-          products={listDienThoai}
+          danhMucId={6}
         />
 
         {/* TẦNG 9: ĐÁNH GIÁ SHOP CỦA KHÁCH HÀNG */}

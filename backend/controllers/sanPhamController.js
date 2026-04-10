@@ -25,19 +25,33 @@ const generateSlug = (text) => {
 // 1. Lấy danh sách toàn bộ sản phẩm
 exports.getAllSanPham = async (req, res) => {
   try {
+    const { danhMucId, thuongHieu } = req.query;
+
+    let whereCondition = { trang_thai: "active" };
+
+    if (danhMucId) {
+      whereCondition.danh_muc_id = danhMucId;
+    }
+
+    if (thuongHieu) {
+      whereCondition.thuong_hieu = thuongHieu;
+    }
+
     const danhSach = await SanPham.findAll({
+      where: whereCondition,
       include: [
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
       order: [["created_at", "DESC"]],
+      limit: 20,
     });
 
     res.status(200).json(danhSach);
   } catch (error) {
     console.error("Lỗi server khi lấy danh sách sản phẩm:", error);
-    res.status(500).json({ message: "Lỗi server khi lấy danh sách sản phẩm" });
+    res.status(500).json({ message: "Lỗi server!" });
   }
 };
 
