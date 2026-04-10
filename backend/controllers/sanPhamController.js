@@ -27,9 +27,9 @@ exports.getAllSanPham = async (req, res) => {
   try {
     const danhSach = await SanPham.findAll({
       include: [
-        { model: require("../models/BienTheSanPham"), as: "bien_the" },
-        { model: require("../models/ThuocTinhSanPham"), as: "thuoc_tinh" },
-        { model: require("../models/HinhAnhSanPham"), as: "hinh_anh" },
+        { model: BienTheSanPham, as: "bien_the" },
+        { model: ThuocTinhSanPham, as: "thuoc_tinh" },
+        { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
       order: [["created_at", "DESC"]],
     });
@@ -65,11 +65,12 @@ exports.getSanPhamById = async (req, res) => {
   }
 };
 
-// 2. Thêm một sản phẩm mới
+// 2. Thêm một sản phẩm mới (ĐÃ TÍCH HỢP UPLOAD ẢNH)
 exports.createSanPham = async (req, res) => {
   const t = await require("../config/db").transaction();
 
   try {
+    // Lấy dữ liệu text từ req.body (gửi qua FormData)
     const {
       ten_san_pham,
       danh_muc_id,
@@ -79,20 +80,24 @@ exports.createSanPham = async (req, res) => {
       thuong_hieu,
       trang_thai,
       noi_bat,
-      bien_the,
-      thuoc_tinh,
-      hinh_anh,
     } = req.body;
 
-    // 1. Tên sản phẩm là bắt buộc
-    if (!ten_san_pham) {
-      await t.rollback();
-      return res
-        .status(400)
-        .json({ message: "Tên sản phẩm không được để trống!" });
+    // Ép kiểu các mảng JSON string về dạng Object/Array
+    let bien_the = [];
+    let thuoc_tinh = [];
+    
+    if (req.body.bien_the) {
+      try { bien_the = JSON.parse(req.body.bien_the); } catch (e) { console.error("Lỗi parse bien_the", e); }
+    }
+    if (req.body.thuoc_tinh) {
+      try { thuoc_tinh = JSON.parse(req.body.thuoc_tinh); } catch (e) { console.error("Lỗi parse thuoc_tinh", e); }
     }
 
-    // 2. Tự động tạo slug
+    if (!ten_san_pham) {
+      await t.rollback();
+      return res.status(400).json({ message: "Tên sản phẩm không được để trống!" });
+    }
+
     const slug = generateSlug(ten_san_pham);
 
     // 3. Lưu thông tin chung vào CSDL
@@ -100,48 +105,65 @@ exports.createSanPham = async (req, res) => {
       {
         ten_san_pham,
         slug,
-        danh_muc_id: danh_muc_id || null,
-        nha_cung_cap_id: nha_cung_cap_id || null,
+        danh_muc_id: danh_muc_id ? Number(danh_muc_id) : null,
+        nha_cung_cap_id: nha_cung_cap_id ? Number(nha_cung_cap_id) : null,
         mo_ta_ngan,
         mo_ta_day_du,
         thuong_hieu,
         trang_thai: trang_thai || "active",
-        noi_bat: noi_bat !== undefined ? noi_bat : false,
+        noi_bat: noi_bat === "true" || noi_bat === true, // Ép kiểu boolean
         luot_xem: 0,
       },
-      { transaction: t },
+      { transaction: t }
     );
 
     const newProductId = sanPhamMoi.id;
 
     // 4. Lưu mảng Biến thể vào CSDL
     if (bien_the && bien_the.length > 0) {
-      const BienTheSanPham = require("../models/BienTheSanPham");
       const dataBienThe = bien_the.map((bt) => ({
         ...bt,
         san_pham_id: newProductId,
+        gia_goc: Number(bt.gia_goc) || 0,
+        gia_ban: Number(bt.gia_ban) || 0,
+        ton_kho: Number(bt.ton_kho) || 0
       }));
       await BienTheSanPham.bulkCreate(dataBienThe, { transaction: t });
     }
 
     // 5. Lưu mảng Thuộc tính vào CSDL
     if (thuoc_tinh && thuoc_tinh.length > 0) {
-      const ThuocTinhSanPham = require("../models/ThuocTinhSanPham");
       const dataThuocTinh = thuoc_tinh.map((tt) => ({
         ...tt,
         san_pham_id: newProductId,
+        thu_tu: Number(tt.thu_tu) || 1
       }));
       await ThuocTinhSanPham.bulkCreate(dataThuocTinh, { transaction: t });
     }
 
-    // 6. Lưu mảng Hình ảnh vào CSDL
-    if (hinh_anh && hinh_anh.length > 0) {
-      const HinhAnhSanPham = require("../models/HinhAnhSanPham");
-      const dataHinhAnh = hinh_anh.map((ha) => ({
-        ...ha,
+    // 6. XỬ LÝ LƯU HÌNH ẢNH (Từ req.files của multer)
+    if (req.files && req.files.length > 0) {
+      const dataHinhAnh = req.files.map((file, index) => ({
         san_pham_id: newProductId,
+        url_anh: `/uploads/${file.filename}`, // Lưu đường dẫn tương đối
+        alt_text: ten_san_pham,
+        la_anh_chinh: index === 0 // Đặt ảnh đầu tiên làm ảnh chính
       }));
       await HinhAnhSanPham.bulkCreate(dataHinhAnh, { transaction: t });
+    } else if (req.body.hinh_anh) {
+      // Trường hợp dự phòng nếu gửi ảnh dạng string JSON
+      try {
+        let hinh_anh_arr = JSON.parse(req.body.hinh_anh);
+        if (hinh_anh_arr && hinh_anh_arr.length > 0) {
+          const dataHinhAnh = hinh_anh_arr.map((ha, index) => ({
+            san_pham_id: newProductId,
+            url_anh: ha.url_anh,
+            alt_text: ha.alt_text || ten_san_pham,
+            la_anh_chinh: ha.la_anh_chinh !== undefined ? ha.la_anh_chinh : (index === 0)
+          }));
+          await HinhAnhSanPham.bulkCreate(dataHinhAnh, { transaction: t });
+        }
+      } catch(e) { console.error("Lỗi parse hinh_anh", e) }
     }
 
     await t.commit();
@@ -151,7 +173,6 @@ exports.createSanPham = async (req, res) => {
       data: sanPhamMoi,
     });
   } catch (error) {
-    // Nếu bị lỗi ở bất kỳ dòng nào -> hủy bỏ toàn bộ
     await t.rollback();
     console.error("Lỗi khi thêm sản phẩm:", error);
     res.status(500).json({ message: "Lỗi server khi thêm sản phẩm!" });
@@ -162,16 +183,12 @@ exports.toggleTrangThai = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Tìm sản phẩm trong DB
     const sanPham = await SanPham.findByPk(id);
     if (!sanPham) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
 
-    // Đảo ngược trạng thái hiện tại
     const newStatus = sanPham.trang_thai === "active" ? "inactive" : "active";
-
-    //Lưu vào Database
     await sanPham.update({ trang_thai: newStatus });
 
     res.status(200).json({
@@ -184,7 +201,6 @@ exports.toggleTrangThai = async (req, res) => {
   }
 };
 
-// API xóa sản phẩm
 exports.deleteSanPham = async (req, res) => {
   try {
     const { id } = req.params;
@@ -193,7 +209,6 @@ exports.deleteSanPham = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
 
-    // Lệnh xóa khỏi Database
     await sanPham.destroy();
     res.status(200).json({ message: "Đã xóa sản phẩm thành công!" });
   } catch (error) {
@@ -202,8 +217,8 @@ exports.deleteSanPham = async (req, res) => {
   }
 };
 
+// API cập nhật sản phẩm (ĐÃ TÍCH HỢP UPLOAD ẢNH)
 exports.updateSanPham = async (req, res) => {
-  // Bắt đầu 1 Transaction để bảo vệ dữ liệu
   const t = await require("../config/db").transaction();
 
   try {
@@ -217,75 +232,102 @@ exports.updateSanPham = async (req, res) => {
       mo_ta_day_du,
       trang_thai,
       noi_bat,
-      bien_the,
-      thuoc_tinh,
-      hinh_anh,
     } = req.body;
 
-    // 1. Tìm sản phẩm
+    let bien_the = [];
+    let thuoc_tinh = [];
+    let hinh_anh_giu_lai = [];
+
+    if (req.body.bien_the) try { bien_the = JSON.parse(req.body.bien_the); } catch (e) {}
+    if (req.body.thuoc_tinh) try { thuoc_tinh = JSON.parse(req.body.thuoc_tinh); } catch (e) {}
+    if (req.body.hinh_anh) try { hinh_anh_giu_lai = JSON.parse(req.body.hinh_anh); } catch (e) {}
+
     const sanPham = await SanPham.findByPk(id);
     if (!sanPham) {
       await t.rollback();
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
 
-    // 2. Cập nhật thông tin bảng chính
     await sanPham.update(
       {
         ten_san_pham,
         thuong_hieu,
-        danh_muc_id,
-        nha_cung_cap_id,
+        danh_muc_id: danh_muc_id ? Number(danh_muc_id) : null,
+        nha_cung_cap_id: nha_cung_cap_id ? Number(nha_cung_cap_id) : null,
         mo_ta_ngan,
         mo_ta_day_du,
         trang_thai,
-        noi_bat,
+        noi_bat: noi_bat === "true" || noi_bat === true,
       },
-      { transaction: t },
+      { transaction: t }
     );
 
-    // 3. Cập nhật các bảng phụ
-    await BienTheSanPham.destroy({
-      where: { san_pham_id: id },
-      transaction: t,
-    });
-    await ThuocTinhSanPham.destroy({
-      where: { san_pham_id: id },
-      transaction: t,
-    });
-    await HinhAnhSanPham.destroy({
-      where: { san_pham_id: id },
-      transaction: t,
-    });
+    await BienTheSanPham.destroy({ where: { san_pham_id: id }, transaction: t });
+    await ThuocTinhSanPham.destroy({ where: { san_pham_id: id }, transaction: t });
+    await HinhAnhSanPham.destroy({ where: { san_pham_id: id }, transaction: t });
 
-    // Thêm cái mới từ Form gửi lên
     if (bien_the && bien_the.length > 0) {
-      const newBienThe = bien_the.map((bt) => ({ ...bt, san_pham_id: id }));
+      const newBienThe = bien_the.map((bt) => ({ 
+        ...bt, 
+        san_pham_id: id,
+        gia_goc: Number(bt.gia_goc) || 0,
+        gia_ban: Number(bt.gia_ban) || 0,
+        ton_kho: Number(bt.ton_kho) || 0
+      }));
       await BienTheSanPham.bulkCreate(newBienThe, { transaction: t });
     }
 
     if (thuoc_tinh && thuoc_tinh.length > 0) {
-      const newThuocTinh = thuoc_tinh.map((tt) => ({ ...tt, san_pham_id: id }));
+      const newThuocTinh = thuoc_tinh.map((tt) => ({ 
+        ...tt, 
+        san_pham_id: id,
+        thu_tu: Number(tt.thu_tu) || 1
+      }));
       await ThuocTinhSanPham.bulkCreate(newThuocTinh, { transaction: t });
     }
 
-    if (hinh_anh && hinh_anh.length > 0) {
-      const newHinhAnh = hinh_anh.map((ha) => ({ ...ha, san_pham_id: id }));
-      await HinhAnhSanPham.bulkCreate(newHinhAnh, { transaction: t });
+    // XỬ LÝ LƯU ẢNH KHI CẬP NHẬT
+    let tatCaAnh = [];
+    
+    if(hinh_anh_giu_lai && hinh_anh_giu_lai.length > 0){
+      hinh_anh_giu_lai.forEach(ha => {
+        tatCaAnh.push({
+          san_pham_id: id,
+          url_anh: ha.url_anh,
+          alt_text: ha.alt_text || ten_san_pham,
+          la_anh_chinh: ha.la_anh_chinh || false
+        })
+      })
     }
 
-    // Nếu mọi thứ trót lọt -> Xác nhận lưu vào DB
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        tatCaAnh.push({
+          san_pham_id: id,
+          url_anh: `/uploads/${file.filename}`,
+          alt_text: ten_san_pham,
+          la_anh_chinh: false
+        })
+      });
+    }
+
+    if (tatCaAnh.length > 0 && !tatCaAnh.some(a => a.la_anh_chinh)) {
+      tatCaAnh[0].la_anh_chinh = true;
+    }
+
+    if(tatCaAnh.length > 0) {
+      await HinhAnhSanPham.bulkCreate(tatCaAnh, { transaction: t });
+    }
+
     await t.commit();
     res.status(200).json({ message: "Cập nhật sản phẩm thành công!" });
   } catch (error) {
-    // Nếu có lỗi ở bất kỳ bước nào -> Hủy bỏ toàn bộ, không lưu rác vào DB
     await t.rollback();
     console.error("Lỗi khi cập nhật sản phẩm:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật sản phẩm!" });
   }
 };
 
-// API Lấy 4 sản phẩm tương tự
 exports.getSanPhamTuongTu = async (req, res) => {
   try {
     const { id } = req.params;
@@ -300,8 +342,8 @@ exports.getSanPhamTuongTu = async (req, res) => {
         id: { [Op.ne]: id },
       },
       include: [
-        { model: require("../models/BienTheSanPham"), as: "bien_the" },
-        { model: require("../models/HinhAnhSanPham"), as: "hinh_anh" },
+        { model: BienTheSanPham, as: "bien_the" },
+        { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
       limit: 4,
       order: [["created_at", "DESC"]],
@@ -314,7 +356,6 @@ exports.getSanPhamTuongTu = async (req, res) => {
   }
 };
 
-// API Lấy danh sách đánh giá của 1 sản phẩm
 exports.getDanhGiaBySanPham = async (req, res) => {
   try {
     const { id } = req.params;
@@ -335,7 +376,6 @@ exports.getDanhGiaBySanPham = async (req, res) => {
   }
 };
 
-// API Thêm đánh giá mới
 exports.createDanhGia = async (req, res) => {
   try {
     const { id } = req.params;

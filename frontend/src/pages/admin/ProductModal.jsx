@@ -14,6 +14,7 @@ const ProductModal = ({
   activeTab,
   setActiveTab,
   formData,
+  setFormData, // Cần thêm để update thứ tự ảnh cũ
   handleBasicChange,
   handleArrayChange,
   addRow,
@@ -22,9 +23,70 @@ const ProductModal = ({
   editingProduct,
   categories, 
   suppliers,  
+  // Props để xử lý file vật lý
+  uploadedFiles,
+  setUploadedFiles 
 }) => {
 
   if (!isModalOpen) return null;
+
+  // ─── LOGIC ĐIỀU HƯỚNG ẢNH CŨ (TRONG DB) ──────────────────────
+  const moveOldImage = (index, direction) => {
+    if (index + direction < 0 || index + direction >= formData.hinh_anh.length) return;
+    const newArr = [...formData.hinh_anh];
+    const temp = newArr[index];
+    newArr[index] = newArr[index + direction];
+    newArr[index + direction] = temp;
+    
+    // Cập nhật la_anh_chinh: Ảnh ở vị trí 0 luôn là ảnh chính
+    newArr.forEach((img, i) => img.la_anh_chinh = (i === 0));
+    setFormData(prev => ({ ...prev, hinh_anh: newArr }));
+  };
+
+  const setOldImageMain = (index) => {
+    if (index === 0) return;
+    const newArr = [...formData.hinh_anh];
+    const [item] = newArr.splice(index, 1);
+    newArr.unshift(item); // Đưa lên đầu
+    newArr.forEach((img, i) => img.la_anh_chinh = (i === 0));
+    setFormData(prev => ({ ...prev, hinh_anh: newArr }));
+  };
+
+  // ─── LOGIC ĐIỀU HƯỚNG ẢNH MỚI (VỪA UPLOAD) ───────────────────
+  const moveNewImage = (index, direction) => {
+    if (index + direction < 0 || index + direction >= uploadedFiles.length) return;
+    const newArr = [...uploadedFiles];
+    const temp = newArr[index];
+    newArr[index] = newArr[index + direction];
+    newArr[index + direction] = temp;
+    setUploadedFiles(newArr);
+  };
+
+  const setNewImageMain = (index) => {
+    if (index === 0) return;
+    const newArr = [...uploadedFiles];
+    const [item] = newArr.splice(index, 1);
+    newArr.unshift(item);
+    setUploadedFiles(newArr);
+  };
+
+  const hasOldImages = formData.hinh_anh && formData.hinh_anh.length > 0;
+  const oldImagesCount = formData.hinh_anh?.length || 0;
+  const newImagesCount = uploadedFiles?.length || 0;
+  const totalImagesCount = oldImagesCount + newImagesCount;
+  const totalSlots = Math.max(3, totalImagesCount);
+
+  const renderImages = [];
+  for (let i = 0; i < totalSlots; i++) {
+      if (i < oldImagesCount) {
+          renderImages.push({ type: 'old', data: formData.hinh_anh[i], originalIndex: i });
+      } else if (i < totalImagesCount) {
+          const newIndex = i - oldImagesCount;
+          renderImages.push({ type: 'new', data: uploadedFiles[newIndex], originalIndex: newIndex });
+      } else {
+          renderImages.push({ type: 'empty' });
+      }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-opacity">
@@ -100,7 +162,6 @@ const ProductModal = ({
                     />
                   </div>
                   
-                  {/* DANH MỤC (Đã bỏ dấu +) */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block font-semibold text-gray-700 mb-2">
                       Danh mục
@@ -118,7 +179,6 @@ const ProductModal = ({
                     </select>
                   </div>
 
-                  {/* NHÀ CUNG CẤP (Đã bỏ dấu +) */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block font-semibold text-gray-700 mb-2">
                       Nhà cung cấp
@@ -325,44 +385,81 @@ const ProductModal = ({
               </div>
             )}
 
-            {/* TAB 4: HÌNH ẢNH */}
+            {/* TAB 4: HÌNH ẢNH (BẢO TOÀN UI GỐC 100%) */}
             {activeTab === 4 && (
               <div className="space-y-6">
                 <h4 className="text-lg font-bold text-gray-800 border-b pb-2 mb-4">
                   Quản lý Hình ảnh
                 </h4>
 
-                <div className="border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-xl p-8 text-center cursor-pointer hover:bg-blue-50 transition">
+                <label className="border-2 border-dashed border-blue-300 bg-blue-50/50 rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition">
+                  <input 
+                    type="file" multiple accept="image/jpeg, image/png, image/webp" className="hidden" 
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      if (files.length > 0) setUploadedFiles(prev => [...prev, ...files]);
+                      e.target.value = null; 
+                    }}
+                  />
                   <div className="text-4xl mb-3">📸</div>
                   <p className="font-semibold text-blue-700">Click hoặc kéo thả hình ảnh vào đây để tải lên</p>
                   <p className="text-xs text-gray-500 mt-1">Hỗ trợ JPG, PNG. Tối đa 5MB/ảnh.</p>
-                </div>
+                </label>
 
+                {/* Khung hiển thị ảnh (luôn có tối thiểu 3 slot như bản gốc của Bro) */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  {[1, 2, 3].map((imgOrder) => (
-                    <div
-                      key={imgOrder}
-                      className={`relative border rounded-lg p-2 flex flex-col items-center gap-2 ${imgOrder === 1 ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-gray-50"}`}
-                    >
-                      {imgOrder === 1 && (
-                        <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg rounded-tl-lg z-10 font-bold">Ảnh chính</span>
-                      )}
-                      <div className="w-full h-24 bg-gray-200 rounded object-cover flex items-center justify-center text-gray-400 text-xs">
-                        [Preview Ảnh {imgOrder}]
-                      </div>
-                      <div className="flex w-full justify-between items-center px-1">
-                        <button className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer" title="Dịch sang trái">←</button>
-                        <span className="text-xs font-semibold text-gray-600">Thứ tự: {imgOrder}</span>
-                        <button className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer" title="Dịch sang phải">→</button>
-                      </div>
-                      <div className="flex w-full gap-2 mt-1">
-                        {imgOrder !== 1 && (
-                          <button className="flex-1 bg-white border border-gray-300 text-xs py-1 rounded hover:bg-gray-100 cursor-pointer">Set Chính</button>
-                        )}
-                        <button className="flex-1 bg-white border border-red-200 text-red-500 text-xs py-1 rounded hover:bg-red-50 cursor-pointer">Xóa</button>
-                      </div>
-                    </div>
-                  ))}
+                  {renderImages.map((slot, index) => {
+                     const isMain = index === 0;
+                     return (
+                        <div key={index} className={`relative border rounded-lg p-2 flex flex-col items-center gap-2 ${isMain ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-gray-50"}`}>
+                           {isMain && <span className="absolute top-0 left-0 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg rounded-tl-lg z-10 font-bold">Ảnh chính</span>}
+
+                           {/* 1. Hiển thị Ảnh hoặc Placeholder */}
+                           {slot.type === 'old' && <img src={`http://localhost:5000${slot.data.url_anh}`} alt="old" className="w-full h-24 object-cover rounded border border-gray-200 bg-white" />}
+                           {slot.type === 'new' && <img src={URL.createObjectURL(slot.data)} alt="new" className="w-full h-24 object-cover rounded border border-gray-200 bg-white" />}
+                           {slot.type === 'empty' && (
+                             <div className="w-full h-24 bg-gray-200 rounded object-cover flex items-center justify-center text-gray-400 text-xs font-medium">
+                               [Preview Ảnh {index + 1}]
+                             </div>
+                           )}
+
+                           {/* 2. Nút điều hướng ← → (Giữ nguyên cấu trúc HTML của Bro) */}
+                           <div className="flex w-full justify-between items-center px-1">
+                              <button
+                                type="button"
+                                onClick={() => slot.type === 'old' ? moveOldImage(slot.originalIndex, -1) : moveNewImage(slot.originalIndex, -1)}
+                                disabled={slot.type === 'empty' || slot.originalIndex === 0}
+                                className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              >←</button>
+                              <span className="text-xs font-semibold text-gray-600">Thứ tự: {index + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => slot.type === 'old' ? moveOldImage(slot.originalIndex, 1) : moveNewImage(slot.originalIndex, 1)}
+                                disabled={slot.type === 'empty' || (slot.type === 'old' && slot.originalIndex === formData.hinh_anh.length - 1) || (slot.type === 'new' && slot.originalIndex === uploadedFiles.length - 1)}
+                                className="text-gray-400 hover:text-blue-600 text-lg leading-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              >→</button>
+                           </div>
+
+                           {/* 3. Nút thao tác Set Chính / Xóa (Giữ nguyên cấu trúc HTML của Bro) */}
+                           <div className="flex w-full gap-2 mt-1">
+                              {!isMain && (
+                                <button
+                                  type="button"
+                                  disabled={slot.type === 'empty'}
+                                  onClick={() => slot.type === 'old' ? setOldImageMain(slot.originalIndex) : setNewImageMain(slot.originalIndex)}
+                                  className="flex-1 bg-white border border-gray-300 text-[11px] py-1 rounded hover:bg-gray-100 cursor-pointer font-medium disabled:opacity-30 disabled:cursor-not-allowed"
+                                >Set Chính</button>
+                              )}
+                              <button
+                                type="button"
+                                disabled={slot.type === 'empty'}
+                                onClick={() => slot.type === 'old' ? removeRow("hinh_anh", slot.originalIndex) : setUploadedFiles(prev => prev.filter((_, i) => i !== slot.originalIndex))}
+                                className="flex-1 bg-white border border-red-200 text-red-500 text-[11px] py-1 rounded hover:bg-red-50 cursor-pointer font-medium disabled:opacity-30 disabled:cursor-not-allowed"
+                              >Xóa</button>
+                           </div>
+                        </div>
+                     );
+                  })}
                 </div>
               </div>
             )}

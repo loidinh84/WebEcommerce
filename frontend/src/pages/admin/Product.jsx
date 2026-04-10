@@ -84,16 +84,17 @@ const Product = () => {
   const [stockFilter, setStockFilter]         = useState("all");
   // ────────────────────────────────────────────────────────
 
+  // ĐÃ SỬA ID THÀNH SỐ CHO KHỚP VỚI BẢNG SQL SERVER (BIGINT)
   const [categories, setCategories] = useState([
-    { id: "DM001", name: "Điện thoại di động" },
-    { id: "DM002", name: "Laptop & Macbook" },
-    { id: "DM003", name: "Phụ kiện - Bàn phím" },
+    { id: 7, name: "Điện thoại di động" },
+    { id: 8, name: "Laptop & Macbook" },
+    { id: 9, name: "Phụ kiện - Bàn phím" },
   ]);
   const [suppliers, setSuppliers] = useState([
-    { id: "NCC001", name: "Apple Vietnam" },
-    { id: "NCC002", name: "ASUS Global" },
-    { id: "NCC003", name: "GearVN" },
-    { id: "NCC004", name: "Samsung Vietnam" },
+    { id: 3, name: "Apple Vietnam" },
+    { id: 4, name: "ASUS Global" },
+    { id: 5, name: "GearVN" },
+    { id: 6, name: "Samsung Vietnam" },
   ]);
 
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -113,6 +114,7 @@ const Product = () => {
     hinh_anh:   [{ url_anh: "", alt_text: "", la_anh_chinh: true }],
   };
   const [formData, setFormData] = useState(emptyFormData);
+  const [uploadedFiles, setUploadedFiles] = useState([]); // State mới để giữ các file ảnh vật lý
 
   // ── MAP & FETCH ──────────────────────────────────────────
   const mapAndSetProducts = (data) => {
@@ -194,7 +196,8 @@ const Product = () => {
   const handleQuickSaveCategory = (e) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return toast.warning("Vui lòng nhập tên danh mục!");
-    setCategories([...categories, { id: `DM00${categories.length + 1}`, name: newCategoryName }]);
+    // ĐÃ SỬA ID THÀNH SỐ KHI THÊM NHANH
+    setCategories([...categories, { id: categories.length + 1, name: newCategoryName }]);
     toast.success("Đã thêm danh mục: " + newCategoryName);
     setIsAddCategoryOpen(false); setNewCategoryName("");
   };
@@ -202,7 +205,8 @@ const Product = () => {
   const handleQuickSaveSupplier = (e) => {
     e.preventDefault();
     if (!newSupplierName.trim()) return toast.warning("Vui lòng nhập tên nhà cung cấp!");
-    setSuppliers([...suppliers, { id: `NCC00${suppliers.length + 1}`, name: newSupplierName }]);
+    // ĐÃ SỬA ID THÀNH SỐ KHI THÊM NHANH
+    setSuppliers([...suppliers, { id: suppliers.length + 1, name: newSupplierName }]);
     toast.success("Đã thêm nhà cung cấp: " + newSupplierName);
     setIsAddSupplierOpen(false); setNewSupplierName("");
   };
@@ -219,18 +223,59 @@ const Product = () => {
   const addRow    = (n, obj)   => setFormData(prev => ({ ...prev, [n]: [...prev[n], obj] }));
   const removeRow = (n, index) => setFormData(prev => ({ ...prev, [n]: formData[n].filter((_, i) => i !== index) }));
 
+  // ── XỬ LÝ LƯU SẢN PHẨM VỚI FORMDATA ─────────────────────
   const handleSaveProduct = async () => {
     if (!formData.ten_san_pham.trim()) return toast.warning("Tên sản phẩm không được để trống!");
+    
     try {
+      const dataToSend = new FormData();
+      
+      // 1. Thêm dữ liệu cơ bản
+      dataToSend.append('ten_san_pham', formData.ten_san_pham);
+      dataToSend.append('thuong_hieu', formData.thuong_hieu);
+      dataToSend.append('danh_muc_id', formData.danh_muc_id);
+      dataToSend.append('nha_cung_cap_id', formData.nha_cung_cap_id);
+      dataToSend.append('trang_thai', formData.trang_thai);
+      dataToSend.append('mo_ta_ngan', formData.mo_ta_ngan);
+      dataToSend.append('mo_ta_day_du', formData.mo_ta_day_du);
+      dataToSend.append('noi_bat', formData.noi_bat);
+
+      // 2. Chuyển đổi các mảng thành JSON string (Backend đã chuẩn bị sẵn để parse)
+      dataToSend.append('bien_the', JSON.stringify(formData.bien_the));
+      dataToSend.append('thuoc_tinh', JSON.stringify(formData.thuoc_tinh));
+      
+      // 3. Nếu có ảnh cũ giữ lại, truyền lên
+      if (formData.hinh_anh && formData.hinh_anh.length > 0) {
+         dataToSend.append('hinh_anh', JSON.stringify(formData.hinh_anh));
+      }
+
+      // 4. Nếu có file vật lý mới, đính kèm vào
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        uploadedFiles.forEach(file => {
+          // Lưu ý: Tên field 'hinh_anh_files' phải khớp với upload.array('hinh_anh_files') trong router
+          dataToSend.append('hinh_anh_files', file);
+        });
+      }
+
+      // 5. Gửi request
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      };
+
       if (editingProduct) {
-        await axios.put(`http://localhost:5000/api/sanpham/${editingProduct.id}`, formData);
+        await axios.put(`http://localhost:5000/api/sanpham/${editingProduct.id}`, dataToSend, config);
         toast.success("Lưu thành công!");
       } else {
-        await axios.post("http://localhost:5000/api/sanpham", formData);
+        await axios.post("http://localhost:5000/api/sanpham", dataToSend, config);
         toast.success("Thêm sản phẩm mới thành công!");
       }
-      setIsModalOpen(false); fetchProducts();
-    } catch {
+      setIsModalOpen(false); 
+      setUploadedFiles([]); // Reset files sau khi thành công
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
       const saved = {
         id: editingProduct ? editingProduct.id : `SP00${products.length + 10}`,
         name: formData.ten_san_pham, brand: formData.thuong_hieu,
@@ -250,6 +295,7 @@ const Product = () => {
         toast.success("Đã thêm (UI)");
       }
       setIsModalOpen(false);
+      setUploadedFiles([]);
     }
   };
 
@@ -283,6 +329,7 @@ const Product = () => {
   };
 
   const handleEditClick = async (product) => {
+    setUploadedFiles([]); // Xóa file cũ còn đọng
     try {
       const res = await axios.get(`http://localhost:5000/api/sanpham/${product.id}`);
       const d = res.data;
@@ -294,7 +341,7 @@ const Product = () => {
         mo_ta_ngan: d.mo_ta_ngan || "", mo_ta_day_du: d.mo_ta_day_du || "", noi_bat: d.noi_bat || false,
         thuoc_tinh: d.thuoc_tinh?.length > 0 ? d.thuoc_tinh : emptyFormData.thuoc_tinh,
         bien_the:   d.bien_the?.length   > 0 ? d.bien_the   : emptyFormData.bien_the,
-        hinh_anh:   d.hinh_anh?.length   > 0 ? d.hinh_anh   : emptyFormData.hinh_anh,
+        hinh_anh:   d.hinh_anh?.length   > 0 ? d.hinh_anh   : [],
       });
     } catch {
       setEditingProduct(product);
@@ -307,7 +354,7 @@ const Product = () => {
         noi_bat: product.isFeatured || false,
         thuoc_tinh: product.attributes?.length > 0 ? product.attributes : emptyFormData.thuoc_tinh,
         bien_the:   product.variants?.length   > 0 ? product.variants   : emptyFormData.bien_the,
-        hinh_anh:   product.images?.length     > 0 ? product.images     : emptyFormData.hinh_anh,
+        hinh_anh:   product.images?.length     > 0 ? product.images     : [],
       });
     }
     setIsModalOpen(true); setActiveTab(1);
@@ -447,7 +494,7 @@ const Product = () => {
           <div className="px-6 py-5 flex justify-between items-center border-b border-gray-100 bg-white shrink-0">
             <h2 className="text-xl font-bold text-gray-800">Danh sách sản phẩm</h2>
             <button
-              onClick={() => { setIsModalOpen(true); setActiveTab(1); setEditingProduct(null); setFormData({ ...emptyFormData }); }}
+              onClick={() => { setIsModalOpen(true); setActiveTab(1); setEditingProduct(null); setFormData({ ...emptyFormData }); setUploadedFiles([]); }}
               className="bg-[#4caf50] hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm cursor-pointer"
             >
               + Thêm sản phẩm
@@ -629,10 +676,11 @@ const Product = () => {
       <ProductModal
         isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen}
         activeTab={activeTab} setActiveTab={setActiveTab}
-        formData={formData} handleBasicChange={handleBasicChange}
+        formData={formData} setFormData={setFormData} handleBasicChange={handleBasicChange}
         handleArrayChange={handleArrayChange} addRow={addRow} removeRow={removeRow}
         handleSaveProduct={handleSaveProduct} editingProduct={editingProduct}
         categories={categories} suppliers={suppliers}
+        uploadedFiles={uploadedFiles} setUploadedFiles={setUploadedFiles}
       />
 
       {/* Quick add modals */}
