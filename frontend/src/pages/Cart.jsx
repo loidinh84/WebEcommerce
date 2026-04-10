@@ -1,38 +1,36 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index";
 import { Link } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "PC TTG GAMING i5 12400F - 16GB DDR4- RTX 3060 8GB OC WHITE",
-      specs: "CPU: i5 12400F | RAM: 16GB DDR4 | SSD: 500GB",
-      price: 23680000,
-      quantity: 1,
-      image: Images.Logo,
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+    const initializedCart = savedCart.map((item) => ({
+      ...item,
       selected: true,
-    },
-    {
-      id: 2,
-      name: "PC TTG GAMING PRO i5 12600KF - 16GB DDR4 - RX 6600 XT 8GB OC",
-      specs: "CPU: i5 12600KF | RAM: 16GB DDR4 | SSD: 500GB",
-      price: 23180000,
-      quantity: 1,
-      image: Images.Logo,
-      selected: false,
-    },
-  ]);
+    }));
+    setCartItems(initializedCart);
+  }, []);
+
+  const saveCartToLocal = (newCart) => {
+    const cartToSave = newCart.map(({ selected, ...rest }) => rest);
+    localStorage.setItem("cart", JSON.stringify(cartToSave));
+    setCartItems(newCart);
+  };
 
   // --- LOGIC XỬ LÝ GIỎ HÀNG ---
   const selectedItems = cartItems.filter((item) => item.selected);
   const totalAmount = selectedItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + item.gia_ban * item.so_luong,
     0,
   );
+
   const selectedCount = selectedItems.length;
   const isAllSelected =
     cartItems.length > 0 && cartItems.every((item) => item.selected);
@@ -44,39 +42,38 @@ const Cart = () => {
     );
   };
 
-  const handleSelectItem = (id) => {
+  const handleSelectItem = (variantId) => {
     setCartItems(
       cartItems.map((item) =>
-        item.id === id ? { ...item, selected: !item.selected } : item,
+        item.variantId === variantId
+          ? { ...item, selected: !item.selected }
+          : item,
       ),
     );
   };
 
-  const updateQuantity = (id, delta) => {
-    setCartItems(
-      cartItems.map((item) => {
-        if (item.id === id) {
-          const newQuantity = item.quantity + delta;
-          return { ...item, quantity: newQuantity > 0 ? newQuantity : 1 };
-        }
-        return item;
-      }),
-    );
+  const updateQuantity = (variantId, delta) => {
+    const newCart = cartItems.map((item) => {
+      if (item.variantId === variantId) {
+        const newQuantity = item.so_luong + delta;
+        return { ...item, so_luong: newQuantity > 0 ? newQuantity : 1 };
+      }
+      return item;
+    });
+    saveCartToLocal(newCart);
   };
 
-  const handleRemoveItem = (id) => {
-    if (window.confirm("Bạn có chắc muốn bỏ sản phẩm này khỏi giỏ hàng?")) {
-      setCartItems(cartItems.filter((item) => item.id !== id));
-    }
+  const handleRemoveItem = (variantId) => {
+    const newCart = cartItems.filter((item) => item.variantId !== variantId);
+    saveCartToLocal(newCart);
+    toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
   };
 
   const handleRemoveSelected = () => {
-    if (selectedCount === 0) return;
-    if (
-      window.confirm(`Bạn có chắc muốn xóa ${selectedCount} sản phẩm đã chọn?`)
-    ) {
-      setCartItems(cartItems.filter((item) => !item.selected));
-    }
+    if (selectedCount === 0)
+      return toast.error("Vui lòng chọn sản phẩm cần xóa!");
+    const newCart = cartItems.filter((item) => !item.selected);
+    saveCartToLocal(newCart);
   };
 
   const formatPrice = (price) => {
@@ -86,12 +83,22 @@ const Cart = () => {
     }).format(price);
   };
 
+  const getImageUrl = (url) => {
+    if (!url) return "https://via.placeholder.com/150";
+    return url.startsWith("http")
+      ? url
+      : `http://localhost:5000/uploads/${url}`;
+  };
+
   return (
     <div className="bg-[#f5f5f5] min-h-screen font-sans text-gray-800 pb-12">
       <Header />
+      <Toaster position="bottom-right" />
 
       <main className="container mx-auto p-4 max-w-6xl">
-        <h1 className="text-2xl font-bold text-gray-700 mb-2">Giỏ hàng</h1>
+        <h1 className="text-2xl font-bold text-gray-700 mb-2">
+          Giỏ hàng của bạn
+        </h1>
 
         {/* THANH TIÊU ĐỀ CỘT */}
         <div className="bg-white rounded shadow-sm flex items-center p-4 mb-4 text-sm text-gray-500 font-medium">
@@ -117,19 +124,19 @@ const Cart = () => {
               <img
                 src="https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/9bdd8040b334d31946f49e36beaf32db.png"
                 alt="Giỏ hàng trống"
-                className="w-32 h-32 mb-4 opacity-50"
+                className="w-30 h-30 mb-4 opacity-40"
               />
               <p>Giỏ hàng của bạn còn trống</p>
               <Link to="/">
-                <button className="mt-4 bg-[#e30019] hover:bg-red-700 text-white px-8 py-2 rounded uppercase font-medium transition cursor-pointer">
-                  MUA NGAY
+                <button className="mt-4 bg-[#e30019] hover:bg-red-700 text-white px-8 py-2 rounded font-medium transition cursor-pointer">
+                  Mua sắm ngay
                 </button>
               </Link>
             </div>
           ) : (
             cartItems.map((item) => (
               <div
-                key={item.id}
+                key={item.variantId}
                 className="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
               >
                 {/* Checkbox & Thông tin SP */}
@@ -139,47 +146,51 @@ const Cart = () => {
                       type="checkbox"
                       className="w-4 h-4 cursor-pointer accent-[#e30019]"
                       checked={item.selected}
-                      onChange={() => handleSelectItem(item.id)}
+                      onChange={() => handleSelectItem(item.variantId)}
                     />
                   </div>
                   <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 object-contain border rounded p-1 bg-white"
+                    src={getImageUrl(item.hinh_anh)}
+                    alt={item.ten_san_pham}
+                    className="w-20 h-20 object-contain rounded p-1 bg-white"
                   />
                   <div className="flex flex-col pr-4">
                     <h3 className="font-medium text-sm text-gray-800 hover:text-[#e30019] cursor-pointer line-clamp-2 leading-snug mb-1">
-                      {item.name}
+                      {item.ten_san_pham}
                     </h3>
                     <p className="text-[12px] text-gray-500 line-clamp-2">
-                      Phân loại: {item.specs}
+                      Phân loại:{" "}
+                      <span className="font-medium text-gray-700">
+                        {item.dung_luong || ""}{" "}
+                        {item.mau_sac ? `- ${item.mau_sac}` : ""}
+                      </span>
                     </p>
                   </div>
                 </div>
 
                 {/* Đơn Giá */}
                 <div className="w-[15%] text-center text-sm font-medium text-gray-600">
-                  {formatPrice(item.price)}
+                  {formatPrice(item.gia_ban)}
                 </div>
 
                 {/* Số Lượng */}
                 <div className="w-[15%] flex justify-center">
-                  <div className="flex border border-gray-300 rounded text-gray-600 overflow-hidden">
+                  <div className="flex border border-gray-300 rounded text-gray-600 overflow-hidden h-8">
                     <button
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="w-8 h-7 flex items-center justify-center bg-white hover:bg-gray-100 border-r border-gray-300 cursor-pointer transition-colors"
+                      onClick={() => updateQuantity(item.variantId, -1)}
+                      className="w-8 flex items-center justify-center bg-gray-50 hover:bg-gray-200 border-r border-gray-300 cursor-pointer transition-colors"
                     >
                       -
                     </button>
                     <input
                       type="text"
-                      value={item.quantity}
+                      value={item.so_luong}
                       readOnly
-                      className="w-10 h-7 text-center text-sm outline-none bg-white font-medium"
+                      className="w-10 text-center text-sm outline-none bg-white font-semibold text-gray-800"
                     />
                     <button
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="w-8 h-7 flex items-center justify-center bg-white hover:bg-gray-100 border-l border-gray-300 cursor-pointer transition-colors"
+                      onClick={() => updateQuantity(item.variantId, 1)}
+                      className="w-8 flex items-center justify-center bg-gray-50 hover:bg-gray-200 border-l border-gray-300 cursor-pointer transition-colors"
                     >
                       +
                     </button>
@@ -188,13 +199,13 @@ const Cart = () => {
 
                 {/* Số Tiền */}
                 <div className="w-[15%] text-center text-sm font-bold text-[#e30019]">
-                  {formatPrice(item.price * item.quantity)}
+                  {formatPrice(item.gia_ban * item.so_luong)}
                 </div>
 
                 {/* Thao Tác Xóa */}
                 <div className="w-[10%] text-center">
                   <button
-                    onClick={() => handleRemoveItem(item.id)}
+                    onClick={() => handleRemoveItem(item.variantId)}
                     className="text-sm font-medium text-gray-600 hover:text-[#e30019] cursor-pointer transition-colors"
                   >
                     Xóa
@@ -237,7 +248,7 @@ const Cart = () => {
                 </span>
               </div>
               <button
-                className={`px-10 py-3 rounded text-white font-medium text-lg transition-colors cursor-pointer ${selectedCount > 0 ? "bg-[#e30019] hover:bg-red-700 shadow-md" : "bg-gray-300 cursor-not-allowed"}`}
+                className={`px-7 py-2 rounded text-white font-medium text-xl transition-colors cursor-pointer ${selectedCount > 0 ? "bg-[#e30019] hover:bg-red-700 shadow-md" : "bg-gray-300 cursor-not-allowed"}`}
                 disabled={selectedCount === 0}
               >
                 Mua Hàng
