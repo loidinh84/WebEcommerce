@@ -11,7 +11,6 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
 
-  // Load trang và kiểm tra có user trong kho lưu trữ không
   useEffect(() => {
     const loggedInUser =
       localStorage.getItem("user") || sessionStorage.getItem("user");
@@ -69,51 +68,31 @@ const Header = () => {
         <div className="container mx-auto px-4 py-2 flex justify-between items-center">
           <div className="flex items-center gap-6 hidden lg:flex">
             <span className="flex items-center text-sm gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.ChinhHang}
-                alt="Chính hãng"
-                className=" w-4 h-4 brightness-0 invert"
-              />
+              <Icons.ChinhHang className=" w-4 h-4 brightness-0 invert" />
               Sản phẩm chính hãng - Xuất hóa đơn đầy đủ
             </span>
 
             <span className="flex items-center text-sm  gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.Delivery}
-                alt="Giao hàng"
-                className="w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Delivery className="w-4 h-4 brightness-0 invert" />
               Giao nhanh - miễn phí cho hóa đơn 300k
             </span>
 
             <span className="flex items-center text-sm gap-1.5 hover:text-gray-200">
-              <img
-                src={Icons.Build}
-                alt="Lắp đặt"
-                className=" w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Build className=" w-4 h-4 brightness-0 invert" />
               Lắp đặt tại nhà - Giao hàng tận tay
             </span>
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
             <span className="cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90">
-              <img
-                src={Icons.Bill}
-                alt="Bill"
-                className="w-4 h-4 brightness-0 invert"
-              />
+              <Icons.Bill className="w-4 h-4 brightness-0 invert" />
               Tra cứu đơn hàng
             </span>
 
             <span className="text-white/40">|</span>
 
             <span className="font-semibold cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90">
-              <img
-                src={Icons.Call}
-                alt="Call"
-                className="w-4 h-4 gap-2 brightness-0 invert"
-              />
+              <Icons.Call className="w-4 h-4 gap-2 brightness-0 invert" />
               055.956.9340
             </span>
           </div>
@@ -147,46 +126,26 @@ const Header = () => {
         {/* Hai nút Dropdown */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button className="flex cursor-pointer items-center gap-2 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition">
-            <img
-              src={Icons.DanhMuc}
-              alt="Shop Info"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.DanhMuc className="w-5 h-5 brightness-0" />
             <span className="font-medium text-[15px] text-gray-900">
               Thông tin shop
             </span>
-            <img
-              src={Icons.ArrowDown}
-              alt="Arrow Down"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.ArrowDown className="w-5 h-5 text-gray-600" />
           </button>
 
           <button className="flex cursor-pointer items-center gap-1 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition ">
-            <img
-              src={Icons.DanhMuc}
-              alt="Category"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.DanhMuc className="w-5 h-5 brightness-0" />
             <span className="font-medium text-[15px] text-gray-900">
               Danh mục
             </span>
-            <img
-              src={Icons.ArrowDown}
-              alt="Arrow Down"
-              className="w-5 h-5 brightness-0"
-            />
+            <Icons.ArrowDown className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
         {/* Thanh tìm kiếm */}
         <div className="flex-1 relative">
           <button className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <img
-              src={Icons.Search}
-              alt="Search"
-              className="w-6 h-6 brightness-0 cursor-pointer"
-            />
+            <Icons.Search className="w-6 h-6 brightness-0 cursor-pointer" />
           </button>
           <input
             type="text"
@@ -199,11 +158,7 @@ const Header = () => {
         <div className="flex items-center gap-1 text-sm flex-shrink-0 font-medium">
           <button className="flex cursor-pointer hover:bg-white/10 hover:border-white px-4 py-2 rounded-lg text-sm items-center gap-1 hover:text-gray-200 transition">
             <span>Giỏ hàng</span>
-            <img
-              src={Icons.ShoppingCart}
-              alt="Cart"
-              className="w-5 h-5 brightness-0 invert"
-            />
+            <Icons.ShoppingCart className="w-5 h-5 brightness-0 invert" />
           </button>
 
           {user ? (
@@ -257,11 +212,7 @@ const Header = () => {
               {/* Nút Đăng Ký */}
               <Link to="/register">
                 <button className="flex text-[16px] cursor-pointer items-center gap-1 text-xl hover:bg-white/10 transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-                  <img
-                    src={Icons.User}
-                    alt="User"
-                    className="w-7 h-7 brightness-0 invert"
-                  />
+                  <Icons.User className="w-7 h-7 brightness-0 invert" />
                   <span>Đăng Ký</span>
                 </button>
               </Link>
@@ -269,11 +220,7 @@ const Header = () => {
               {/* Nút Đăng Nhập */}
               <Link to="/login">
                 <button className="flex cursor-pointer items-center gap-1 text-[16px] hover:bg-[#4A44F2] transition border border-white/40 hover:border-white px-4 py-2 rounded-lg">
-                  <img
-                    src={Icons.User}
-                    alt="User"
-                    className="w-7 h-7 brightness-0 invert"
-                  />
+                  <Icons.User className="w-7 h-7 brightness-0 invert" />
                   <span>Đăng nhập</span>
                 </button>
               </Link>

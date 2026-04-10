@@ -186,10 +186,10 @@ const HeroBanner = () => {
           </div>
           <ul className="p-3 space-y-1">
             {[
-              { text: "Đăng ký nhận ưu đãi" },
-              { text: "Deal hot học sinh sinh viên" },
-              { text: "Laptop ưu đãi khủng" },
-              { text: "Quà tặng kèm hấp dẫn" },
+              { icon: <Icons.School />, text: "Đăng ký nhận ưu đãi" },
+              { icon: <Icons.School />, text: "Deal hot học sinh sinh viên" },
+              { icon: <Icons.School />, text: "Laptop ưu đãi khủng" },
+              { icon: <Icons.School />, text: "Quà tặng kèm hấp dẫn" },
             ].map((item, i) => (
               <li
                 key={i}

@@ -14,7 +14,7 @@ const ProductSection = ({
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 mt-6">
-      {/* === CỘT TRÁI: Widget thông minh (thay banner) === */}
+      {/* === CỘT TRÁI: Widget thông minh === */}
       {sideWidget && (
         <div className="hidden lg:block lg:w-1/4 xl:w-1/5 flex-shrink-0">
           {sideWidget}

@@ -27,7 +27,6 @@ const ProductCard = ({ product }) => {
       : 0;
 
   return (
-    // Bọc toàn bộ card bằng thẻ Link để có thể click chuyển trang
     <Link
       to={`/product/${product.id}`}
       className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition-all group cursor-pointer relative font-sans flex flex-col h-full block"
@@ -44,17 +43,13 @@ const ProductCard = ({ product }) => {
           </div>
         )}
         <button
-          className="text-blue-500 hover:text-red-500 text-[12px] flex items-center gap-1 font-medium z-20 cursor-pointer "
+          className="text-blue-500 hover:text-red-500 text-[12px] flex items-center font-medium z-20 cursor-pointer "
           onClick={(e) => {
             e.preventDefault();
             // TODO: Hàm thêm vào danh sách yêu thích
           }}
         >
-          <img
-            src={Icons.Favorite}
-            alt="Yêu thích"
-            className="w-5 h-5 brightness-100 invert"
-          />
+          <Icons.Favorite className="w-5 h-5" />
           Yêu thích
         </button>
       </div>
@@ -103,7 +98,7 @@ const ProductCard = ({ product }) => {
         {/* Footer */}
         <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-2">
           <div className="flex text-[10px] gap-1.5 text-yellow-400 font-medium">
-            <img src={Icons.Star} alt="đánh giá" className="w-3 h-3" />
+            <Icons.Star className="w-3 h-3" />
             5.0
           </div>
           <div className="text-[10px] text-gray-500 font-medium">
