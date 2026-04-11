@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import * as Icons from "../../assets/icons/index";
+import TransactionIcon from "../../assets/icons/Transaction.svg?url";
+import BillIcon from "../../assets/icons/Bill.svg?url";
+import CustomersIcon from "../../assets/icons/Customers.svg?url";
+import InventoryIcon from "../../assets/icons/Inventory.svg?url";
 
 // ── DỮ LIỆU MẪU ─────────────────────────────────────────────────────────────
 const statsCards = [
@@ -13,7 +16,7 @@ const statsCards = [
     accent: "#2563eb",
     bg: "from-blue-50 to-blue-100/40",
     border: "border-blue-200",
-    icon: Icons.Transaction,
+    icon: TransactionIcon, // Dùng đường dẫn tĩnh
   },
   {
     id: 2,
@@ -25,7 +28,7 @@ const statsCards = [
     accent: "#059669",
     bg: "from-emerald-50 to-emerald-100/40",
     border: "border-emerald-200",
-    icon: Icons.Bill,
+    icon: BillIcon,
   },
   {
     id: 3,
@@ -37,7 +40,7 @@ const statsCards = [
     accent: "#7c3aed",
     bg: "from-violet-50 to-violet-100/40",
     border: "border-violet-200",
-    icon: Icons.Customers,
+    icon: CustomersIcon,
   },
   {
     id: 4,
@@ -49,7 +52,7 @@ const statsCards = [
     accent: "#dc2626",
     bg: "from-red-50 to-red-100/40",
     border: "border-red-200",
-    icon: Icons.Inventory,
+    icon: InventoryIcon,
   },
 ];
 
@@ -133,6 +136,7 @@ const Dashboard = () => {
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
               style={{ backgroundColor: card.accent }}
             >
+              {/* Dùng thẻ <img> như Bro mong muốn */}
               <img
                 src={card.icon}
                 alt={card.label}
