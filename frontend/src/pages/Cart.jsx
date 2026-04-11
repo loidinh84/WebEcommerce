@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([]);
-
-  useEffect(() => {
+  const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState(() => {
     const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    const initializedCart = savedCart.map((item) => ({
+    return savedCart.map((item) => ({
       ...item,
       selected: true,
     }));
-    setCartItems(initializedCart);
-  }, []);
+  });
 
   const saveCartToLocal = (newCart) => {
-    const cartToSave = newCart.map(({ selected, ...rest }) => rest);
-    localStorage.setItem("cart", JSON.stringify(cartToSave));
+    localStorage.setItem("cart", JSON.stringify(newCart));
     setCartItems(newCart);
   };
 
@@ -37,19 +34,20 @@ const Cart = () => {
 
   const handleSelectAll = () => {
     const newSelectedState = !isAllSelected;
-    setCartItems(
-      cartItems.map((item) => ({ ...item, selected: newSelectedState })),
-    );
+    const newCart = cartItems.map((item) => ({
+      ...item,
+      selected: newSelectedState,
+    }));
+    saveCartToLocal(newCart);
   };
 
   const handleSelectItem = (variantId) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.variantId === variantId
-          ? { ...item, selected: !item.selected }
-          : item,
-      ),
+    const newCart = cartItems.map((item) =>
+      item.variantId === variantId
+        ? { ...item, selected: !item.selected }
+        : item,
     );
+    saveCartToLocal(newCart);
   };
 
   const updateQuantity = (variantId, delta) => {
@@ -248,10 +246,11 @@ const Cart = () => {
                 </span>
               </div>
               <button
+                onClick={() => navigate("/checkout")}
                 className={`px-7 py-2 rounded text-white font-medium text-xl transition-colors cursor-pointer ${selectedCount > 0 ? "bg-[#e30019] hover:bg-red-700 shadow-md" : "bg-gray-300 cursor-not-allowed"}`}
                 disabled={selectedCount === 0}
               >
-                Mua Hàng
+                Mua ngay
               </button>
             </div>
           </div>

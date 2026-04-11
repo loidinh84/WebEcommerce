@@ -18,6 +18,7 @@ import Customer from "./pages/admin/Customer";
 import Inventory from "./pages/admin/Inventory";
 import InventoryCheck from "./pages/admin/InventoryCheck";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/order-detail/:id" element={<OrderDetail />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
 
           {/* Nhánh Admin */}
           <Route path="/admin" element={<AdminLayout />}>

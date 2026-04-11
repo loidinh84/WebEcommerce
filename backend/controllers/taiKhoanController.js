@@ -5,6 +5,7 @@ const { Op } = require("sequelize");
 const TheThanhVien = require("../models/TheThanhVien");
 const DonHang = require("../models/DonHang");
 const ChiTietDonHang = require("../models/ChiTietDonHang");
+const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -153,7 +154,7 @@ exports.getOrderDetail = async (req, res) => {
       include: [
         {
           model: ChiTietDonHang,
-          as: "chi_tiet", 
+          as: "chi_tiet",
         },
       ],
     });
@@ -166,5 +167,18 @@ exports.getOrderDetail = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi Server khi lấy chi tiết đơn hàng" });
+  }
+};
+
+exports.getDiaChiByUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const diaChiList = await DiaChiGiaoHang.findAll({
+      where: { tai_khoan_id: id },
+      order: [["la_mac_dinh", "DESC"]],
+    });
+    res.json(diaChiList);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi lấy danh sách địa chỉ!" });
   }
 };

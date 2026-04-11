@@ -12,6 +12,9 @@ const sanPhamRoutes = require("./routers/sanPhamRoutes");
 const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");
 const ChatHistory = require("./models/ChatHistory");
+const DonHangRoutes = require("./routers/donHangRoutes");
+const DonViVanChuyen = require("./models/DonViVanChuyen");
+const PhuongThucThanhToan = require("./models/PhuongThucThanhToan");
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +23,7 @@ app.use(express.json());
 app.use("/api/taiKhoan", TaiKhoanRoutes);
 app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/donhang", DonHangRoutes);
 
 sequelize
   .authenticate()
