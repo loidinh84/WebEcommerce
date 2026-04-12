@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import BASE_URL from "../config/api";
 
 const OrderDetail = () => {
   const { id } = useParams(); // Lấy ID đơn hàng từ URL
@@ -14,7 +15,7 @@ const OrderDetail = () => {
       try {
         // API này lát nữa mình sẽ viết ở Backend
         const response = await fetch(
-          `http://localhost:5000/api/taikhoan/order-detail/${id}`,
+          `${BASE_URL}/api/taikhoan/order-detail/${id}`,
         );
         const data = await response.json();
         setOrder(data);

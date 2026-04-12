@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Images from "../assets/images/index";
+import BASE_URL from "../config/api";
 
 const productDatabase = [
   {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ProductCard from "./ProductCard";
+import BASE_URL from "../config/api";
 
 const ProductSection = ({
   tab1,
@@ -23,7 +24,7 @@ const ProductSection = ({
         const selectedBrand =
           activeFilter !== null ? filters[activeFilter] : "";
 
-        let url = `http://localhost:5000/api/sanpham?danhMucId=${danhMucId}`;
+        let url = `${BASE_URL}/api/sanpham?danhMucId=${danhMucId}`;
 
         if (selectedBrand) {
           url += `&thuongHieu=${selectedBrand}`;

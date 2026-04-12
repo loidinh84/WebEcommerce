@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import BASE_URL from "../config/api";
 
 const Icons = {
   Home: () => (
@@ -184,7 +185,7 @@ const UserProfile = () => {
     const fetchProfile = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/taikhoan/dashboard/${user.id}`,
+          `${BASE_URL}/api/taikhoan/dashboard/${user.id}`,
         );
         const data = await response.json();
         setProfileData(data);
@@ -522,8 +523,7 @@ const UserProfile = () => {
 
                   {/* Giao diện khi trống địa chỉ */}
                   <div className="flex flex-col items-center justify-center py-10">
-                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                    </div>
+                    <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4"></div>
                     <p className="text-gray-400 text-sm italic">
                       Bạn chưa có địa chỉ nào được tạo.
                     </p>

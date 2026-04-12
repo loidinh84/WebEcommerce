@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import BASE_URL from "../config/api";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -18,7 +19,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:5000/api/taikhoan/login", {
+      const response = await fetch(`${BASE_URL}/api/taikhoan/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email, mat_khau: password }),

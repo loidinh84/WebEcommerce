@@ -7,6 +7,7 @@ import * as Icons from "../assets/icons/index";
 import SpecsModal from "../components/SpecsModal";
 import CompareModal from "../components/CompareModal";
 import { AuthContext } from "../context/AuthContext";
+import BASE_URL from "../config/api";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -43,9 +44,7 @@ const ProductDetail = () => {
       try {
         if (!id || id === "undefined") return;
         // 1. Fetch Chi tiết sản phẩm
-        const resDetail = await fetch(
-          `http://localhost:5000/api/sanpham/${id}`,
-        );
+        const resDetail = await fetch(`${BASE_URL}/api/sanpham/${id}`);
         if (!resDetail.ok) throw new Error("Không tìm thấy sản phẩm");
         const dataDetail = await resDetail.json();
         setProduct(dataDetail);
@@ -62,7 +61,7 @@ const ProductDetail = () => {
         // 2. Fetch Sản phẩm tương tự
         try {
           const resSimilar = await fetch(
-            `http://localhost:5000/api/sanpham/${id}/tuong-tu`,
+            `${BASE_URL}/api/sanpham/${id}/tuong-tu`,
           );
           if (resSimilar.ok) setSimilarProducts(await resSimilar.json());
         } catch (e) {
@@ -84,9 +83,7 @@ const ProductDetail = () => {
 
   const fetchReviews = async () => {
     try {
-      const resReviews = await fetch(
-        `http://localhost:5000/api/sanpham/${id}/danh-gia`,
-      );
+      const resReviews = await fetch(`${BASE_URL}/api/sanpham/${id}/danh-gia`);
       if (resReviews.ok) {
         const data = await resReviews.json();
         setReviews(data);
@@ -110,9 +107,7 @@ const ProductDetail = () => {
 
   const getImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/400x400?text=No+Image";
-    return url.startsWith("http")
-      ? url
-      : `http://localhost:5000/uploads/${url}`;
+    return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
   };
 
   const handleWishlist = () => {
@@ -146,18 +141,15 @@ const ProductDetail = () => {
       return toast.error("Vui lòng nhập đánh giá ít nhất 10 ký tự!");
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/sanpham/${id}/danh-gia`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tai_khoan_id: user.id,
-            so_sao: userRating,
-            noi_dung: reviewText,
-          }),
-        },
-      );
+      const response = await fetch(`${BASE_URL}/api/sanpham/${id}/danh-gia`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tai_khoan_id: user.id,
+          so_sao: userRating,
+          noi_dung: reviewText,
+        }),
+      });
 
       if (response.ok) {
         toast.success("Cảm ơn bạn! Đánh giá đã được gửi.");

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
+import BASE_URL from "../config/api";
 
 const ContactSupport = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -19,7 +20,7 @@ const ContactSupport = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/ai/history");
+        const response = await fetch(`${BASE_URL}/api/ai/history`);
         const data = await response.json();
         if (data && data.length > 0) {
           setMessages(data);
@@ -46,7 +47,7 @@ const ContactSupport = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/ai/chat", {
+      const response = await fetch("${BASE_URL}/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
@@ -78,7 +79,7 @@ const ContactSupport = () => {
 
     // 2. Gọi API để xóa sạch trong SQL Database
     try {
-      await fetch("http://localhost:5000/api/ai/history", { method: "DELETE" });
+      await fetch("${BASE_URL}/api/ai/history", { method: "DELETE" });
     } catch (error) {
       console.error("Lỗi xóa lịch sử:", error);
     }

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = "${BASE_URL}";
 
 const tabs = [
   { id: 1, name: "1. Thông tin chung" },

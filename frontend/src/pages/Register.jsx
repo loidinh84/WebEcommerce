@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
+import BASE_URL from "../config/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const Register = () => {
 
     try {
       // Gửi dữ liệu xuống Backend
-      const response = await fetch("http://localhost:5000/api/taikhoan", {
+      const response = await fetch("${BASE_URL}/api/taikhoan", {
         method: "POST",
         headers: {
           // ĐÃ SỬA: Thêm chữ 's' vào headers

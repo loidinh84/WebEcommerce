@@ -5,6 +5,7 @@ import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import BASE_URL from "../config/api";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -83,9 +84,7 @@ const Cart = () => {
 
   const getImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/150";
-    return url.startsWith("http")
-      ? url
-      : `http://localhost:5000/uploads/${url}`;
+    return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
   };
 
   return (

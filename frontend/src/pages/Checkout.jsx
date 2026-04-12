@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import toast, { Toaster } from "react-hot-toast";
 import { AuthContext } from "../context/AuthContext";
+import BASE_URL from "../config/api";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const Checkout = () => {
 
     if (user) {
       // Lấy địa chỉ
-      fetch(`http://localhost:5000/api/taiKhoan/${user.id}/dia-chi`)
+      fetch(`${BASE_URL}/api/taiKhoan/${user.id}/dia-chi`)
         .then((res) => res.json())
         .then((data) => {
           setAddresses(data);
@@ -50,7 +51,7 @@ const Checkout = () => {
         });
 
       // Lấy Đơn vị vận chuyển
-      fetch("http://localhost:5000/api/donhang/vanchuyen")
+      fetch("${BASE_URL}/api/donhang/vanchuyen")
         .then((res) => res.json())
         .then((data) => {
           setShippingUnits(data);
@@ -58,7 +59,7 @@ const Checkout = () => {
         });
 
       // Lấy Phương thức thanh toán
-      fetch("http://localhost:5000/api/donhang/thanhtoan")
+      fetch("${BASE_URL}/api/donhang/thanhtoan")
         .then((res) => res.json())
         .then((data) => {
           setPaymentMethods(data);
@@ -121,14 +122,11 @@ const Checkout = () => {
     };
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/donhang/dat-hang",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(orderData),
-        },
-      );
+      const response = await fetch("${BASE_URL}/api/donhang/dat-hang", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderData),
+      });
 
       const result = await response.json();
 
@@ -157,9 +155,7 @@ const Checkout = () => {
 
   const getImageUrl = (url) => {
     if (!url) return "../assets/images/TayNghe.jpg";
-    return url.startsWith("http")
-      ? url
-      : `http://localhost:5000/uploads/${url}`;
+    return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
   };
 
   return (

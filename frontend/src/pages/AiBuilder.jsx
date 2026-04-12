@@ -87,7 +87,7 @@ const AiBuilder = () => {
     setOpenCategory(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/ai/build-pc", {
+      const response = await fetch("${BASE_URL}/api/ai/build-pc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText }),
@@ -168,7 +168,7 @@ const AiBuilder = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/ai/build-pc", {
+      const response = await fetch("${BASE_URL}/api/ai/build-pc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: cauLenhChoAI }),

@@ -1,8 +1,6 @@
-// backend/routes/sanPhamRoutes.js (Tôi giả sử tên file của Bro là vậy)
 const express = require("express");
 const router = express.Router();
 const sanPhamController = require("../controllers/sanPhamController");
-// Import middleware upload vừa tạo
 const upload = require("../config/upload"); 
 
 router.get("/", sanPhamController.getAllSanPham);

@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import * as Images from "../assets/images/index";
+import BASE_URL from "../config/api";
 
 // --- MOCK DATA DÀNH CHO MÀN HÌNH ---
 const brands = ["ASUS", "LG", "Samsung", "Dell", "Acer", "MSI", "ViewSonic", "Gigabyte", "AOC", "HKC"];
