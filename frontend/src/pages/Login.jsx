@@ -88,19 +88,15 @@ const Login = () => {
                   className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                   placeholder="Nhập mật khẩu"
                   required
-                  value={password} // Gắn biến password
-                  onChange={(e) => setPassword(e.target.value)} // Bắt sự kiện gõ
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
 
                 <span
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600 p-1"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  <img
-                    src={showPassword ? Icons.EyeOff : Icons.EyeOn}
-                    alt="Toggle Password"
-                    className="w-6 h-6 opacity-70"
-                  />
+                  {showPassword ? <Icons.EyeOff /> : <Icons.EyeOn />}
                 </span>
               </div>
             </div>

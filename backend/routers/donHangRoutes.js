@@ -5,5 +5,6 @@ const DonHangController = require("../controllers/donHangController");
 router.get("/vanchuyen", DonHangController.getAllShippingUnits);
 router.get("/thanhtoan", DonHangController.getAllPaymentMethods);
 router.post("/dat-hang", DonHangController.createDonHang);
+router.post("/check-voucher", DonHangController.checkVoucher);
 
 module.exports = router;

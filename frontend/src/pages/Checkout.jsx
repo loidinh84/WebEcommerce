@@ -5,11 +5,13 @@ import Footer from "../components/Footer";
 import toast, { Toaster } from "react-hot-toast";
 import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
+import * as Icons from "../assets/icons/index";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
+  const [loading, setLoading] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
@@ -21,6 +23,7 @@ const Checkout = () => {
   // Các state quản lý form
   const [tempPaymentMethod, setTempPaymentMethod] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [orderNote, setOrderNote] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherDiscount, setVoucherDiscount] = useState(0);
@@ -51,7 +54,7 @@ const Checkout = () => {
         });
 
       // Lấy Đơn vị vận chuyển
-      fetch("${BASE_URL}/api/donhang/vanchuyen")
+      fetch(`${BASE_URL}/api/donhang/vanchuyen`)
         .then((res) => res.json())
         .then((data) => {
           setShippingUnits(data);
@@ -59,7 +62,7 @@ const Checkout = () => {
         });
 
       // Lấy Phương thức thanh toán
-      fetch("${BASE_URL}/api/donhang/thanhtoan")
+      fetch(`${BASE_URL}/api/donhang/thanhtoan`)
         .then((res) => res.json())
         .then((data) => {
           setPaymentMethods(data);
@@ -71,13 +74,37 @@ const Checkout = () => {
     }
   }, [user, navigate]);
 
-  const handleApplyVoucher = () => {
-    if (voucherCode.toUpperCase() === "LTLSHOP") {
-      setVoucherDiscount(50000);
-      toast.success("Áp dụng mã thành công!");
-    } else {
-      setVoucherDiscount(0);
-      toast.error("Mã không hợp lệ hoặc đã hết hạn!");
+  const handleApplyVoucher = async () => {
+    if (!voucherCode) return toast.error("Vui lòng nhập mã!");
+    try {
+      const res = await fetch(`${BASE_URL}/api/donhang/check-voucher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: voucherCode,
+          userId: user.id,
+          totalAmount: subtotal,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        let discount = 0;
+        if (data.discount.loai === "phantram") {
+          discount = subtotal * (data.discount.gia_tri / 100);
+          if (discount > data.discount.gia_tri_toi_da)
+            discount = Number(data.discount.gia_tri_toi_da);
+        } else {
+          discount = Number(data.discount.gia_tri);
+        }
+
+        setVoucherDiscount(discount);
+        toast.success(data.message);
+      } else {
+        setVoucherDiscount(0);
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Lỗi kết nối máy chủ!");
     }
   };
 
@@ -100,6 +127,19 @@ const Checkout = () => {
     if (!selectedAddress)
       return toast.error("Vui lòng chọn địa chỉ giao hàng!");
 
+    if (vatRequested) {
+      if (!vatInfo.ten_cong_ty.trim())
+        return toast.error("Vui lòng nhập tên công ty!");
+      if (!vatInfo.mst.trim()) return toast.error("Vui lòng nhập mã số thuế!");
+      if (!vatInfo.dia_chi_cty.trim())
+        return toast.error("Vui lòng nhập địa chỉ công ty!");
+      const mstRegex = /^\d{10}(-\d{3})?$/;
+      if (!mstRegex.test(vatInfo.mst.trim()))
+        return toast.error("Mã số thuế không đúng định dạng!");
+    }
+
+    setLoading(true);
+
     const orderData = {
       tai_khoan_id: user.id,
       dia_chi_id: selectedAddress.id,
@@ -110,6 +150,7 @@ const Checkout = () => {
       tong_thanh_toan: total,
       ghi_chu: orderNote,
       phuong_thuc_tt: paymentMethod?.id,
+      voucher_code: voucherDiscount > 0 ? voucherCode : null,
       items: checkoutItems.map((item) => ({
         id: item.id,
         variantId: item.variantId,
@@ -118,11 +159,11 @@ const Checkout = () => {
         gia_ban: item.gia_ban,
       })),
       vat_info: vatRequested ? vatInfo : null,
-      receive_Email: receiveEmail,
+      receive_email: receiveEmail,
     };
 
     try {
-      const response = await fetch("${BASE_URL}/api/donhang/dat-hang", {
+      const response = await fetch(`${BASE_URL}/api/donhang/dat-hang`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
@@ -143,6 +184,8 @@ const Checkout = () => {
       }
     } catch (error) {
       toast.error("Lỗi kết nối server!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,7 +197,7 @@ const Checkout = () => {
   };
 
   const getImageUrl = (url) => {
-    if (!url) return "../assets/images/TayNghe.jpg";
+    if (!url) return "../assets/images/NoImage.webp";
     return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
   };
 
@@ -172,13 +215,13 @@ const Checkout = () => {
           {/* ================= CỘT TRÁI: THÔNG TIN ================= */}
           <div className="w-full lg:w-2/3 flex flex-col gap-6">
             {/* 1. THÔNG TIN NHẬN HÀNG */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex justify-between items-center mb-4">
+            <div className="bg-white rounded-lg shadow-sm px-6 py-4">
+              <div className="flex justify-between items-center mb-1">
                 <h2 className="text-lg font-medium text-gray-800">
                   Thông tin nhận hàng
                 </h2>
                 <button
-                  onClick={() => navigate("/profile")}
+                  onClick={() => setIsAddressModalOpen(true)}
                   className="text-blue-600 text-xs font-medium hover:underline hover:underline cursor-pointer"
                 >
                   Thay đổi
@@ -196,6 +239,12 @@ const Checkout = () => {
                     {selectedAddress.dia_chi_cu_the} {selectedAddress.phuong_xa}{" "}
                     {selectedAddress.quan_huyen} {selectedAddress.tinh_thanh}
                   </p>
+                  <p className="font-medium  text-gray-500 text-sm mt-2">
+                    Email
+                  </p>
+                  <span className="font-normal text-gray-500">
+                    {user.email}
+                  </span>
                 </div>
               ) : (
                 <p className="text-gray-400 italic">
@@ -205,7 +254,7 @@ const Checkout = () => {
             </div>
 
             {/* 2. KIỂM TRA SẢN PHẨM  */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm px-6 pt-3 border border-gray-100">
               <h2 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
                 Danh sách sản phẩm
               </h2>
@@ -245,7 +294,7 @@ const Checkout = () => {
             </div>
 
             {/* 2. VẬN CHUYỂN */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-lg shadow-sm px-6 pt-3">
               <h2 className="text-lg font-medium text-gray-800 mb-4">
                 Phương thức vận chuyển
               </h2>
@@ -253,7 +302,7 @@ const Checkout = () => {
                 {shippingUnits.map((unit) => (
                   <label
                     key={unit.id}
-                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${selectedShipping?.id === unit.id ? "border-blue-600 bg-blue-50" : "border-gray-100 hover:bg-gray-50"}`}
+                    className={`flex items-center justify-between p-2.5 border rounded-lg cursor-pointer transition-colors ${selectedShipping?.id === unit.id ? "border-blue-600 bg-blue-50" : "border-gray-100 hover:bg-gray-50"}`}
                   >
                     <div className="flex items-center gap-3">
                       <input
@@ -281,8 +330,8 @@ const Checkout = () => {
             </div>
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-              <h2 className="text-lg font-bold mb-4">Phương thức thanh toán</h2>
+            <div className="bg-white rounded-lg shadow-sm px-6 py-3 border border-gray-100">
+              <h2 className="text-lg font-medium mb-4">Phương thức thanh toán</h2>
               <div
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-all"
@@ -299,7 +348,7 @@ const Checkout = () => {
                     </p>
                   </div>
                 </div>
-                <button className="text-blue-600 font-bold text-xs">
+                <button className="text-blue-600 font-bold text-xs cursor-pointer">
                   Thay đổi
                 </button>
               </div>
@@ -340,7 +389,7 @@ const Checkout = () => {
                   <input
                     type="text"
                     placeholder="Mã số thuế"
-                    className="px-3 py-2 border-b border-gray-300 text-sm outline-none focus:border-blue-500"
+                    className="px-3 border-b border-gray-300 text-sm outline-none focus:border-blue-500"
                     value={vatInfo.mst}
                     onChange={(e) =>
                       setVatInfo({ ...vatInfo, mst: e.target.value })
@@ -442,9 +491,10 @@ const Checkout = () => {
 
               <button
                 onClick={handleConfirmOrder}
+                disabled={loading}
                 className="w-full bg-[#e30019] text-white py-2.5 rounded-lg font-bold text-lg hover:bg-red-700 shadow-md transition cursor-pointer"
               >
-                Thanh toán
+                {loading ? "Đang xử lý..." : "Thanh toán"}
               </button>
             </div>
           </div>
@@ -510,6 +560,72 @@ const Checkout = () => {
                 className="w-full bg-[#e30019] text-white py-3 rounded-lg font-bold shadow-md hover:bg-red-700 transition cursor-pointer"
               >
                 Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <h3 className="font-bold text-gray-800 text-lg">
+                Sổ địa chỉ của bạn
+              </h3>
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="text-3xl text-gray-400 hover:text-red-500 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto bg-gray-50">
+              {addresses.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">
+                  Bạn chưa có địa chỉ nào được lưu.
+                </p>
+              ) : (
+                addresses.map((addr) => (
+                  <div
+                    key={addr.id}
+                    onClick={() => {
+                      setSelectedAddress(addr);
+                      setIsAddressModalOpen(false);
+                    }}
+                    className={`p-4 border rounded-xl cursor-pointer transition-all bg-white shadow-sm hover:shadow-md ${selectedAddress?.id === addr.id ? "border-blue-100 ring-1 ring-blue-600" : "border-gray-200"}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="font-bold text-gray-800 flex items-center gap-2">
+                        {addr.ho_ten_nguoi_nhan || user?.ho_ten}
+                        {addr.la_mac_dinh && (
+                          <span className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
+                            Mặc định
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-sm font-medium text-gray-600">
+                        {addr.so_dien_thoai}
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                      {addr.dia_chi_cu_the}, {addr.phuong_xa}, {addr.quan_huyen}
+                      , {addr.tinh_thanh}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <button
+                onClick={() => {
+                  setIsAddressModalOpen(false);
+                  navigate("/profile");
+                }}
+                className="w-full border border-green-400 bg-green-500 text-white py-2.5 rounded-lg font-medium hover:bg-green-600 transition cursor-pointer flex justify-center items-center gap-2"
+              >
+                <Icons.Add /> Thêm địa chỉ mới
               </button>
             </div>
           </div>

@@ -1,23 +1,20 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const app = express();
+const path = require("path");
 const sequelize = require("./config/db");
-const {
-  TaiKhoan,
-  DonHang,
-  ChiTietDonHang,
-  TheThanhVien,
-} = require("./models/index");
+
 const sanPhamRoutes = require("./routers/sanPhamRoutes");
 const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");
-const ChatHistory = require("./models/ChatHistory");
 const DonHangRoutes = require("./routers/donHangRoutes");
-const DonViVanChuyen = require("./models/DonViVanChuyen");
-const PhuongThucThanhToan = require("./models/PhuongThucThanhToan");
+
+const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/taiKhoan", TaiKhoanRoutes);
@@ -25,14 +22,15 @@ app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/donhang", DonHangRoutes);
 
+const PORT = process.env.PORT || 5000;
 sequelize
   .authenticate()
   .then(() => {
     console.log("Đã kết nối thành công với SQL Server");
-    return sequelize.sync();
+    return sequelize.sync({ alter: false });
   })
   .then(() => {
-    app.listen(5000, () => console.log("Server chạy tại port 5000"));
+    app.listen(PORT, () => console.log(`Server chạy tại port ${PORT}`));
   })
   .catch((error) => {
     console.error("Lỗi khởi động hệ thống:", error);

@@ -14,7 +14,7 @@ const sequelize = new Sequelize(
         trustSeverCertificate: true,
       },
     },
-    logging: false, //Tắt log các câu lệnh SQL
+    logging: false,
   },
 );
 
