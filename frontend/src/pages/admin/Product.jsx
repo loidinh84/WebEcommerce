@@ -3,266 +3,19 @@ import ProductModal from "./ProductModal";
 import ConfirmModal from "./ConfirmModal";
 import axios from "axios";
 import { toast } from "react-toastify";
+import BASE_URL from "../../config/api";
+
+const getAuthHeader = () => {
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+  return { headers: { Authorization: `Bearer ${token}` } };
+};
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price || 0);
 
-const API_BASE = "${BASE_URL}";
+const API_BASE = BASE_URL;
 
-// ── DỮ LIỆU MẪU FALLBACK ────────────────────────────────────────────────────
-const mockProductsData = [
-  {
-    id: "SP001",
-    ten_san_pham: "iPhone 16 Pro Max 256GB",
-    thuong_hieu: "Apple",
-    supplier: "Apple Vietnam",
-    category: "Điện thoại di động",
-    bien_the: [
-      {
-        sku: "IP16-256-TITAN",
-        mau_sac: "Titan Đen",
-        dung_luong: "256GB",
-        ram: "8GB",
-        gia_ban: 34990000,
-        gia_goc: 30000000,
-        ton_kho: 50,
-        ma_mau_hex: "#2C2C2C",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "Màn hình",
-        gia_tri: "6.9 inch OLED",
-        nhom: "Màn hình",
-        thu_tu: 1,
-      },
-      {
-        ten_thuoc_tinh: "Chip",
-        gia_tri: "Apple A18 Pro",
-        nhom: "Hiệu năng",
-        thu_tu: 2,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: true,
-    mo_ta_ngan: "Flagship Apple mới nhất 2025, chip A18 Pro.",
-    mo_ta_day_du:
-      "iPhone 16 Pro Max là flagship cao cấp nhất của Apple năm 2025.",
-    created_at: "2025-01-10T00:00:00.000Z",
-  },
-  {
-    id: "SP002",
-    ten_san_pham: "iPhone 15 128GB",
-    thuong_hieu: "Apple",
-    supplier: "Apple Vietnam",
-    category: "Điện thoại di động",
-    bien_the: [
-      {
-        sku: "IP15-128-PINK",
-        mau_sac: "Hồng",
-        dung_luong: "128GB",
-        ram: "6GB",
-        gia_ban: 19990000,
-        gia_goc: 17000000,
-        ton_kho: 0,
-        ma_mau_hex: "#FFB6C1",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "Màn hình",
-        gia_tri: "6.1 inch OLED",
-        nhom: "Màn hình",
-        thu_tu: 1,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: false,
-    mo_ta_ngan: "iPhone 15 tiêu chuẩn, camera 48MP.",
-    mo_ta_day_du: "",
-    created_at: "2025-02-01T00:00:00.000Z",
-  },
-  {
-    id: "SP003",
-    ten_san_pham: "Samsung Galaxy S24 Ultra",
-    thuong_hieu: "Samsung",
-    supplier: "Samsung Vietnam",
-    category: "Điện thoại di động",
-    bien_the: [
-      {
-        sku: "S24U-256-BLK",
-        mau_sac: "Đen",
-        dung_luong: "256GB",
-        ram: "12GB",
-        gia_ban: 27490000,
-        gia_goc: 24000000,
-        ton_kho: 20,
-        ma_mau_hex: "#1a1a1a",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "Bút S Pen",
-        gia_tri: "Tích hợp",
-        nhom: "Tính năng",
-        thu_tu: 1,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: true,
-    mo_ta_ngan: "Flagship Samsung, bút S Pen tích hợp.",
-    mo_ta_day_du: "",
-    created_at: "2025-02-15T00:00:00.000Z",
-  },
-  {
-    id: "SP004",
-    ten_san_pham: "MacBook Air M3 13 inch",
-    thuong_hieu: "Apple",
-    supplier: "Apple Vietnam",
-    category: "Laptop & Macbook",
-    bien_the: [
-      {
-        sku: "MBA-M3-256",
-        mau_sac: "Xám",
-        dung_luong: "256GB",
-        ram: "8GB",
-        gia_ban: 27990000,
-        gia_goc: 25000000,
-        ton_kho: 15,
-        ma_mau_hex: "#9EA3A8",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "Chip",
-        gia_tri: "Apple M3",
-        nhom: "Hiệu năng",
-        thu_tu: 1,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: true,
-    mo_ta_ngan: "Laptop siêu mỏng nhẹ, chip M3 mạnh mẽ.",
-    mo_ta_day_du: "",
-    created_at: "2025-03-01T00:00:00.000Z",
-  },
-  {
-    id: "SP005",
-    ten_san_pham: "Laptop ASUS ROG Strix G15",
-    thuong_hieu: "ASUS",
-    supplier: "ASUS Global",
-    category: "Laptop & Macbook",
-    bien_the: [
-      {
-        sku: "ROG-G15-512",
-        mau_sac: "Xám Eclipse",
-        dung_luong: "512GB",
-        ram: "16GB",
-        gia_ban: 32990000,
-        gia_goc: 30000000,
-        ton_kho: 5,
-        ma_mau_hex: "#3D3D3D",
-        trang_thai: "active",
-      },
-      {
-        sku: "ROG-G15-1TB",
-        mau_sac: "Xám Eclipse",
-        dung_luong: "1TB",
-        ram: "32GB",
-        gia_ban: 38990000,
-        gia_goc: 35000000,
-        ton_kho: 3,
-        ma_mau_hex: "#3D3D3D",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "GPU",
-        gia_tri: "NVIDIA RTX 4070",
-        nhom: "Hiệu năng",
-        thu_tu: 1,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: false,
-    mo_ta_ngan: "Gaming laptop cao cấp, RTX 4070.",
-    mo_ta_day_du: "",
-    created_at: "2025-03-10T00:00:00.000Z",
-  },
-  {
-    id: "SP006",
-    ten_san_pham: "Laptop ASUS TUF Gaming F15",
-    thuong_hieu: "ASUS",
-    supplier: "ASUS Global",
-    category: "Laptop & Macbook",
-    bien_the: [
-      {
-        sku: "TUF-F15-512",
-        mau_sac: "Đen",
-        dung_luong: "512GB",
-        ram: "16GB",
-        gia_ban: 22000000,
-        gia_goc: 20000000,
-        ton_kho: 10,
-        ma_mau_hex: "#111111",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [],
-    hinh_anh: [],
-    trang_thai: "inactive",
-    noi_bat: false,
-    mo_ta_ngan: "Laptop gaming quốc dân, cấu hình cực mạnh.",
-    mo_ta_day_du: "",
-    created_at: "2025-03-20T00:00:00.000Z",
-  },
-  {
-    id: "SP007",
-    ten_san_pham: "Bàn phím cơ AKKO 3098B",
-    thuong_hieu: "AKKO",
-    supplier: "GearVN",
-    category: "Phụ kiện - Bàn phím",
-    bien_the: [
-      {
-        sku: "AK-3098B-HONG",
-        mau_sac: "Hồng",
-        dung_luong: "",
-        ram: "",
-        gia_ban: 1500000,
-        gia_goc: 1200000,
-        ton_kho: 15,
-        ma_mau_hex: "#FF69B4",
-        trang_thai: "active",
-      },
-    ],
-    thuoc_tinh: [
-      {
-        ten_thuoc_tinh: "Switch",
-        gia_tri: "Jelly Pink",
-        nhom: "Phím",
-        thu_tu: 1,
-      },
-    ],
-    hinh_anh: [],
-    trang_thai: "active",
-    noi_bat: false,
-    mo_ta_ngan: "Phím cơ giá sinh viên, switch Jelly Pink.",
-    mo_ta_day_du: "",
-    created_at: "2025-04-01T00:00:00.000Z",
-  },
-];
-
-// ── MAP DỮ LIỆU API → STATE ──────────────────────────────────────────────────
 const mapProduct = (p) => ({
   id: p.id,
   name: p.ten_san_pham,
@@ -293,26 +46,16 @@ const Product = () => {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ── BỘ LỌC ──────────────────────────────────────────────
+  // ── BỘ LỌC ──
   const [searchTerm, setSearchTerm] = useState("");
   const [productTab, setProductTab] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSupplier, setSelectedSupplier] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
-  // ────────────────────────────────────────────────────────
 
-  const [categories, setCategories] = useState([
-    { id: 7, name: "Điện thoại di động" },
-    { id: 8, name: "Laptop & Macbook" },
-    { id: 9, name: "Phụ kiện - Bàn phím" },
-  ]);
-  const [suppliers, setSuppliers] = useState([
-    { id: 3, name: "Apple Vietnam" },
-    { id: 4, name: "ASUS Global" },
-    { id: 5, name: "GearVN" },
-    { id: 6, name: "Samsung Vietnam" },
-  ]);
+  const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
 
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
@@ -359,10 +102,29 @@ const Product = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get(`${API_BASE}/api/sanpham`);
-      setProducts(res.data.map(mapProduct));
-    } catch {
-      setProducts(mockProductsData.map(mapProduct));
+      const [resSp, resCat, resSup] = await Promise.all([
+        axios.get(`${API_BASE}/api/sanPham/tatCaSanPham`, getAuthHeader()),
+        axios.get(`${API_BASE}/api/sanPham/danhMuc`, getAuthHeader()),
+        axios.get(`${API_BASE}/api/sanPham/nhaCungCap`, getAuthHeader()),
+      ]);
+
+      setCategories(resCat.data);
+      setSuppliers(resSup.data);
+
+      const mappedProducts = resSp.data.map((p) => {
+        const catObj = resCat.data.find((c) => c.id === p.danh_muc_id);
+        const supObj = resSup.data.find((s) => s.id === p.nha_cung_cap_id);
+
+        return {
+          ...mapProduct(p),
+          category: catObj ? catObj.ten_danh_muc : "Chưa cập nhật",
+          supplier: supObj ? supObj.ten_nha_cc : "Chưa cập nhật",
+        };
+      });
+
+      setProducts(mappedProducts);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -371,7 +133,6 @@ const Product = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-  // ────────────────────────────────────────────────────────
 
   // ── BỘ LỌC ──────────────────────────────────────────────
   const filteredProducts = products.filter((p) => {
@@ -441,9 +202,8 @@ const Product = () => {
     setStockFilter("all");
     setSearchTerm("");
   };
-  // ────────────────────────────────────────────────────────
 
-  // ── HANDLERS ────────────────────────────────────────────
+  // ── HANDLERS ──
   const handleQuickSaveCategory = (e) => {
     e.preventDefault();
     if (!newCategoryName.trim())
@@ -504,63 +264,33 @@ const Product = () => {
       dataToSend.append("hinh_anh", JSON.stringify(formData.hinh_anh));
     uploadedFiles.forEach((file) => dataToSend.append("hinh_anh_files", file));
 
-    const config = { headers: { "Content-Type": "multipart/form-data" } };
+    const config = {
+      headers: {
+        ...getAuthHeader().headers,
+        "Content-Type": "multipart/form-data",
+      },
+    };
 
     try {
       if (editingProduct) {
         await axios.put(
-          `${API_BASE}/api/sanpham/${editingProduct.id}`,
+          `${API_BASE}/api/sanPham/${editingProduct.id}`,
           dataToSend,
           config,
         );
         toast.success("Cập nhật sản phẩm thành công!");
       } else {
-        await axios.post(`${API_BASE}/api/sanpham`, dataToSend, config);
+        await axios.post(`${API_BASE}/api/sanPham`, dataToSend, config);
         toast.success("Thêm sản phẩm mới thành công!");
       }
       setIsModalOpen(false);
       setUploadedFiles([]);
       fetchProducts();
     } catch (error) {
-      // Fallback cập nhật UI khi API lỗi (dev mode)
-      const saved = {
-        id: editingProduct?.id || `SP${Date.now()}`,
-        name: formData.ten_san_pham,
-        brand: formData.thuong_hieu,
-        supplier:
-          suppliers.find(
-            (s) => String(s.id) === String(formData.nha_cung_cap_id),
-          )?.name || "Chưa cập nhật",
-        category:
-          categories.find((c) => String(c.id) === String(formData.danh_muc_id))
-            ?.name || "Chưa cập nhật",
-        price: Number(formData.bien_the[0]?.gia_ban) || 0,
-        cost: Number(formData.bien_the[0]?.gia_goc) || 0,
-        stock: formData.bien_the.reduce(
-          (s, bt) => s + (Number(bt.ton_kho) || 0),
-          0,
-        ),
-        status: formData.trang_thai,
-        isFeatured: formData.noi_bat,
-        shortDesc: formData.mo_ta_ngan,
-        fullDesc: formData.mo_ta_day_du,
-        variants: formData.bien_the,
-        attributes: formData.thuoc_tinh,
-        images: formData.hinh_anh,
-        createdAt: new Date().toISOString(),
-        rawData: formData,
-      };
-      if (editingProduct) {
-        setProducts(
-          products.map((p) => (p.id === editingProduct.id ? saved : p)),
-        );
-        toast.success("Đã cập nhật (UI)");
-      } else {
-        setProducts([saved, ...products]);
-        toast.success("Đã thêm (UI)");
-      }
-      setIsModalOpen(false);
-      setUploadedFiles([]);
+      console.error(error);
+      const msg =
+        error.response?.data?.message || "Có lỗi xảy ra khi lưu sản phẩm!";
+      toast.error(msg);
     }
   };
 
@@ -568,34 +298,21 @@ const Product = () => {
     const pid = confirmModal.product.id;
     try {
       if (confirmModal.actionType === "delete") {
-        await axios.delete(`${API_BASE}/api/sanpham/${pid}`);
+        await axios.delete(`${API_BASE}/api/sanPham/${pid}`, getAuthHeader());
         toast.success("Xóa thành công!");
         setProducts(products.filter((p) => p.id !== pid));
       } else {
-        await axios.put(`${API_BASE}/api/sanpham/${pid}/status`);
+        await axios.put(
+          `${API_BASE}/api/sanPham/${pid}/status`,
+          {},
+          getAuthHeader(),
+        );
         toast.success("Cập nhật trạng thái thành công!");
-        setProducts(
-          products.map((p) =>
-            p.id === pid
-              ? { ...p, status: p.status === "active" ? "inactive" : "active" }
-              : p,
-          ),
-        );
       }
-    } catch {
-      if (confirmModal.actionType === "delete") {
-        setProducts(products.filter((p) => p.id !== pid));
-        toast.success("Đã xóa (UI)");
-      } else {
-        setProducts(
-          products.map((p) =>
-            p.id === pid
-              ? { ...p, status: p.status === "active" ? "inactive" : "active" }
-              : p,
-          ),
-        );
-        toast.success("Đã cập nhật (UI)");
-      }
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Thao tác thất bại!");
     } finally {
       setConfirmModal({ ...confirmModal, isOpen: false });
       setExpandedRows((prev) => prev.filter((r) => r !== pid));
@@ -692,11 +409,15 @@ const Product = () => {
             </div>
             <div className="space-y-0.5 text-sm">
               {[
-                { value: "all", label: "Tất cả" },
-                ...categories.map((c) => ({ value: c.name, label: c.name })),
+                { id: "all-cat", value: "all", label: "Tất cả" },
+                ...categories.map((c) => ({
+                  id: c.id,
+                  value: c.ten_danh_muc,
+                  label: c.ten_danh_muc,
+                })),
               ].map((item) => (
                 <button
-                  key={item.value}
+                  key={item.id}
                   onClick={() => setSelectedCategory(item.value)}
                   className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
                     ${selectedCategory === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
@@ -724,11 +445,15 @@ const Product = () => {
             </div>
             <div className="space-y-0.5 text-sm">
               {[
-                { value: "all", label: "Tất cả" },
-                ...suppliers.map((s) => ({ value: s.name, label: s.name })),
+                { id: "all-sup", value: "all", label: "Tất cả" },
+                ...suppliers.map((s) => ({
+                  id: s.id,
+                  value: s.ten_nha_cc,
+                  label: s.ten_nha_cc,
+                })),
               ].map((item) => (
                 <button
-                  key={item.value}
+                  key={item.id}
                   onClick={() => setSelectedSupplier(item.value)}
                   className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
                     ${selectedSupplier === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
@@ -1429,7 +1154,7 @@ const Product = () => {
                                                 className="w-full h-24 object-cover"
                                                 onError={(e) => {
                                                   e.target.src =
-                                                    "https://via.placeholder.com/100x100?text=No+Image";
+                                                    "../../assets/images/NoImage.webp";
                                                 }}
                                               />
                                               {img.la_anh_chinh && (

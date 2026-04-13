@@ -120,7 +120,7 @@ exports.loginTaiKhoan = async (req, res) => {
       where: {
         [Op.or]: [{ email: email }, { so_dien_thoai: email }],
       },
-      include: [{ model: TheThanhVien, as: "hang_thang_vien" }],
+      include: [{ model: TheThanhVien, as: "hang_thanh_vien" }],
     });
 
     if (!user) {
@@ -137,7 +137,7 @@ exports.loginTaiKhoan = async (req, res) => {
 
     // Tạo mã Token để người dùng không phải đăng nhập lại
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, vai_tro: user.vai_tro },
       process.env.JWT_SECRET,
       { expiresIn: "1d" },
     );
