@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useContext } from "react";
+import BASE_URL from "../config/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
-import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import BASE_URL from "../config/api";
+import toast, { Toaster } from "react-hot-toast";
+import { auth, googleProvider } from "../config/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -13,10 +15,12 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await fetch(`${BASE_URL}/api/taikhoan/login`, {
@@ -43,25 +47,58 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (error) {
-      console.error("Lỗi gọi API:", error);
-      alert("Không thể kết nối đến máy chủ!");
+      toast.error("Không thể kết nối đến máy chủ!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+
+      // Gửi thông tin Google xuống backend
+      const response = await fetch(`${BASE_URL}/api/taikhoan/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: googleUser.email,
+          ho_ten: googleUser.displayName,
+          anh_dai_dien: googleUser.photoURL,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.user, data.token, rememberMe);
+        toast.success("Đăng nhập Google thành công!");
+        navigate(data.user.vai_tro === "admin" ? "/admin" : "/");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Đăng nhập Google thất bại!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="bg-[#F3F4F6] min-h-screen flex flex-col font-sans">
       <Header />
-
+      <Toaster position="top-center" />
       <main className="flex-grow flex flex-col items-center justify-end p-4 pt-12 pb-8">
         <div className="max-w-[600px] w-full bg-white shadow-sm border border-gray-100 p-12">
           <h2 className="text-center text-3xl font-bold uppercase mb-10 text-gray-800 tracking-tight">
             Đăng nhập tài khoản
           </h2>
 
-          {/* GẮN SỰ KIỆN ONSUBMIT VÀO FORM */}
           <form className="space-y-7" onSubmit={handleLogin}>
             <div>
               <label className="block text-base font-semibold text-gray-700 mb-2">
@@ -72,7 +109,6 @@ const Login = () => {
                 type="text"
                 className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                 placeholder="Nhập email hoặc số điện thoại"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -87,7 +123,6 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                   placeholder="Nhập mật khẩu"
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -127,7 +162,7 @@ const Login = () => {
                 type="submit"
                 className="w-full bg-[#e31e24] text-white font-bold py-4 px-4 hover:bg-red-700 transition duration-200 text-base uppercase shadow-sm"
               >
-                Đăng nhập
+                {loading ? "Đang vào..." : "Đăng nhập"}
               </button>
             </div>
           </form>
@@ -147,6 +182,8 @@ const Login = () => {
             <div className="mt-8">
               <button
                 type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
                 className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-bold py-3.5 px-4 hover:bg-gray-50 transition duration-200 text-base shadow-sm uppercase"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24">

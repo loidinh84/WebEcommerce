@@ -11,7 +11,7 @@ TaiKhoan.belongsTo(TheThanhVien, {
   as: "hang_thanh_vien",
 });
 // Một hạng thành viên có thể có nhiều tài khoản
-TheThanhVien.hasMany(TaiKhoan, { foreignKey: "the_thanh_vien_id" });
+TheThanhVien.hasMany(TaiKhoan, { foreignKey: "the_thanh_vien_id", as: "thanh_vien" });
 
 // 2. Quan hệ Tài Khoản <-> Đơn Hàng
 // Một tài khoản có nhiều đơn hàng

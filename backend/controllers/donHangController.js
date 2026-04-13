@@ -161,7 +161,7 @@ exports.createDonHang = async (req, res) => {
 
     await t.commit();
 
-    const taiKhoan = await TaiKhoan.findByPk(tai_khoan_id); // query 1 lần dùng cho cả 2 việc
+    const taiKhoan = await TaiKhoan.findByPk(tai_khoan_id);
 
     try {
       const tongChiTieuMoi =

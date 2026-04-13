@@ -4,6 +4,9 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
 import BASE_URL from "../config/api";
+import toast, { Toaster } from "react-hot-toast";
+import { auth, googleProvider } from "../config/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,6 +22,7 @@ const Register = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Hàm xử lý cập nhật state khi người dùng gõ phím
   const handleChange = (e) => {
@@ -33,18 +37,26 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra mật khẩu nhập lại có khớp không
-    if (formData.password !== formData.rePassword) {
-      alert("Mật khẩu nhập lại không khớp");
-      return;
-    }
+    if (!formData.fullName.trim()) return toast.error("Vui lòng nhập họ tên!");
+
+    if (!/^(0[3|5|7|8|9])+([0-9]{8})$/.test(formData.phone))
+      return toast.error("Số điện thoại không hợp lệ!");
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      return toast.error("Email không đúng định dạng!");
+
+    if (formData.password.length < 6)
+      return toast.error("Mật khẩu phải có ít nhất 6 ký tự!");
+
+    if (formData.password !== formData.rePassword)
+      return toast.error("Mật khẩu nhập lại không khớp!");
+    setLoading(true);
 
     try {
       // Gửi dữ liệu xuống Backend
-      const response = await fetch("${BASE_URL}/api/taikhoan", {
+      const response = await fetch(`${BASE_URL}/api/taikhoan`, {
         method: "POST",
         headers: {
-          // ĐÃ SỬA: Thêm chữ 's' vào headers
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -52,27 +64,61 @@ const Register = () => {
           so_dien_thoai: formData.phone,
           email: formData.email,
           mat_khau: formData.password,
-          // dia_chi: formData.address
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert("Đăng ký tài khoản thành công! Vui lòng đăng nhập lại.");
+        toast.success("Đăng ký tài khoản thành công! Vui lòng đăng nhập lại.");
         navigate("/login");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (error) {
       console.error("Lỗi gọi API đăng ký: ", error);
-      alert("Không thể kết nối đến máy chủ!");
+      toast.error("Không thể kết nối đến máy chủ!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const googleUser = result.user;
+
+      // Gửi thông tin Google xuống backend
+      const response = await fetch(`${BASE_URL}/api/taikhoan/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: googleUser.email,
+          ho_ten: googleUser.displayName,
+          anh_dai_dien: googleUser.photoURL,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Đăng nhập Google thành công!");
+        navigate("/");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error("Đăng nhập Google thất bại!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="bg-[#F3F4F6] min-h-screen flex flex-col font-sans">
       <Header />
+      <Toaster position="top-center" reverseOrder={false} />
 
       <main className="flex-grow flex flex-col items-center justify-end p-4 pt-12 pb-8">
         <div className="max-w-[600px] w-full bg-white shadow-sm border border-gray-100 p-12">
@@ -92,7 +138,6 @@ const Register = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                 placeholder="Nhập họ và tên"
-                required
               />
             </div>
 
@@ -107,21 +152,6 @@ const Register = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                 placeholder="Nhập số điện thoại"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-base font-semibold text-gray-700 mb-2">
-                Địa chỉ
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
-                placeholder="Nhập địa chỉ"
               />
             </div>
 
@@ -136,7 +166,6 @@ const Register = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                 placeholder="Nhập địa chỉ email"
-                required
               />
             </div>
 
@@ -152,17 +181,12 @@ const Register = () => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                   placeholder="Nhập mật khẩu"
-                  required
                 />
                 <span
-                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer hover:bg-gray-100 p-1 rounded-full transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer hover:bg-gray-100 p-1 rounded-full transition-colors text-gray-500"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  <img
-                    src={showPassword ? Icons.EyeOff : Icons.EyeOn}
-                    alt="Toggle Password"
-                    className="w-6 h-6 opacity-70"
-                  />
+                  {showPassword ? <Icons.EyeOff /> : <Icons.EyeOn />}
                 </span>
               </div>
             </div>
@@ -179,17 +203,12 @@ const Register = () => {
                   onChange={handleChange}
                   className="w-full border border-gray-300 px-4 py-3.5 focus:outline-none focus:border-blue-500 text-base transition-colors"
                   placeholder="Xác nhận lại mật khẩu"
-                  required
                 />
                 <span
-                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer hover:bg-gray-100 p-1 rounded-full transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer hover:bg-gray-100 p-1 rounded-full transition-colors text-gray-500"
                   onClick={() => setShowRePassword(!showRePassword)}
                 >
-                  <img
-                    src={showRePassword ? Icons.EyeOff : Icons.EyeOn}
-                    alt="Toggle Re-Password"
-                    className="w-6 h-6 opacity-70"
-                  />
+                  {showRePassword ? <Icons.EyeOff /> : <Icons.EyeOn />}
                 </span>
               </div>
             </div>
@@ -197,14 +216,14 @@ const Register = () => {
             <div className="pt-4">
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-[#e31e24] text-white font-bold py-4 px-4 hover:bg-red-700 transition duration-200 text-base uppercase shadow-sm"
               >
-                Đăng ký
+                {loading ? "Đang xử lý..." : "Đăng ký"}
               </button>
             </div>
           </form>
 
-          {/* ... (Giữ nguyên phần Google và link điều hướng ở dưới) ... */}
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -220,7 +239,9 @@ const Register = () => {
             <div className="mt-8">
               <button
                 type="button"
-                className="w-full flex items-center cursor-pointer justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-bold py-3.5 px-4 hover:bg-gray-50 transition duration-200 text-base shadow-sm uppercase"
+                disabled={loading}
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center cursor-pointer justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-bold py-3.5 px-4 hover:bg-gray-50 transition duration-200 text-base shadow-sm uppercase cursor-not-allowed"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24">
                   <path

@@ -54,7 +54,7 @@ exports.getUserFullDashboard = async (req, res) => {
   }
 };
 
-// Thêm một tài khoản mới vào CSDL
+// Thêm tài khoản mới
 exports.createTaiKhoan = async (req, res) => {
   try {
     const { ho_ten, email, mat_khau, so_dien_thoai } = req.body;
@@ -81,12 +81,24 @@ exports.createTaiKhoan = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedMatKhau = await bcrypt.hash(mat_khau, salt);
 
+    const hangMacDinh = await TheThanhVien.findOne({
+      order: [["muc_chi_tieu_tu", "ASC"]],
+    });
+
+    if (!hangMacDinh) {
+      return res.status(500).json({
+        message: "Hệ thống chưa thiết lập hạng thẻ thành viên!",
+      });
+    }
+
     // Lưu thông tin tài khoản
     const taiKhoanMoi = await TaiKhoan.create({
       ho_ten,
       email,
       mat_khau: hashedMatKhau,
       so_dien_thoai,
+      the_thanh_vien_id: hangMacDinh.id,
+      tong_chi_tieu: 0,
     });
 
     res
@@ -108,11 +120,12 @@ exports.loginTaiKhoan = async (req, res) => {
       where: {
         [Op.or]: [{ email: email }, { so_dien_thoai: email }],
       },
+      include: [{ model: TheThanhVien, as: "hang_thang_vien" }],
     });
 
     if (!user) {
       return res.status(404).json({
-        message: " Email hoặc số điện thoại không tồn tại trong hệ thống!",
+        message: " Email hoặc số điện thoại không tồn tại!",
       });
     }
 
@@ -125,7 +138,7 @@ exports.loginTaiKhoan = async (req, res) => {
     // Tạo mã Token để người dùng không phải đăng nhập lại
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      "MAT_KHAU_BI_MAT",
+      process.env.JWT_SECRET,
       { expiresIn: "1d" },
     );
 
@@ -139,11 +152,70 @@ exports.loginTaiKhoan = async (req, res) => {
         vai_tro: user.vai_tro,
         so_dien_thoai: user.so_dien_thoai,
         anh_dai_dien: user.anh_dai_dien,
+        ty_le_giam_gia: user.hang_thanh_vien?.ty_le_giam_gia || 0,
+        ten_hang: user.hang_thanh_vien?.ten_hang,
       },
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi server khi đăng nhập!" });
+  }
+};
+
+// Đăng nhập bằng google
+exports.loginWithGoogle = async (req, res) => {
+  try {
+    const { email, ho_ten, anh_dai_dien } = req.body;
+
+    // Tìm user theo email
+    let user = await TaiKhoan.findOne({ where: { email } });
+
+    // Nếu chưa có → tự động tạo mới
+    if (!user) {
+      const hangMacDinh = await TheThanhVien.findOne({
+        order: [["muc_chi_tieu_tu", "ASC"]],
+      });
+
+      user = await TaiKhoan.create({
+        ho_ten,
+        email,
+        mat_khau: "GOOGLE_AUTH_NO_PASSWORD",
+        anh_dai_dien,
+        vai_tro: "customer",
+        the_thanh_vien_id: hangMacDinh?.id,
+        tong_chi_tieu: 0,
+      });
+    }
+
+    // Tạo token
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    // Lấy thông tin thẻ thành viên
+    const userWithCard = await TaiKhoan.findByPk(user.id, {
+      include: [{ model: TheThanhVien, as: "hang_thanh_vien" }],
+    });
+
+    res.status(200).json({
+      message: "Đăng nhập Google thành công!",
+      token,
+      user: {
+        id: user.id,
+        ho_ten: user.ho_ten,
+        email: user.email,
+        vai_tro: user.vai_tro,
+        anh_dai_dien: user.anh_dai_dien,
+        so_dien_thoai: user.so_dien_thoai,
+        ty_le_giam_gia: userWithCard.hang_thanh_vien?.ty_le_giam_gia || 0,
+        ten_hang: userWithCard.hang_thanh_vien?.ten_hang,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi đăng nhập Google!" });
   }
 };
 

@@ -10,5 +10,6 @@ router.get("/dashboard/:id", taiKhoanController.getUserFullDashboard);
 router.get("/:id", taiKhoanController.getProfile);
 router.get("/order-detail/:id", taiKhoanController.getOrderDetail);
 router.get("/:id/dia-chi", taiKhoanController.getDiaChiByUser);
+router.post("/google", taiKhoanController.loginWithGoogle);
 
 module.exports = router;
