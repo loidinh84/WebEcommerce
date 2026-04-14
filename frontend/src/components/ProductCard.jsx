@@ -28,8 +28,8 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link
-      to={`/product/${product.id}`}
-      className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition-all group cursor-pointer relative font-sans flex flex-col h-full block"
+      to={`/product/${product.slug}`}
+      className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition-all group cursor-pointer relative font-sans flex flex-col h-full"
     >
       {/* Khối Header của thẻ: Tag giảm giá & Nút Yêu thích */}
       <div className="flex justify-between items-start z-10 absolute w-full pr-6 top-3">

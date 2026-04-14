@@ -4,6 +4,7 @@ import ConfirmModal from "./ConfirmModal";
 import axios from "axios";
 import { toast } from "react-toastify";
 import BASE_URL from "../../config/api";
+import * as Icons from "../../assets/icons/index";
 
 const getAuthHeader = () => {
   const token =
@@ -61,6 +62,8 @@ const Product = () => {
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newSupplierName, setNewSupplierName] = useState("");
+  const [newCategoryParentId, setNewCategoryParentId] = useState("");
+  const [expandedParents, setExpandedParents] = useState(new Set());
 
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -93,10 +96,25 @@ const Product = () => {
         trang_thai: "active",
       },
     ],
+    can_nang: null,
+    chieu_dai: null,
+    chieu_rong: null,
+    chieu_cao: null,
+    meta_title: null,
+    meta_description: null,
     hinh_anh: [],
   };
   const [formData, setFormData] = useState(emptyFormData);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+
+  const toggleExpand = (parentName) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentName)) next.delete(parentName);
+      else next.add(parentName);
+      return next;
+    });
+  };
 
   // ── FETCH ────────────────────────────────────────────────
   const fetchProducts = async () => {
@@ -204,14 +222,33 @@ const Product = () => {
   };
 
   // ── HANDLERS ──
-  const handleQuickSaveCategory = (e) => {
+  const handleQuickSaveCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryName.trim())
       return toast.warning("Vui lòng nhập tên danh mục!");
-    setCategories([...categories, { id: Date.now(), name: newCategoryName }]);
-    toast.success("Đã thêm danh mục: " + newCategoryName);
-    setIsAddCategoryOpen(false);
-    setNewCategoryName("");
+
+    try {
+      // Gọi API thật xuống Backend để lưu vào SQL Server
+      // (Lưu ý: Bạn cần đảm bảo Backend đã có API POST /api/sanPham/danhMuc này nhé)
+      await axios.post(
+        `${API_BASE}/api/sanPham/danhMuc`,
+        {
+          ten_danh_muc: newCategoryName,
+          danh_muc_cha_id: newCategoryParentId || null,
+          trang_thai: "active",
+        },
+        getAuthHeader(),
+      );
+
+      toast.success("Đã thêm danh mục: " + newCategoryName);
+      setIsAddCategoryOpen(false);
+      setNewCategoryName("");
+      setNewCategoryParentId("");
+      fetchProducts();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Lỗi khi thêm danh mục!");
+    }
   };
 
   const handleQuickSaveSupplier = (e) => {
@@ -249,6 +286,17 @@ const Product = () => {
     if (!formData.ten_san_pham.trim())
       return toast.warning("Tên sản phẩm không được để trống!");
 
+    if (!formData.danh_muc_id) return toast.warning("Vui lòng chọn danh mục!");
+
+    if (formData.bien_the.length === 0)
+      return toast.warning("Vui lòng thêm ít nhất 1 biến thể!");
+
+    if (formData.bien_the.some((bt) => !bt.gia_ban || Number(bt.gia_ban) <= 0))
+      return toast.warning("Vui lòng nhập giá bán cho tất cả biến thể!");
+
+    if (formData.bien_the.some((bt) => Number(bt.ton_kho) < 0))
+      return toast.warning("Tồn kho không được âm!");
+
     const dataToSend = new FormData();
     dataToSend.append("ten_san_pham", formData.ten_san_pham);
     dataToSend.append("thuong_hieu", formData.thuong_hieu);
@@ -260,6 +308,13 @@ const Product = () => {
     dataToSend.append("noi_bat", formData.noi_bat);
     dataToSend.append("bien_the", JSON.stringify(formData.bien_the));
     dataToSend.append("thuoc_tinh", JSON.stringify(formData.thuoc_tinh));
+    dataToSend.append("can_nang", formData.can_nang || 0);
+    dataToSend.append("chieu_dai", formData.chieu_dai || 0);
+    dataToSend.append("chieu_rong", formData.chieu_rong || 0);
+    dataToSend.append("chieu_cao", formData.chieu_cao || 0);
+    dataToSend.append("meta_title", formData.meta_title || "");
+    dataToSend.append("meta_description", formData.meta_description || "");
+
     if (formData.hinh_anh?.length > 0)
       dataToSend.append("hinh_anh", JSON.stringify(formData.hinh_anh));
     uploadedFiles.forEach((file) => dataToSend.append("hinh_anh_files", file));
@@ -346,6 +401,12 @@ const Product = () => {
           d.thuoc_tinh?.length > 0 ? d.thuoc_tinh : emptyFormData.thuoc_tinh,
         bien_the: d.bien_the?.length > 0 ? d.bien_the : emptyFormData.bien_the,
         hinh_anh: d.hinh_anh?.length > 0 ? d.hinh_anh : [],
+        can_nang: d.can_nang || "",
+        chieu_dai: d.chieu_dai || "",
+        chieu_rong: d.chieu_rong || "",
+        chieu_cao: d.chieu_cao || "",
+        meta_title: d.meta_title || "",
+        meta_description: d.meta_description || "",
       });
     } catch {
       setEditingProduct(product);
@@ -378,7 +439,7 @@ const Product = () => {
 
   return (
     <div className="flex w-full h-full bg-[#f0f2f5] overflow-hidden justify-center relative font-sans">
-      <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-6">
+      <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-4">
         {/* ================================================ */}
         {/* SIDEBAR BỘ LỌC                                   */}
         {/* ================================================ */}
@@ -404,30 +465,75 @@ const Product = () => {
                 className="text-gray-400 hover:text-blue-600 text-xl cursor-pointer font-medium leading-none"
                 title="Thêm danh mục"
               >
-                +
+                <Icons.Add className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-0.5 text-sm">
-              {[
-                { id: "all-cat", value: "all", label: "Tất cả" },
-                ...categories.map((c) => ({
-                  id: c.id,
-                  value: c.ten_danh_muc,
-                  label: c.ten_danh_muc,
-                })),
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedCategory(item.value)}
-                  className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
-                    ${selectedCategory === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
-                >
-                  <span className="truncate">{item.label}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0 ml-1">
-                    {countByCategory(item.value)}
-                  </span>
-                </button>
-              ))}
+              {/* 1. Nút Tất cả */}
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
+                  ${selectedCategory === "all" ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
+              >
+                <span className="truncate">Tất cả</span>
+                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0 ml-1">
+                  {countByCategory("all")}
+                </span>
+              </button>
+              {/* 2. Các danh mục từ Database */}
+              {categories
+                .filter((c) => !c.danh_muc_cha_id)
+                .map((parent) => {
+                  const children = categories.filter(
+                    (c) => c.danh_muc_cha_id === parent.id,
+                  ); // Lấy con
+                  const isExpanded = expandedParents.has(parent.ten_danh_muc);
+
+                  return (
+                    <div key={parent.id}>
+                      {/* Thẻ Cha */}
+                      <button
+                        onClick={() => {
+                          toggleExpand(parent.ten_danh_muc);
+                          setSelectedCategory(parent.ten_danh_muc);
+                        }}
+                        className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
+                          ${selectedCategory === parent.ten_danh_muc ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-700 hover:bg-gray-50"}`}
+                      >
+                        <span className="truncate">{parent.ten_danh_muc}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                          {countByCategory(parent.ten_danh_muc)}
+                        </span>
+                      </button>
+
+                      {/* Danh sách Con (Chỉ hiện khi Expanded) */}
+                      {isExpanded && children.length > 0 && (
+                        <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-gray-200 pl-2">
+                          {children.map((child) => (
+                            <button
+                              key={child.id}
+                              onClick={() =>
+                                setSelectedCategory(child.ten_danh_muc)
+                              }
+                              className={`w-full flex justify-between items-center px-2.5 py-1.5 rounded-lg transition-colors text-left cursor-pointer text-[12px]
+                                ${selectedCategory === child.ten_danh_muc ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-500 hover:bg-gray-50 font-medium"}`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-gray-300" />
+                                <span className="truncate">
+                                  {child.ten_danh_muc}
+                                </span>
+                              </div>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                {countByCategory(child.ten_danh_muc)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
 
@@ -440,7 +546,7 @@ const Product = () => {
                 className="text-gray-400 hover:text-blue-600 text-xl cursor-pointer font-medium leading-none"
                 title="Thêm nhà cung cấp"
               >
-                +
+                <Icons.Add className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-0.5 text-sm">
@@ -514,155 +620,12 @@ const Product = () => {
               ))}
             </div>
           </div>
-
-          {/* -- Thống kê -- */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <h3 className="font-bold text-gray-800 mb-3 text-sm">Thống kê</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tổng sản phẩm</span>
-                <span className="font-bold text-gray-800">
-                  {products.length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Đang kinh doanh</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("active")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Ngừng kinh doanh</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("inactive")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Hết hàng</span>
-                <span className="font-bold text-red-500">
-                  {countByStock("out_of_stock")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Sản phẩm nổi bật</span>
-                <span className="font-bold text-yellow-600">
-                  {countTab("featured")}
-                </span>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-gray-100 pt-2 mt-1">
-                {/* Bán chạy nhất (top 3 theo luot_mua) */}
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-                  Bán chạy nhất
-                </p>
-                {[...products]
-                  .filter((p) => (p.luot_mua || 0) > 0)
-                  .sort((a, b) => (b.luot_mua || 0) - (a.luot_mua || 0))
-                  .slice(0, 3)
-                  .map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="flex justify-between items-center py-1"
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0
-                          ${
-                            i === 0
-                              ? "bg-yellow-100 text-yellow-700"
-                              : i === 1
-                                ? "bg-gray-100 text-gray-600"
-                                : "bg-orange-50 text-orange-600"
-                          }`}
-                        >
-                          #{i + 1}
-                        </span>
-                        <span className="text-xs text-gray-700 truncate">
-                          {p.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-blue-600 shrink-0 ml-1">
-                        {(p.luot_mua || 0).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                {products.filter((p) => (p.luot_mua || 0) > 0).length === 0 && (
-                  <p className="text-xs text-gray-400 italic">
-                    Chưa có dữ liệu lượt mua.
-                  </p>
-                )}
-              </div>
-
-              {/* Giá trị cao nhất */}
-              <div className="border-t border-gray-100 pt-2">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
-                  Giá trị cao nhất
-                </p>
-                {[...products]
-                  .sort((a, b) => b.price - a.price)
-                  .slice(0, 3)
-                  .map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="flex justify-between items-center py-1"
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0
-                          ${
-                            i === 0
-                              ? "bg-purple-100 text-purple-700"
-                              : i === 1
-                                ? "bg-indigo-50 text-indigo-600"
-                                : "bg-blue-50 text-blue-600"
-                          }`}
-                        >
-                          #{i + 1}
-                        </span>
-                        <span className="text-xs text-gray-700 truncate">
-                          {p.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-purple-600 shrink-0 ml-1">
-                        {new Intl.NumberFormat("vi-VN", {
-                          notation: "compact",
-                          maximumFractionDigits: 1,
-                        }).format(p.price)}
-                        đ
-                      </span>
-                    </div>
-                  ))}
-
-                {/* Tổng số sản phẩm trên 10 triệu */}
-                <div className="mt-2 pt-2 border-t border-dashed border-gray-100 flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Trên 10 triệu</span>
-                  <span className="text-xs font-bold text-purple-600">
-                    {products.filter((p) => p.price >= 10000000).length} SP
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Trên 20 triệu</span>
-                  <span className="text-xs font-bold text-purple-600">
-                    {products.filter((p) => p.price >= 20000000).length} SP
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Trên 30 triệu</span>
-                  <span className="text-xs font-bold text-purple-600">
-                    {products.filter((p) => p.price >= 30000000).length} SP
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-        {/* ================================================ */}
-        {/* CỘT PHẢI: BẢNG DỮ LIỆU                          */}
-        {/* ================================================ */}
+
+        {/* CỘT PHẢI: BẢNG DỮ LIỆU */}
         <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-0">
           {/* Header */}
-          <div className="px-6 py-5 flex justify-between items-center border-b border-gray-100 bg-white shrink-0">
+          <div className="px-6 py-4 flex justify-between items-center border-b border-gray-100 bg-white shrink-0">
             <h2 className="text-xl font-bold text-gray-800">
               Danh sách sản phẩm
             </h2>
@@ -674,9 +637,9 @@ const Product = () => {
                 setFormData({ ...emptyFormData });
                 setUploadedFiles([]);
               }}
-              className="bg-[#4caf50] hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm cursor-pointer"
+              className="bg-[#4caf50] hover:bg-green-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors text-[15px] shadow-sm cursor-pointer flex items-center gap-1"
             >
-              + Thêm sản phẩm
+              <Icons.Add className="w-5 h-5" /> Thêm sản phẩm
             </button>
           </div>
 
@@ -783,18 +746,20 @@ const Product = () => {
                           </td>
                           <td className="py-3 px-5 text-center font-bold">
                             {p.stock <= 0 ? (
-                              <span className="text-red-500">Hết hàng</span>
+                              <span className="text-red-500  whitespace-nowrap">
+                                Hết hàng
+                              </span>
                             ) : (
                               <span className="text-gray-800">{p.stock}</span>
                             )}
                           </td>
                           <td className="py-3 px-5 text-center">
                             {p.status === "active" ? (
-                              <span className="bg-green-100 text-green-700 border border-green-200 px-3 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
-                                Đang KD
+                              <span className=" text-green-700 px-3 py-1 rounded text-sm font-bold  whitespace-nowrap">
+                                Đang kinh doanh
                               </span>
                             ) : (
-                              <span className="bg-red-100 text-red-500 border border-red-200 px-3 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
+                              <span className=" text-red-500 px-3 py-1 rounded text-sm font-bold whitespace-nowrap">
                                 Ngừng bán
                               </span>
                             )}
@@ -1240,7 +1205,7 @@ const Product = () => {
 
       {/* ── QUICK ADD MODALS ── */}
       {isAddCategoryOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/50 p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
             <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
               <h3 className="font-bold text-gray-800">Thêm Danh Mục</h3>
@@ -1252,21 +1217,43 @@ const Product = () => {
               </button>
             </div>
             <form onSubmit={handleQuickSaveCategory}>
-              <div className="p-6">
+              <div className="p-6 pb-1">
+                <label className="text-sm font-medium text-gray-700 ">
+                  Tên danh mục
+                </label>
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="w-full p-3 border rounded-xl outline-none focus:border-blue-500 font-medium"
+                  className="w-full p-2.5 border border-gray-300 rounded-xl outline-none focus:border-blue-500 font-medium font-medium"
                   placeholder="Tên danh mục..."
                   autoFocus
                 />
+              </div>
+              <div className="px-6 py-3">
+                <label className="text-sm font-medium text-gray-700 ">
+                  Danh mục cha:
+                </label>
+                <select
+                  value={newCategoryParentId}
+                  onChange={(e) => setNewCategoryParentId(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-xl outline-none focus:border-blue-500 text-sm text-gray-700 bg-white appearance-none"
+                >
+                  <option value="">Là danh mục cha</option>
+                  {categories
+                    .filter((c) => !c.danh_muc_cha_id)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.ten_danh_muc}
+                      </option>
+                    ))}
+                </select>
               </div>
               <div className="px-6 py-4 bg-gray-50 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsAddCategoryOpen(false)}
-                  className="flex-1 py-2 bg-white border rounded-xl font-bold cursor-pointer hover:bg-gray-100"
+                  className="flex-1 py-2 bg-white border border-gray-300 rounded-xl font-medium cursor-pointer hover:bg-gray-100"
                 >
                   Hủy
                 </button>

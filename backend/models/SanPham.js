@@ -50,6 +50,30 @@ const SanPham = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+    can_nang: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    chieu_dai: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    chieu_rong: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    chieu_cao: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    meta_title: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    meta_description: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
   },
   {
     tableName: "SanPham",

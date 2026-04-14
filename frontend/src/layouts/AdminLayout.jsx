@@ -60,8 +60,6 @@ const AdminLayout = () => {
             <ul className="flex h-full gap-1">
               {menuItems.map((item) => {
                 const isActive = checkIsActive(item);
-
-                // ── Item có dropdown ──────────────────────────
                 if (item.hasDropdown) {
                   return (
                     <li key={item.label} className="relative group h-full">
@@ -101,8 +99,6 @@ const AdminLayout = () => {
                     </li>
                   );
                 }
-
-                // ── Item thường ───────────────────────────────
                 return (
                   <li key={item.path} className="h-full">
                     <Link
@@ -161,15 +157,6 @@ const AdminLayout = () => {
           </div>
         </div>
       </header>
-
-      {/* Breadcrumb */}
-      <div className="h-14 bg-white shadow-sm flex items-center px-8 z-10 border-b border-gray-200 shrink-0">
-        <div className="text-gray-800 font-semibold text-lg flex items-center gap-2">
-          <span className="text-gray-400 hover:text-blue-600 cursor-pointer transition-colors">Trang chủ</span>
-          <span className="text-gray-400 text-sm">/</span>
-          <span className="text-gray-800">{currentPageLabel}</span>
-        </div>
-      </div>
 
       <main className="flex-1 overflow-hidden flex bg-[#f0f2f5]">
         <Outlet />

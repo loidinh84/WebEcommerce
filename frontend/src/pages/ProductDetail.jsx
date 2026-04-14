@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import BASE_URL from "../config/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,10 +8,10 @@ import * as Icons from "../assets/icons/index";
 import SpecsModal from "../components/SpecsModal";
 import CompareModal from "../components/CompareModal";
 import { AuthContext } from "../context/AuthContext";
-import BASE_URL from "../config/api";
+import { Helmet } from "react-helmet-async";
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
 
@@ -42,9 +43,11 @@ const ProductDetail = () => {
     const fetchProductData = async () => {
       setIsLoading(true);
       try {
-        if (!id || id === "undefined") return;
+        if (!slug || slug === "undefined") return;
         // 1. Fetch Chi tiết sản phẩm
-        const resDetail = await fetch(`${BASE_URL}/api/sanpham/${id}`);
+        const resDetail = await fetch(
+          `${BASE_URL}/api/sanPham/chi-tiet/${slug}`,
+        );
         if (!resDetail.ok) throw new Error("Không tìm thấy sản phẩm");
         const dataDetail = await resDetail.json();
         setProduct(dataDetail);
@@ -58,10 +61,12 @@ const ProductDetail = () => {
           setMainImage(mainImg.url_anh);
         }
 
+        const actualId = dataDetail.id;
+
         // 2. Fetch Sản phẩm tương tự
         try {
           const resSimilar = await fetch(
-            `${BASE_URL}/api/sanpham/${id}/tuong-tu`,
+            `${BASE_URL}/api/sanPham/${actualId}/tuong-tu`,
           );
           if (resSimilar.ok) setSimilarProducts(await resSimilar.json());
         } catch (e) {
@@ -69,7 +74,7 @@ const ProductDetail = () => {
         }
 
         // 3. Fetch Đánh giá
-        fetchReviews();
+        fetchReviews(actualId);
       } catch (error) {
         console.error(error);
         toast.error("Lỗi khi tải dữ liệu sản phẩm!");
@@ -77,13 +82,17 @@ const ProductDetail = () => {
         setIsLoading(false);
       }
     };
-
     fetchProductData();
-  }, [id]);
+  }, [slug]);
 
-  const fetchReviews = async () => {
+  const fetchReviews = async (productIdToFetch) => {
+    const targetId = productIdToFetch || product?.id;
+    if (!targetId) return;
+
     try {
-      const resReviews = await fetch(`${BASE_URL}/api/sanpham/${id}/danh-gia`);
+      const resReviews = await fetch(
+        `${BASE_URL}/api/sanPham/${targetId}/danh-gia`,
+      );
       if (resReviews.ok) {
         const data = await resReviews.json();
         setReviews(data);
@@ -141,15 +150,18 @@ const ProductDetail = () => {
       return toast.error("Vui lòng nhập đánh giá ít nhất 10 ký tự!");
 
     try {
-      const response = await fetch(`${BASE_URL}/api/sanpham/${id}/danh-gia`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tai_khoan_id: user.id,
-          so_sao: userRating,
-          noi_dung: reviewText,
-        }),
-      });
+      const response = await fetch(
+        `${BASE_URL}/api/sanPham/${product.id}/danh-gia`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tai_khoan_id: user.id,
+            so_sao: userRating,
+            noi_dung: reviewText,
+          }),
+        },
+      );
 
       if (response.ok) {
         toast.success("Cảm ơn bạn! Đánh giá đã được gửi.");
@@ -253,6 +265,24 @@ const ProductDetail = () => {
 
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans relative pb-10">
+      <Helmet>
+        <title>{product.meta_title || product.ten_san_pham} - LTLShop</title>
+        <meta
+          name="description"
+          content={product.meta_description || product.mo_ta_ngan}
+        />
+        <meta
+          property="og:title"
+          content={product.meta_title || product.ten_san_pham}
+        />
+        <meta
+          property="og:description"
+          content={product.meta_description || product.mo_ta_ngan}
+        />
+        <meta property="og:image" content={getImageUrl(mainImage)} />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <Header />
 
       <Toaster position="bottom-right" reverseOrder={false} />
@@ -575,7 +605,7 @@ const ProductDetail = () => {
                 return (
                   <div
                     key={sp.id}
-                    onClick={() => navigate(`/product/${sp.id}`)}
+                    onClick={() => navigate(`/product/${sp.slug}`)}
                     className="border border-gray-100 rounded-lg p-4 hover:shadow-lg transition cursor-pointer flex flex-col group"
                   >
                     <img

@@ -1,30 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import * as Icons from "../assets/icons/index";
 import Logo from "../assets/images/logo.png";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const Header = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const { user, logout } = useContext(AuthContext);
 
+  const [showDropdown, setShowDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
-
-  useEffect(() => {
-    const loggedInUser =
-      localStorage.getItem("user") || sessionStorage.getItem("user");
-    if (loggedInUser && loggedInUser !== "undefined") {
-      try {
-        // Cố gắng dịch dữ liệu
-        setUser(JSON.parse(loggedInUser));
-      } catch (error) {
-        console.error("Lỗi đọc dữ liệu user từ bộ nhớ:", error);
-        localStorage.removeItem("user");
-        sessionStorage.removeItem("user");
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,9 +37,8 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("user");
-    setUser(null);
+    logout();
+    setShowDropdown(false);
     navigate("/login");
   };
 

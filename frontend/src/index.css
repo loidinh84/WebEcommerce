@@ -7,3 +7,30 @@
 body {
   font-family: var(--font-inter);
 }
+
+/* 1. Dành cho Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* 2. Dành cho Chrome, Edge, Safari (Webkit) */
+::-webkit-scrollbar {
+  width: 7px; /* Độ rộng của thanh cuộn dọc */
+  height: 7px; /* Độ cao của thanh cuộn ngang */
+}
+
+/* Nền của thanh cuộn */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Con trỏ cuộn */
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}

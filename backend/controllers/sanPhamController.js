@@ -131,12 +131,32 @@ exports.getSanPhamById = async (req, res) => {
   }
 };
 
+exports.getSanPhamBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const sanPham = await SanPham.findOne({
+      where: { slug: slug },
+      include: [
+        { model: BienTheSanPham, as: "bien_the" },
+        { model: ThuocTinhSanPham, as: "thuoc_tinh" },
+        { model: HinhAnhSanPham, as: "hinh_anh" },
+      ],
+    });
+
+    if (!sanPham) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
+    }
+    res.status(200).json(sanPham);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server khi lấy chi tiết sản phẩm!" });
+  }
+};
+
 // 2. Thêm một sản phẩm mới
 exports.createSanPham = async (req, res) => {
   const t = await require("../config/db").transaction();
 
   try {
-    // Lấy dữ liệu text từ req.body (gửi qua FormData)
     const {
       ten_san_pham,
       danh_muc_id,
@@ -146,9 +166,14 @@ exports.createSanPham = async (req, res) => {
       thuong_hieu,
       trang_thai,
       noi_bat,
+      can_nang,
+      chieu_dai,
+      chieu_rong,
+      chieu_cao,
+      meta_title,
+      meta_description,
     } = req.body;
 
-    // Ép kiểu các mảng JSON string về dạng Object/Array
     let bien_the = [];
     let thuoc_tinh = [];
 
@@ -187,8 +212,14 @@ exports.createSanPham = async (req, res) => {
         mo_ta_day_du,
         thuong_hieu,
         trang_thai: trang_thai || "active",
-        noi_bat: noi_bat === "true" || noi_bat === true, // Ép kiểu boolean
+        noi_bat: noi_bat === "true" || noi_bat === true,
         luot_xem: 0,
+        can_nang: can_nang ? Number(can_nang) : null,
+        chieu_dai: chieu_dai ? Number(chieu_dai) : null,
+        chieu_rong: chieu_rong ? Number(chieu_rong) : null,
+        chieu_cao: chieu_cao ? Number(chieu_cao) : null,
+        meta_title: meta_title || null,
+        meta_description: meta_description || null,
       },
       { transaction: t },
     );

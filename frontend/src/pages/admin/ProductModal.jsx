@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 
-const API_BASE = "${BASE_URL}";
+import BASE_URL from "../../config/api";
+
+const API_BASE = BASE_URL;
 
 const tabs = [
   { id: 1, name: "1. Thông tin chung" },
@@ -338,6 +340,97 @@ const ProductModal = ({
                       className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-y"
                       placeholder="Mô tả chi tiết..."
                     />
+                  </div>
+                  <div className="mt-6 border-t pt-4">
+                    <h4 className="font-bold text-gray-800 mb-4">
+                      Thông số
+                    </h4>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">
+                          Cân nặng (Gram)
+                        </label>
+                        <input
+                          type="number"
+                          name="can_nang"
+                          value={formData.can_nang}
+                          onChange={handleBasicChange}
+                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          placeholder="VD: 500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          Dài (cm)
+                        </label>
+                        <input
+                          type="number"
+                          name="chieu_dai"
+                          value={formData.chieu_dai}
+                          onChange={handleBasicChange}
+                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          placeholder="VD: 20"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          Rộng (cm)
+                        </label>
+                        <input
+                          type="number"
+                          name="chieu_rong"
+                          value={formData.chieu_rong}
+                          onChange={handleBasicChange}
+                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          placeholder="VD: 10"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          Cao (cm)
+                        </label>
+                        <input
+                          type="number"
+                          name="chieu_cao"
+                          value={formData.chieu_cao}
+                          onChange={handleBasicChange}
+                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          placeholder="VD: 5"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ---- CẤU HÌNH SEO ---- */}
+                  <div className="mt-6 border-t pt-4">
+                    <h4 className="font-bold text-gray-800 mb-4">
+                      Cấu hình SEO (Tối ưu tìm kiếm)
+                    </h4>
+                    <div className="mb-4">
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Meta Title (Tiêu đề SEO)
+                      </label>
+                      <input
+                        type="text"
+                        name="meta_title"
+                        value={formData.meta_title}
+                        onChange={handleBasicChange}
+                        className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                        placeholder="Nên để 50 - 60 ký tự..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Meta Description (Mô tả SEO)
+                      </label>
+                      <textarea
+                        name="meta_description"
+                        value={formData.meta_description}
+                        onChange={handleBasicChange}
+                        className="w-full p-2 border rounded outline-none focus:border-blue-500 min-h-[80px]"
+                        placeholder="Mô tả ngắn gọn hiển thị trên Google..."
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

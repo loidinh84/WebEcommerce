@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import React from "react";
+import PrivateRoute from "./components/PrivateRoute";
 import Home from "./pages/Home";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
@@ -29,7 +30,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/order-detail/:id" element={<OrderDetail />} />
@@ -37,14 +38,16 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
 
           {/* Nhánh Admin */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="products" element={<Product />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="orders" element={<Order />} />
-            <Route path="customers" element={<Customer />} />
-            <Route path="inventory" element={<Inventory />} />
-            <Route path="inventory-check" element={<InventoryCheck />} />
+          <Route path="/admin" element={<PrivateRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="products" element={<Product />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="orders" element={<Order />} />
+              <Route path="customers" element={<Customer />} />
+              <Route path="inventory" element={<Inventory />} />
+              <Route path="inventory-check" element={<InventoryCheck />} />
+            </Route>
           </Route>
         </Routes>
       </Router>

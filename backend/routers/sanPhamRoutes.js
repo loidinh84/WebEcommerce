@@ -1,17 +1,40 @@
 const express = require("express");
 const router = express.Router();
 const sanPhamController = require("../controllers/sanPhamController");
+const danhMucController = require("../controllers/danhMucController");
 const upload = require("../config/upload");
 const { verifyToken, isAdmin } = require("../middlewares/authMiddleware");
 
 // 1. CÁC ROUTE CỐ ĐỊNH
+  // Danh mục
 router.get("/danhMuc", verifyToken, isAdmin, sanPhamController.getAllDanhMuc);
+router.post("/danhMuc", verifyToken, isAdmin, danhMucController.createDanhMuc);
+router.put(
+  "/danhMuc/:id",
+  verifyToken,
+  isAdmin,
+  danhMucController.updateDanhMuc,
+);
+router.delete(
+  "/danhMuc/:id",
+  verifyToken,
+  isAdmin,
+  danhMucController.deleteDanhMuc,
+);
+router.put(
+  "/danhMuc/:id/status",
+  verifyToken,
+  isAdmin,
+  danhMucController.toggleTrangThai,
+);
+  // Nhà cung cấp
 router.get(
   "/nhaCungCap",
   verifyToken,
   isAdmin,
   sanPhamController.getAllNhaCungCap,
 );
+  // Sản phẩm
 router.get("/", sanPhamController.getAllSanPham);
 router.get(
   "/tatCaSanPham",
@@ -30,6 +53,7 @@ router.post(
 );
 
 // 2. CÁC ROUTE CÓ BIẾN
+router.get("/chi-tiet/:slug", sanPhamController.getSanPhamBySlug);
 router.get("/:id", sanPhamController.getSanPhamById);
 router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
 router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);
