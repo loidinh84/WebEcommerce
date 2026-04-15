@@ -20,10 +20,13 @@ import Inventory from "./pages/admin/Inventory";
 import InventoryCheck from "./pages/admin/InventoryCheck";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
     <AuthProvider>
+      <ToastContainer position="top-right" autoClose={3000} />
       <Router>
         <Routes>
           {/* Nhánh khách hàng */}

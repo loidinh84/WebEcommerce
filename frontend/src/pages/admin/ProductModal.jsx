@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-
+import * as Icons from "../../assets/icons/index";
 import BASE_URL from "../../config/api";
 
 const API_BASE = BASE_URL;
@@ -180,7 +180,7 @@ const ProductModal = ({
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50">
       <div className="bg-[#F8FAFC] w-full max-w-5xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">
         {/* ── HEADER ── */}
         <div className="bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
@@ -219,7 +219,7 @@ const ProductModal = ({
             {/* ═══ TAB 1: THÔNG TIN CHUNG ═══ */}
             {activeTab === 1 && (
               <div className="space-y-5">
-                <h4 className="text-base font-bold text-gray-800 border-b pb-2 mb-4">
+                <h4 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2 mb-2">
                   Thông tin cơ bản
                 </h4>
                 <div className="grid grid-cols-2 gap-5 text-sm">
@@ -232,8 +232,7 @@ const ProductModal = ({
                       value={formData.ten_san_pham}
                       onChange={handleBasicChange}
                       type="text"
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="VD: iPhone 16 Pro Max"
+                      className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
                     />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
@@ -245,8 +244,7 @@ const ProductModal = ({
                       value={formData.thuong_hieu}
                       onChange={handleBasicChange}
                       type="text"
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="VD: Apple"
+                      className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
                     />
                   </div>
                   <div>
@@ -257,7 +255,7 @@ const ProductModal = ({
                       name="danh_muc_id"
                       value={formData.danh_muc_id || ""}
                       onChange={handleBasicChange}
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
+                      className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white cursor-pointer appearance-none"
                     >
                       <option value="">Chọn danh mục</option>
                       {categories?.map((cat) => (
@@ -275,7 +273,7 @@ const ProductModal = ({
                       name="nha_cung_cap_id"
                       value={formData.nha_cung_cap_id || ""}
                       onChange={handleBasicChange}
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
+                      className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white cursor-pointer appearance-none"
                     >
                       <option value="">Chọn nhà cung cấp</option>
                       {suppliers?.map((sup) => (
@@ -293,26 +291,26 @@ const ProductModal = ({
                       name="trang_thai"
                       value={formData.trang_thai}
                       onChange={handleBasicChange}
-                      className="w-full border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white cursor-pointer"
+                      className="w-full border border-gray-300 px-4 py-2.5 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none bg-white cursor-pointer appearance-none"
                     >
                       <option value="active">Đang kinh doanh</option>
                       <option value="inactive">Ngừng kinh doanh</option>
                     </select>
                   </div>
-                  <div className="flex items-center gap-3 pt-6">
+                  <div className="flex items-center gap-1 pt-6">
                     <input
                       type="checkbox"
                       name="noi_bat"
                       id="noi_bat"
                       checked={formData.noi_bat}
                       onChange={handleBasicChange}
-                      className="w-5 h-5 text-blue-600 rounded border-gray-300 cursor-pointer"
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 cursor-pointer"
                     />
                     <label
                       htmlFor="noi_bat"
-                      className="font-semibold text-gray-700 cursor-pointer"
+                      className="font-bold text-gray-800 cursor-pointer"
                     >
-                      Đánh dấu là sản phẩm nổi bật
+                      Là sản phẩm nổi bật
                     </label>
                   </div>
                   <div className="col-span-2">
@@ -324,8 +322,8 @@ const ProductModal = ({
                       value={formData.mo_ta_ngan}
                       onChange={handleBasicChange}
                       rows="2"
-                      className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                      placeholder="Mô tả ngắn gọn..."
+                      className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                      placeholder="Mô tả ngắn..."
                     />
                   </div>
                   <div className="col-span-2">
@@ -337,14 +335,12 @@ const ProductModal = ({
                       value={formData.mo_ta_day_du}
                       onChange={handleBasicChange}
                       rows="5"
-                      className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-y"
+                      className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none resize-y"
                       placeholder="Mô tả chi tiết..."
                     />
                   </div>
-                  <div className="mt-6 border-t pt-4">
-                    <h4 className="font-bold text-gray-800 mb-4">
-                      Thông số
-                    </h4>
+                  <div className=" border-t border-gray-200 pt-4">
+                    <h4 className="font-bold text-gray-800 mb-4">Thông số</h4>
                     <div className="grid grid-cols-4 gap-4">
                       <div>
                         <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">
@@ -355,7 +351,7 @@ const ProductModal = ({
                           name="can_nang"
                           value={formData.can_nang}
                           onChange={handleBasicChange}
-                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500"
                           placeholder="VD: 500"
                         />
                       </div>
@@ -368,7 +364,7 @@ const ProductModal = ({
                           name="chieu_dai"
                           value={formData.chieu_dai}
                           onChange={handleBasicChange}
-                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500"
                           placeholder="VD: 20"
                         />
                       </div>
@@ -381,7 +377,7 @@ const ProductModal = ({
                           name="chieu_rong"
                           value={formData.chieu_rong}
                           onChange={handleBasicChange}
-                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500"
                           placeholder="VD: 10"
                         />
                       </div>
@@ -394,7 +390,7 @@ const ProductModal = ({
                           name="chieu_cao"
                           value={formData.chieu_cao}
                           onChange={handleBasicChange}
-                          className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                          className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500"
                           placeholder="VD: 5"
                         />
                       </div>
@@ -402,7 +398,7 @@ const ProductModal = ({
                   </div>
 
                   {/* ---- CẤU HÌNH SEO ---- */}
-                  <div className="mt-6 border-t pt-4">
+                  <div className=" border-t border-gray-200 pt-4">
                     <h4 className="font-bold text-gray-800 mb-4">
                       Cấu hình SEO (Tối ưu tìm kiếm)
                     </h4>
@@ -415,7 +411,7 @@ const ProductModal = ({
                         name="meta_title"
                         value={formData.meta_title}
                         onChange={handleBasicChange}
-                        className="w-full p-2 border rounded outline-none focus:border-blue-500"
+                        className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500"
                         placeholder="Nên để 50 - 60 ký tự..."
                       />
                     </div>
@@ -427,7 +423,7 @@ const ProductModal = ({
                         name="meta_description"
                         value={formData.meta_description}
                         onChange={handleBasicChange}
-                        className="w-full p-2 border rounded outline-none focus:border-blue-500 min-h-[80px]"
+                        className="w-full p-2 border border-gray-300 rounded outline-none focus:border-blue-500 min-h-[80px]"
                         placeholder="Mô tả ngắn gọn hiển thị trên Google..."
                       />
                     </div>
@@ -439,7 +435,7 @@ const ProductModal = ({
             {/* ═══ TAB 2: THUỘC TÍNH ═══ */}
             {activeTab === 2 && (
               <div className="space-y-4">
-                <h4 className="text-base font-bold text-gray-800 border-b pb-2 mb-4">
+                <h4 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">
                   Thông số kỹ thuật
                 </h4>
                 <p className="text-xs text-gray-500 mb-3">
@@ -458,7 +454,7 @@ const ProductModal = ({
                         )
                       }
                       type="text"
-                      className="w-1/5 border px-3 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-1/5 border border-gray-300 px-3 py-2.5 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="Nhóm"
                     />
                     <input
@@ -472,7 +468,7 @@ const ProductModal = ({
                         )
                       }
                       type="text"
-                      className="w-2/5 border px-3 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-2/5 border border-gray-300 px-3 py-2.5 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="Tên thông số"
                     />
                     <input
@@ -486,14 +482,14 @@ const ProductModal = ({
                         )
                       }
                       type="text"
-                      className="flex-1 border px-3 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="flex-1 border border-gray-300 px-3 py-2.5 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                       placeholder="Giá trị"
                     />
                     <button
                       onClick={() => removeRow("thuoc_tinh", index)}
-                      className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition cursor-pointer shrink-0"
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50  rounded-lg transition cursor-pointer shrink-0"
                     >
-                      ✕
+                      <Icons.Delete className="w-5 h-5" />
                     </button>
                   </div>
                 ))}
@@ -506,9 +502,10 @@ const ProductModal = ({
                       thu_tu: formData.thuoc_tinh.length + 1,
                     })
                   }
-                  className="mt-2 px-4 py-2 text-sm text-blue-600 font-semibold border border-blue-600 rounded-lg hover:bg-blue-50 transition cursor-pointer"
+                  className="mt-2 px-3 py-2 text-sm text-blue-600 font-semibold border border-blue-600 rounded-lg hover:bg-blue-50 transition cursor-pointer flex items-center gap-1 shrink-0"
                 >
-                  + Thêm thông số
+                  <Icons.Add className="w-4 h-4" />
+                  Thêm thông số
                 </button>
               </div>
             )}
@@ -516,7 +513,7 @@ const ProductModal = ({
             {/* ═══ TAB 3: BIẾN THỂ ═══ */}
             {activeTab === 3 && (
               <div className="space-y-4">
-                <h4 className="text-base font-bold text-gray-800 border-b pb-2 mb-4">
+                <h4 className="text-sm font-bold text-gray-800 border-b border-gray-300 pb-2 mb-4">
                   Các phiên bản & Mức giá
                 </h4>
                 <div className="overflow-x-auto border border-gray-200 rounded-lg">
@@ -543,17 +540,17 @@ const ProductModal = ({
                         <th className="p-3 font-semibold text-gray-600 w-20 text-center">
                           Tồn kho
                         </th>
-                        <th className="p-3 font-semibold text-gray-600">
+                        <th className="p-3 font-semibold text-gray-600 whitespace-nowrap">
                           Trạng thái
                         </th>
-                        <th className="p-3 w-10 text-center">✕</th>
+                        <th className="p-3 w-8 text-center"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {formData.bien_the.map((item, index) => (
                         <tr
                           key={index}
-                          className="border-b last:border-0 hover:bg-gray-50"
+                          className="border-b border-gray-300 last:border-0 hover:bg-gray-50"
                         >
                           <td className="p-2">
                             <input
@@ -567,7 +564,7 @@ const ProductModal = ({
                                 )
                               }
                               type="text"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                               placeholder="SKU..."
                             />
                           </td>
@@ -583,12 +580,12 @@ const ProductModal = ({
                                 )
                               }
                               type="text"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
-                              placeholder="Màu..."
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                              placeholder="Tên màu..."
                             />
                           </td>
                           <td className="p-2 w-28">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-0.5">
                               <input
                                 type="color"
                                 value={item.ma_mau_hex || "#ffffff"}
@@ -600,7 +597,7 @@ const ProductModal = ({
                                     e.target.value,
                                   )
                                 }
-                                className="w-8 h-8 rounded border border-gray-300 cursor-pointer p-0.5"
+                                className="w-5 h-7 rounded border border-gray-300 cursor-pointer focus:ring-1 focus:ring-blue-500 outline-none p-0"
                               />
                               <input
                                 value={item.ma_mau_hex || ""}
@@ -613,7 +610,7 @@ const ProductModal = ({
                                   )
                                 }
                                 type="text"
-                                className="w-20 border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs font-mono"
+                                className="w-20 border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono"
                                 placeholder="#ffffff"
                               />
                             </div>
@@ -630,7 +627,7 @@ const ProductModal = ({
                                 )
                               }
                               type="text"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                               placeholder="256GB..."
                             />
                           </td>
@@ -646,7 +643,7 @@ const ProductModal = ({
                                 )
                               }
                               type="text"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                               placeholder="8GB..."
                             />
                           </td>
@@ -662,7 +659,7 @@ const ProductModal = ({
                                 )
                               }
                               type="number"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                               placeholder="0"
                             />
                           </td>
@@ -678,7 +675,7 @@ const ProductModal = ({
                                 )
                               }
                               type="number"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                               placeholder="0"
                             />
                           </td>
@@ -694,7 +691,7 @@ const ProductModal = ({
                                 )
                               }
                               type="number"
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs text-center"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm text-center"
                               placeholder="0"
                             />
                           </td>
@@ -709,7 +706,7 @@ const ProductModal = ({
                                   e.target.value,
                                 )
                               }
-                              className="w-full border px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-xs bg-white cursor-pointer"
+                              className="w-full border border-gray-300 px-2 py-2 rounded focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white cursor-pointer appearance-none"
                             >
                               <option value="active">Hiện</option>
                               <option value="inactive">Ẩn</option>
@@ -718,9 +715,9 @@ const ProductModal = ({
                           <td className="p-2 text-center">
                             <button
                               onClick={() => removeRow("bien_the", index)}
-                              className="text-red-400 hover:text-red-600 font-bold cursor-pointer p-1"
+                              className="text-red-400 hover:text-red-600 cursor-pointer"
                             >
-                              ✕
+                              <Icons.Delete className="w-5 h-5" />
                             </button>
                           </td>
                         </tr>
@@ -742,9 +739,9 @@ const ProductModal = ({
                       trang_thai: "active",
                     })
                   }
-                  className="mt-2 px-4 py-2 text-sm text-green-600 font-semibold border border-green-600 rounded-lg hover:bg-green-50 transition cursor-pointer"
+                  className="mt-2 px-4 py-2 text-sm text-green-600 font-semibold border border-green-400 rounded-lg hover:bg-green-50 transition cursor-pointer flex items-center gap-1 shrink-0"
                 >
-                  + Thêm biến thể mới
+                  <Icons.Add className="w-4 h-4" /> Thêm biến thể mới
                 </button>
               </div>
             )}
@@ -752,7 +749,7 @@ const ProductModal = ({
             {/* ═══ TAB 4: HÌNH ẢNH ═══ */}
             {activeTab === 4 && (
               <div className="space-y-5">
-                <h4 className="text-base font-bold text-gray-800 border-b pb-2 mb-2">
+                <h4 className="text-sm font-bold text-gray-800 border-b border-gray-300 pb-1 mb-2">
                   Quản lý hình ảnh
                 </h4>
 
@@ -783,10 +780,10 @@ const ProductModal = ({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInput.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center flex flex-col items-center justify-center cursor-pointer transition select-none
+                  className={`border rounded-xl p-2 text-center flex flex-col items-center justify-center cursor-pointer transition select-none
                     ${dragOver ? "border-blue-500 bg-blue-100" : "border-blue-300 bg-blue-50/50 hover:bg-blue-50"}`}
                 >
-                  <div className="text-4xl mb-3 pointer-events-none">📸</div>
+                  <Icons.Picture className="w-8 h-8 text-blue-500 pointer-events-none" />
                   <p className="font-semibold text-blue-700 pointer-events-none">
                     {dragOver
                       ? "Thả ảnh vào đây..."
@@ -828,7 +825,7 @@ const ProductModal = ({
                 )}
 
                 {/* ── Grid slots ── */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {Array.from({ length: totalSlots }).map((_, slotIndex) => {
                     const img = allImages[slotIndex];
                     const hasImg = !!img;
@@ -875,7 +872,7 @@ const ProductModal = ({
                                   : img.previewUrl
                               }
                               alt={isOld ? img.alt_text || "" : "preview"}
-                              className="w-full h-28 object-cover"
+                              className="w-full h-50 object-cover"
                               onError={(e) => {
                                 e.target.src =
                                   "https://placehold.co/200x112?text=No+Image";
@@ -894,7 +891,7 @@ const ProductModal = ({
                           </div>
                         ) : (
                           <div className="w-full h-28 flex flex-col items-center justify-center text-gray-400 select-none">
-                            <span className="text-2xl mb-1">+</span>
+                            <Icons.Add className="w-5 h-5" />
                             <span className="text-xs font-medium">
                               Slot {slotIndex + 1}
                             </span>
@@ -913,10 +910,10 @@ const ProductModal = ({
                                 className="text-gray-400 hover:text-blue-600 px-1.5 py-0.5 rounded disabled:opacity-30 disabled:cursor-not-allowed text-sm font-bold cursor-pointer"
                                 title="Di chuyển trái"
                               >
-                                ←
+                                <Icons.ArrowLeftLong className="w-4 h-4" />
                               </button>
                               <span className="text-[11px] font-semibold text-gray-500">
-                                #{slotIndex + 1}
+                                {slotIndex + 1}
                               </span>
                               <button
                                 type="button"
@@ -925,7 +922,7 @@ const ProductModal = ({
                                 className="text-gray-400 hover:text-blue-600 px-1.5 py-0.5 rounded disabled:opacity-30 disabled:cursor-not-allowed text-sm font-bold cursor-pointer"
                                 title="Di chuyển phải"
                               >
-                                →
+                                <Icons.ArrowRightLong className="w-4 h-4" />
                               </button>
                             </div>
                             {/* Set chính & Xóa */}
@@ -934,9 +931,9 @@ const ProductModal = ({
                                 <button
                                   type="button"
                                   onClick={() => setAsMain(slotIndex)}
-                                  className="flex-1 bg-white border border-gray-300 text-[10px] py-1 rounded-lg hover:bg-gray-100 cursor-pointer font-semibold text-gray-700"
+                                  className="flex-1 bg-white border border-gray-300 text-[10px] py-1 rounded-lg hover:bg-gray-100 cursor-pointer font-semibold text-gray-800"
                                 >
-                                  Set chính
+                                  Làm ảnh chính
                                 </button>
                               )}
                               <button
@@ -966,36 +963,36 @@ const ProductModal = ({
         </div>
 
         {/* ── FOOTER ── */}
-        <div className="bg-white px-6 py-4 border-t border-gray-200 flex justify-between items-center shrink-0">
+        <div className="bg-white px-4 py-3 border-t border-gray-200 flex justify-between items-center shrink-0">
           <div>
             {activeTab > 1 && (
               <button
                 onClick={() => setActiveTab(activeTab - 1)}
-                className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium cursor-pointer"
+                className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition font-medium cursor-pointer flex items-center gap-1"
               >
-                ← Quay lại
+                <Icons.ArrowLeftLong className="w-5 h-5" /> Quay lại
               </button>
             )}
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="px-5 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium cursor-pointer"
+              className="px-5 py-2 text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-medium cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               onClick={handleSaveProduct}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold transition shadow-sm cursor-pointer"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition shadow-sm cursor-pointer"
             >
               {editingProduct ? "Lưu thay đổi" : "Lưu sản phẩm"}
             </button>
             {activeTab < 4 && (
               <button
                 onClick={() => setActiveTab(activeTab + 1)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm cursor-pointer"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm cursor-pointer flex items-end gap-1"
               >
-                Tiếp tục →
+                Tiếp tục <Icons.ArrowRightLong className="w-5 h-5" />
               </button>
             )}
           </div>

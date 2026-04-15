@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 const sanPhamController = require("../controllers/sanPhamController");
 const danhMucController = require("../controllers/danhMucController");
+const nhaCungCapController = require("../controllers/nhaCungCapController");
 const upload = require("../config/upload");
 const { verifyToken, isAdmin } = require("../middlewares/authMiddleware");
 
 // 1. CÁC ROUTE CỐ ĐỊNH
-  // Danh mục
+// Danh mục
 router.get("/danhMuc", verifyToken, isAdmin, sanPhamController.getAllDanhMuc);
 router.post("/danhMuc", verifyToken, isAdmin, danhMucController.createDanhMuc);
 router.put(
@@ -27,14 +28,32 @@ router.put(
   isAdmin,
   danhMucController.toggleTrangThai,
 );
-  // Nhà cung cấp
+// Nhà cung cấp
 router.get(
   "/nhaCungCap",
   verifyToken,
   isAdmin,
-  sanPhamController.getAllNhaCungCap,
+  nhaCungCapController.getAllNhaCungCap,
 );
-  // Sản phẩm
+router.post(
+  "/nhaCungCap",
+  verifyToken,
+  isAdmin,
+  nhaCungCapController.createNhaCungCap,
+);
+router.put(
+  "/nhaCungCap/:id",
+  verifyToken,
+  isAdmin,
+  nhaCungCapController.updateNhaCungCap,
+);
+router.delete(
+  "/nhaCungCap/:id",
+  verifyToken,
+  isAdmin,
+  nhaCungCapController.deleteNhaCungCap,
+);
+// Sản phẩm
 router.get("/", sanPhamController.getAllSanPham);
 router.get(
   "/tatCaSanPham",

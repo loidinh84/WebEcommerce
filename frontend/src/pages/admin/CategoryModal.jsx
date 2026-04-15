@@ -150,7 +150,6 @@ const CategoryModal = ({ isOpen, onClose, data, allCategories, onSave }) => {
         slug: slugManuallyEdited ? prev.slug : generateSlug(value),
       }));
     } else if (name === "slug") {
-      // Người dùng tự sửa slug → không auto-gen nữa
       setSlugManuallyEdited(true);
       setFormData((prev) => ({ ...prev, slug: generateSlug(value) }));
     } else {

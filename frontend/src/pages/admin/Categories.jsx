@@ -194,6 +194,13 @@ const Categories = () => {
   };
 
   const executeDelete = async () => {
+    const hasChildren = categories.some((c) => c.parent === confirmModal.id);
+    if (hasChildren) {
+      toast.error("Không thể xóa! Danh mục này đang có danh mục con.");
+      setConfirmModal({ ...confirmModal, isOpen: false });
+      return;
+    }
+
     try {
       await axios.delete(
         `${API_BASE}/api/sanPham/danhMuc/${confirmModal.id}`,

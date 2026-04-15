@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const SanPham = require("../models/SanPham");
 const BienTheSanPham = require("../models/BienTheSanPham");
 const ThuocTinhSanPham = require("../models/ThuocTinhSanPham");
@@ -6,7 +7,6 @@ const DanhGiaSanPham = require("../models/DanhGiaSanPham");
 const DanhMuc = require("../models/DanhMuc");
 const NhaCungCap = require("../models/NhaCungCap");
 const TaiKhoan = require("../models/TaiKhoan");
-const { Op } = require("sequelize");
 
 const generateSlug = (text) => {
   if (!text) return "";
@@ -59,9 +59,31 @@ exports.getAllSanPham = async (req, res) => {
 
 exports.getAdminSanPham = async (req, res) => {
   try {
-    const { danhMucId, thuongHieu } = req.query;
+    const {
+      danhMucId,
+      nhaCungCapId,
+      noiBat,
+      trangThai,
+      thuongHieu,
+      search,
+      page = 1,
+      limit = 10,
+    } = req.query;
 
-    let whereCondition = {};
+    const limitNumber = parseInt(limit, 10);
+    const pageNumber = parseInt(page, 10);
+    const offset = (pageNumber - 1) * limitNumber;
+
+    let whereCondition = { trang_thai: { [Op.ne]: "deleted" } };
+    if (danhMucId) whereCondition.danh_muc_id = danhMucId;
+    if (nhaCungCapId) whereCondition.nha_cung_cap_id = nhaCungCapId;
+    if (trangThai) whereCondition.trang_thai = trangThai;
+    if (noiBat === "true") {
+      whereCondition.noi_bat = 1;
+    }
+    if (search) {
+      whereCondition.ten_san_pham = { [Op.like]: `%${search}%` };
+    }
 
     if (danhMucId) {
       whereCondition.danh_muc_id = danhMucId;
@@ -71,18 +93,33 @@ exports.getAdminSanPham = async (req, res) => {
       whereCondition.thuong_hieu = thuongHieu;
     }
 
-    const danhSach = await SanPham.findAll({
+    const { count, rows } = await SanPham.findAndCountAll({
       where: whereCondition,
       include: [
+        { model: DanhMuc, as: "danh_muc", attributes: ["id", "ten_danh_muc"] },
+        {
+          model: NhaCungCap,
+          as: "nha_cung_cap",
+          attributes: ["id", "ten_nha_cc"],
+        },
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
+      distinct: true,
       order: [["created_at", "DESC"]],
-      limit: 20,
+      limit: limitNumber,
+      offset: offset,
     });
 
-    res.status(200).json(danhSach);
+    const totalPages = Math.ceil(count / limitNumber);
+
+    res.status(200).json({
+      data: rows,
+      currentPage: pageNumber,
+      totalPages: totalPages,
+      totalItems: count,
+    });
   } catch (error) {
     console.error("Lỗi server khi lấy danh sách sản phẩm:", error);
     res.status(500).json({ message: "Lỗi server!" });
@@ -92,15 +129,6 @@ exports.getAdminSanPham = async (req, res) => {
 exports.getAllDanhMuc = async (req, res) => {
   try {
     const list = await DanhMuc.findAll();
-    res.json(list);
-  } catch (error) {
-    res.status(500).json({ message: "Lỗi!" });
-  }
-};
-
-exports.getAllNhaCungCap = async (req, res) => {
-  try {
-    const list = await NhaCungCap.findAll();
     res.json(list);
   } catch (error) {
     res.status(500).json({ message: "Lỗi!" });
@@ -314,15 +342,40 @@ exports.deleteSanPham = async (req, res) => {
   try {
     const { id } = req.params;
     const sanPham = await SanPham.findByPk(id);
-    if (!sanPham) {
+    if (!sanPham || sanPham.trang_thai === "deleted") {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
-
-    await sanPham.destroy();
+    sanPham.trang_thai = "deleted";
+    await sanPham.save();
     res.status(200).json({ message: "Đã xóa sản phẩm thành công!" });
   } catch (error) {
     console.error("Lỗi khi xóa sản phẩm:", error);
-    res.status(500).json({ message: "Lỗi server khi xóa sản phẩm!" });
+    if (error.name === "SequelizeForeignKeyConstraintError") {
+      const errDetail = error.parent ? error.parent.message : "";
+
+      if (errDetail.includes("DanhGiaSP")) {
+        return res.status(400).json({
+          message:
+            "Không thể xóa! Sản phẩm này đang có đánh giá từ khách hàng.",
+        });
+      }
+      if (errDetail.includes("ChiTietDonHang")) {
+        return res.status(400).json({
+          message: "Không thể xóa! Sản phẩm này đã phát sinh đơn hàng.",
+        });
+      }
+      if (errDetail.includes("GioHang")) {
+        return res.status(400).json({
+          message: "Không thể xóa! Sản phẩm đang nằm trong giỏ hàng của khách.",
+        });
+      }
+
+      return res.status(400).json({
+        message:
+          "Không thể xóa vì sản phẩm đang liên kết với dữ liệu khác (Đơn hàng/Đánh giá)!",
+      });
+    }
+    res.status(500).json({ message: "Lỗi server khi xóa sản phẩm." });
   }
 };
 

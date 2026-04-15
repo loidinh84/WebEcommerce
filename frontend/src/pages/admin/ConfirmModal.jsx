@@ -13,7 +13,7 @@ const ConfirmModal = ({
   const isDanger = type === "danger";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-gray-900/50">
       <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
         <div
           className={`px-6 py-4 border-b ${isDanger ? "bg-red-50 border-red-100" : "bg-orange-50 border-orange-100"}`}

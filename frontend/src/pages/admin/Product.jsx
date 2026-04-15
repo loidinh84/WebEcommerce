@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import BASE_URL from "../../config/api";
 import * as Icons from "../../assets/icons/index";
+import "react-toastify/dist/ReactToastify.css";
 
 const getAuthHeader = () => {
   const token =
@@ -16,6 +17,66 @@ const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price || 0);
 
 const API_BASE = BASE_URL;
+
+const CategoryNode = ({
+  category,
+  allCategories,
+  level = 0,
+  selected,
+  onSelect,
+  expandedParents,
+  toggleExpand,
+}) => {
+  const children = allCategories.filter(
+    (c) => c.danh_muc_cha_id === category.id,
+  );
+  const isExpanded = expandedParents.has(category.id);
+  const isSelected = selected === category.id;
+
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => {
+          onSelect(category.id);
+          toggleExpand(category.id);
+        }}
+        style={{ paddingLeft: `${level * 1.2 + 0.75}rem` }}
+        className={`w-full flex justify-between items-center py-2 pr-3 rounded-lg transition-colors text-left cursor-pointer group
+          ${isSelected ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50 font-medium"}`}
+      >
+        <div className="flex items-center gap-1.5 truncate">
+          <span className="truncate text-[13px]">{category.ten_danh_muc}</span>
+        </div>
+        {children.length > 0 && (
+          <span className="text-[10px] text-gray-400">
+            {isExpanded ? (
+              <Icons.ArrowDown className="w-5 h-5" />
+            ) : (
+              <Icons.ArrowForward className="w-3 h-3" />
+            )}
+          </span>
+        )}
+      </button>
+
+      {isExpanded && children.length > 0 && (
+        <div className="mt-0.5 space-y-0.5">
+          {children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              category={child}
+              allCategories={allCategories}
+              level={level + 1}
+              selected={selected}
+              onSelect={onSelect}
+              expandedParents={expandedParents}
+              toggleExpand={toggleExpand}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const mapProduct = (p) => ({
   id: p.id,
@@ -49,11 +110,13 @@ const Product = () => {
 
   // ── BỘ LỌC ──
   const [searchTerm, setSearchTerm] = useState("");
-  const [productTab, setProductTab] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSupplier, setSelectedSupplier] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -107,42 +170,56 @@ const Product = () => {
   const [formData, setFormData] = useState(emptyFormData);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  const toggleExpand = (parentName) => {
+  const toggleExpand = (categoryId) => {
     setExpandedParents((prev) => {
       const next = new Set(prev);
-      if (next.has(parentName)) next.delete(parentName);
-      else next.add(parentName);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
       return next;
     });
   };
 
-  // ── FETCH ────────────────────────────────────────────────
+  // FETCH
   const fetchProducts = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const [resSp, resCat, resSup] = await Promise.all([
-        axios.get(`${API_BASE}/api/sanPham/tatCaSanPham`, getAuthHeader()),
-        axios.get(`${API_BASE}/api/sanPham/danhMuc`, getAuthHeader()),
-        axios.get(`${API_BASE}/api/sanPham/nhaCungCap`, getAuthHeader()),
-      ]);
+      let trangThaiParam = "";
+      let noiBatParam = "";
 
-      setCategories(resCat.data);
-      setSuppliers(resSup.data);
+      if (filterStatus === "active" || filterStatus === "inactive") {
+        trangThaiParam = filterStatus;
+      } else if (filterStatus === "featured") {
+        noiBatParam = "true";
+      }
+      const queryParams = new URLSearchParams({
+        page: currentPage,
+        limit: 10,
+        danhMucId: selectedCategory === "all" ? "" : selectedCategory,
+        nhaCungCapId: selectedSupplier === "all" ? "" : selectedSupplier,
+        trangThai: trangThaiParam,
+        noiBat: noiBatParam,
+        search: searchTerm || "",
+      }).toString();
+      const resSp = await axios.get(
+        `${API_BASE}/api/sanPham/tatCaSanPham?${queryParams}`,
+        getAuthHeader(),
+      );
 
-      const mappedProducts = resSp.data.map((p) => {
-        const catObj = resCat.data.find((c) => c.id === p.danh_muc_id);
-        const supObj = resSup.data.find((s) => s.id === p.nha_cung_cap_id);
-
+      const mappedProducts = resSp.data.data.map((p) => {
         return {
           ...mapProduct(p),
-          category: catObj ? catObj.ten_danh_muc : "Chưa cập nhật",
-          supplier: supObj ? supObj.ten_nha_cc : "Chưa cập nhật",
+          category: p.danh_muc ? p.danh_muc.ten_danh_muc : "Chưa cập nhật",
+          supplier: p.nha_cung_cap
+            ? p.nha_cung_cap.ten_nha_cc
+            : "Chưa cập nhật",
         };
       });
 
       setProducts(mappedProducts);
+      setTotalPages(resSp.data.totalPages);
     } catch (error) {
       console.error(error);
+      toast.error("Không thể tải danh sách sản phẩm");
     } finally {
       setIsLoading(false);
     }
@@ -150,76 +227,43 @@ const Product = () => {
 
   useEffect(() => {
     fetchProducts();
+  }, [
+    currentPage,
+    selectedCategory,
+    selectedSupplier,
+    filterStatus,
+    searchTerm,
+  ]);
+
+  const fetchFormOptions = async () => {
+    try {
+      const [resCat, resSup] = await Promise.all([
+        axios.get(`${API_BASE}/api/sanPham/danhMuc`, getAuthHeader()),
+        axios.get(`${API_BASE}/api/sanPham/nhaCungCap`, getAuthHeader()),
+      ]);
+      setCategories(resCat.data);
+      setSuppliers(resSup.data);
+    } catch (error) {
+      console.error("Lỗi khi tải Danh mục/NCC:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFormOptions();
   }, []);
 
-  // ── BỘ LỌC ──────────────────────────────────────────────
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // BỘ LỌC
   const filteredProducts = products.filter((p) => {
-    if (productTab === "active" && p.status !== "active") return false;
-    if (productTab === "inactive" && p.status !== "inactive") return false;
-    if (productTab === "out_of_stock" && p.stock > 0) return false;
-    if (productTab === "featured" && !p.isFeatured) return false;
-    if (
-      searchTerm &&
-      !p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-      return false;
-    if (selectedCategory !== "all" && p.category !== selectedCategory)
-      return false;
-    if (selectedSupplier !== "all" && p.supplier !== selectedSupplier)
-      return false;
-    if (filterStatus === "active" && p.status !== "active") return false;
-    if (filterStatus === "inactive" && p.status !== "inactive") return false;
     if (stockFilter === "in_stock" && p.stock <= 0) return false;
     if (stockFilter === "out_of_stock" && p.stock > 0) return false;
     return true;
   });
-
-  const countTab = (tab) => {
-    if (tab === "all") return products.length;
-    if (tab === "active")
-      return products.filter((p) => p.status === "active").length;
-    if (tab === "inactive")
-      return products.filter((p) => p.status === "inactive").length;
-    if (tab === "out_of_stock")
-      return products.filter((p) => p.stock === 0).length;
-    if (tab === "featured") return products.filter((p) => p.isFeatured).length;
-    return 0;
-  };
-  const countByCategory = (cat) =>
-    cat === "all"
-      ? products.length
-      : products.filter((p) => p.category === cat).length;
-  const countBySupplier = (sup) =>
-    sup === "all"
-      ? products.length
-      : products.filter((p) => p.supplier === sup).length;
-  const countByStatus = (s) =>
-    s === "all"
-      ? products.length
-      : products.filter((p) => p.status === s).length;
-  const countByStock = (s) => {
-    if (s === "all") return products.length;
-    if (s === "in_stock") return products.filter((p) => p.stock > 0).length;
-    if (s === "out_of_stock")
-      return products.filter((p) => p.stock === 0).length;
-    return 0;
-  };
-
-  const hasActiveFilter =
-    selectedCategory !== "all" ||
-    selectedSupplier !== "all" ||
-    filterStatus !== "all" ||
-    stockFilter !== "all" ||
-    searchTerm !== "";
-
-  const clearAllFilters = () => {
-    setSelectedCategory("all");
-    setSelectedSupplier("all");
-    setFilterStatus("all");
-    setStockFilter("all");
-    setSearchTerm("");
-  };
 
   // ── HANDLERS ──
   const handleQuickSaveCategory = async (e) => {
@@ -228,8 +272,6 @@ const Product = () => {
       return toast.warning("Vui lòng nhập tên danh mục!");
 
     try {
-      // Gọi API thật xuống Backend để lưu vào SQL Server
-      // (Lưu ý: Bạn cần đảm bảo Backend đã có API POST /api/sanPham/danhMuc này nhé)
       await axios.post(
         `${API_BASE}/api/sanPham/danhMuc`,
         {
@@ -251,14 +293,60 @@ const Product = () => {
     }
   };
 
-  const handleQuickSaveSupplier = (e) => {
+  const handleQuickSaveSupplier = async (e) => {
     e.preventDefault();
     if (!newSupplierName.trim())
       return toast.warning("Vui lòng nhập tên nhà cung cấp!");
-    setSuppliers([...suppliers, { id: Date.now(), name: newSupplierName }]);
-    toast.success("Đã thêm nhà cung cấp: " + newSupplierName);
-    setIsAddSupplierOpen(false);
-    setNewSupplierName("");
+
+    try {
+      if (editingSupplier) {
+        await axios.put(
+          `${API_BASE}/api/sanPham/nhaCungCap/${editingSupplier}`,
+          { ten_nha_cc: newSupplierName },
+          getAuthHeader(),
+        );
+        toast.success("Cập nhật nhà cung cấp thành công!");
+      } else {
+        await axios.post(
+          `${API_BASE}/api/sanPham/nhaCungCap`,
+          { ten_nha_cc: newSupplierName, trang_thai: "active" },
+          getAuthHeader(),
+        );
+        toast.success("Đã thêm nhà cung cấp: " + newSupplierName);
+      }
+
+      setNewSupplierName("");
+      setEditingSupplier(null);
+      fetchProducts();
+      if (editingSupplier) {
+        setSuppliers(
+          suppliers.map((s) =>
+            s.id === editingSupplier
+              ? { ...s, ten_nha_cc: newSupplierName }
+              : s,
+          ),
+        );
+      } else {
+        await fetchFormOptions();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra!");
+    }
+  };
+
+  const handleEditSupplierClick = (supplier) => {
+    setEditingSupplier(supplier.id);
+    setNewSupplierName(supplier.ten_nha_cc);
+  };
+
+  const handleDeleteSupplier = (supplierObj) => {
+    setConfirmModal({
+      isOpen: true,
+      actionType: "delete_supplier",
+      supplier: supplierObj,
+      title: "Xác nhận xóa Nhà cung cấp",
+      message: `Bạn có chắc chắn muốn xóa "${supplierObj.ten_nha_cc}" không? Dữ liệu sẽ được chuyển vào thùng rác.`,
+    });
   };
 
   const handleBasicChange = (e) => {
@@ -268,11 +356,13 @@ const Product = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+
   const handleArrayChange = (arrayName, index, field, value) => {
     const arr = [...formData[arrayName]];
     arr[index][field] = value;
     setFormData((prev) => ({ ...prev, [arrayName]: arr }));
   };
+
   const addRow = (n, obj) =>
     setFormData((prev) => ({ ...prev, [n]: [...prev[n], obj] }));
   const removeRow = (n, index) =>
@@ -281,12 +371,15 @@ const Product = () => {
       [n]: prev[n].filter((_, i) => i !== index),
     }));
 
-  // ── LƯU SẢN PHẨM ────────────────────────────────────────
+  // LƯU SẢN PHẨM
   const handleSaveProduct = async () => {
     if (!formData.ten_san_pham.trim())
       return toast.warning("Tên sản phẩm không được để trống!");
 
     if (!formData.danh_muc_id) return toast.warning("Vui lòng chọn danh mục!");
+
+    if (!formData.nha_cung_cap_id)
+      return toast.warning("Vui lòng chọn nhà cung cấp!");
 
     if (formData.bien_the.length === 0)
       return toast.warning("Vui lòng thêm ít nhất 1 biến thể!");
@@ -296,6 +389,36 @@ const Product = () => {
 
     if (formData.bien_the.some((bt) => Number(bt.ton_kho) < 0))
       return toast.warning("Tồn kho không được âm!");
+
+    for (let i = 0; i < formData.bien_the.length; i++) {
+      const bt = formData.bien_the[i];
+      if (!bt.sku || !bt.sku.trim()) {
+        return toast.warning(`Vui lòng nhập SKU cho biến thể dòng ${i + 1}!`);
+      }
+      if (Number(bt.gia_ban) <= 0) {
+        return toast.warning(`Giá bán ở dòng ${i + 1} phải lớn hơn 0!`);
+      }
+      if (Number(bt.gia_goc) < 0) {
+        return toast.warning(`Giá gốc ở dòng ${i + 1} không được âm!`);
+      }
+      if (Number(bt.ton_kho) < 0) {
+        return toast.warning(`Tồn kho ở dòng ${i + 1} không được âm!`);
+      }
+    }
+
+    if (
+      Number(formData.can_nang) < 0 ||
+      Number(formData.chieu_dai) < 0 ||
+      Number(formData.chieu_rong) < 0 ||
+      Number(formData.chieu_cao) < 0
+    ) {
+      return toast.warning("Cân nặng và Kích thước không được là số âm!");
+    }
+
+    const totalImages = (formData.hinh_anh?.length || 0) + uploadedFiles.length;
+    if (totalImages === 0) {
+      return toast.warning("Vui lòng tải lên ít nhất 1 hình ảnh cho sản phẩm!");
+    }
 
     const dataToSend = new FormData();
     dataToSend.append("ten_san_pham", formData.ten_san_pham);
@@ -350,8 +473,20 @@ const Product = () => {
   };
 
   const executeConfirmAction = async () => {
-    const pid = confirmModal.product.id;
     try {
+      if (confirmModal.actionType === "delete_supplier") {
+        const sid = confirmModal.supplier.id;
+        await axios.delete(
+          `${API_BASE}/api/sanPham/nhaCungCap/${sid}`,
+          getAuthHeader(),
+        );
+        toast.success("Đã xóa nhà cung cấp thành công!");
+        setSuppliers(suppliers.filter((s) => s.id !== sid));
+        setConfirmModal({ ...confirmModal, isOpen: false });
+        return;
+      }
+
+      const pid = confirmModal.product.id;
       if (confirmModal.actionType === "delete") {
         await axios.delete(`${API_BASE}/api/sanPham/${pid}`, getAuthHeader());
         toast.success("Xóa thành công!");
@@ -370,7 +505,11 @@ const Product = () => {
       toast.error(error.response?.data?.message || "Thao tác thất bại!");
     } finally {
       setConfirmModal({ ...confirmModal, isOpen: false });
-      setExpandedRows((prev) => prev.filter((r) => r !== pid));
+      if (confirmModal.product) {
+        setExpandedRows((prev) =>
+          prev.filter((r) => r !== confirmModal.product.id),
+        );
+      }
     }
   };
 
@@ -435,14 +574,11 @@ const Product = () => {
     setIsModalOpen(true);
     setActiveTab(1);
   };
-  // ────────────────────────────────────────────────────────
 
   return (
     <div className="flex w-full h-full bg-[#f0f2f5] overflow-hidden justify-center relative font-sans">
-      <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-4">
-        {/* ================================================ */}
-        {/* SIDEBAR BỘ LỌC                                   */}
-        {/* ================================================ */}
+      <div className="flex w-full max-w-[1600px] h-full p-4 lg:p-6 gap-4 lg:gap-4">
+        {/* SIDEBAR BỘ LỌC */}
         <div className="w-64 shrink-0 flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-4 pr-1">
           {/* -- Tìm kiếm -- */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -452,7 +588,10 @@ const Product = () => {
               placeholder="Tên, thương hiệu..."
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
 
@@ -476,64 +615,21 @@ const Product = () => {
                   ${selectedCategory === "all" ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
               >
                 <span className="truncate">Tất cả</span>
-                <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0 ml-1">
-                  {countByCategory("all")}
-                </span>
               </button>
               {/* 2. Các danh mục từ Database */}
               {categories
                 .filter((c) => !c.danh_muc_cha_id)
-                .map((parent) => {
-                  const children = categories.filter(
-                    (c) => c.danh_muc_cha_id === parent.id,
-                  ); // Lấy con
-                  const isExpanded = expandedParents.has(parent.ten_danh_muc);
-
-                  return (
-                    <div key={parent.id}>
-                      {/* Thẻ Cha */}
-                      <button
-                        onClick={() => {
-                          toggleExpand(parent.ten_danh_muc);
-                          setSelectedCategory(parent.ten_danh_muc);
-                        }}
-                        className={`w-full flex justify-between items-center px-3 py-2 rounded-lg transition-colors text-left cursor-pointer font-medium
-                          ${selectedCategory === parent.ten_danh_muc ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-700 hover:bg-gray-50"}`}
-                      >
-                        <span className="truncate">{parent.ten_danh_muc}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          {countByCategory(parent.ten_danh_muc)}
-                        </span>
-                      </button>
-
-                      {/* Danh sách Con (Chỉ hiện khi Expanded) */}
-                      {isExpanded && children.length > 0 && (
-                        <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-gray-200 pl-2">
-                          {children.map((child) => (
-                            <button
-                              key={child.id}
-                              onClick={() =>
-                                setSelectedCategory(child.ten_danh_muc)
-                              }
-                              className={`w-full flex justify-between items-center px-2.5 py-1.5 rounded-lg transition-colors text-left cursor-pointer text-[12px]
-                                ${selectedCategory === child.ten_danh_muc ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-500 hover:bg-gray-50 font-medium"}`}
-                            >
-                              <div className="flex items-center gap-1.5 truncate">
-                                <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-gray-300" />
-                                <span className="truncate">
-                                  {child.ten_danh_muc}
-                                </span>
-                              </div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                                {countByCategory(child.ten_danh_muc)}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                .map((rootCategory) => (
+                  <CategoryNode
+                    key={rootCategory.id}
+                    category={rootCategory}
+                    allCategories={categories}
+                    selected={selectedCategory}
+                    onSelect={setSelectedCategory}
+                    expandedParents={expandedParents}
+                    toggleExpand={toggleExpand}
+                  />
+                ))}
             </div>
           </div>
 
@@ -554,7 +650,7 @@ const Product = () => {
                 { id: "all-sup", value: "all", label: "Tất cả" },
                 ...suppliers.map((s) => ({
                   id: s.id,
-                  value: s.ten_nha_cc,
+                  value: s.id,
                   label: s.ten_nha_cc,
                 })),
               ].map((item) => (
@@ -565,9 +661,6 @@ const Product = () => {
                     ${selectedSupplier === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
                 >
                   <span className="truncate">{item.label}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0 ml-1">
-                    {countBySupplier(item.value)}
-                  </span>
                 </button>
               ))}
             </div>
@@ -581,6 +674,7 @@ const Product = () => {
                 { value: "all", label: "Tất cả" },
                 { value: "active", label: "Đang kinh doanh" },
                 { value: "inactive", label: "Ngừng kinh doanh" },
+                { value: "featured", label: "Nổi bật" },
               ].map((item) => (
                 <button
                   key={item.value}
@@ -589,9 +683,6 @@ const Product = () => {
                     ${filterStatus === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
                 >
                   <span>{item.label}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                    {countByStatus(item.value)}
-                  </span>
                 </button>
               ))}
             </div>
@@ -613,9 +704,6 @@ const Product = () => {
                     ${stockFilter === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
                 >
                   <span>{item.label}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                    {countByStock(item.value)}
-                  </span>
                 </button>
               ))}
             </div>
@@ -641,26 +729,6 @@ const Product = () => {
             >
               <Icons.Add className="w-5 h-5" /> Thêm sản phẩm
             </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="px-6 bg-white border-b border-gray-100 flex gap-6 text-sm font-medium shrink-0 overflow-x-auto hide-scrollbar">
-            {[
-              { key: "all", label: "Tất cả" },
-              { key: "active", label: "Đang kinh doanh" },
-              { key: "inactive", label: "Ngừng kinh doanh" },
-              { key: "out_of_stock", label: "Hết hàng" },
-              { key: "featured", label: "Nổi bật" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setProductTab(tab.key)}
-                className={`py-3 border-b-2 transition-colors cursor-pointer whitespace-nowrap
-                  ${productTab === tab.key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-800"}`}
-              >
-                {tab.label} ({countTab(tab.key)})
-              </button>
-            ))}
           </div>
 
           {/* Bảng */}
@@ -813,12 +881,12 @@ const Product = () => {
                                   <div className="flex flex-col xl:flex-row gap-5">
                                     {/* Thông tin cơ bản */}
                                     <div className="flex-1 bg-white rounded-lg border border-gray-200 p-5">
-                                      <h4 className="font-bold text-gray-700 text-xs uppercase tracking-wider mb-4 border-b pb-2">
+                                      <h4 className="font-bold text-gray-700 text-sm mb-4 border-b border-gray-300 pb-2">
                                         Thông tin cơ bản
                                       </h4>
                                       <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Tên sản phẩm
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -826,7 +894,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Thương hiệu
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -834,7 +902,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Danh mục
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -842,7 +910,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Nhà cung cấp
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -850,7 +918,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Giá gốc (nhập)
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -858,7 +926,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Giá bán
                                           </p>
                                           <p className="font-bold text-blue-600">
@@ -866,7 +934,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Tổng tồn kho
                                           </p>
                                           <p
@@ -878,7 +946,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div>
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Nổi bật
                                           </p>
                                           <p className="font-semibold text-gray-900">
@@ -886,7 +954,7 @@ const Product = () => {
                                           </p>
                                         </div>
                                         <div className="col-span-2">
-                                          <p className="text-gray-500 text-xs mb-0.5">
+                                          <p className="text-gray-500 text-sm mb-0.5">
                                             Mô tả ngắn
                                           </p>
                                           <p className="text-gray-700">
@@ -899,10 +967,10 @@ const Product = () => {
                                         </div>
                                         {p.fullDesc && (
                                           <div className="col-span-2">
-                                            <p className="text-gray-500 text-xs mb-0.5">
+                                            <p className="text-gray-500 text-sm mb-0.5">
                                               Mô tả đầy đủ
                                             </p>
-                                            <p className="text-gray-700 text-xs leading-relaxed line-clamp-3">
+                                            <p className="text-gray-700 text-sm leading-relaxed line-clamp-3">
                                               {p.fullDesc}
                                             </p>
                                           </div>
@@ -911,8 +979,8 @@ const Product = () => {
                                     </div>
 
                                     {/* Thao tác */}
-                                    <div className="w-full xl:w-44 shrink-0 flex flex-col gap-2.5">
-                                      <h4 className="font-bold text-gray-700 text-xs uppercase tracking-wider mb-1 border-b pb-2">
+                                    <div className="w-full xl:w-38 shrink-0 flex flex-col gap-2">
+                                      <h4 className="font-bold text-gray-700 text-sm mb-1 pb-2">
                                         Thao tác
                                       </h4>
                                       <button
@@ -934,7 +1002,7 @@ const Product = () => {
                                         className="cursor-pointer w-full py-2.5 bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white rounded-lg font-bold text-xs uppercase tracking-wide transition"
                                       >
                                         {p.status === "active"
-                                          ? "Ngừng KD"
+                                          ? "Ngừng kinh doanh"
                                           : "Mở bán lại"}
                                       </button>
                                       <button
@@ -947,7 +1015,7 @@ const Product = () => {
                                             message: `Bạn có chắc muốn xóa sản phẩm "${p.name}"? Hành động này không thể hoàn tác.`,
                                           })
                                         }
-                                        className="cursor-pointer w-full py-2.5 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 rounded-lg font-bold text-xs uppercase tracking-wide transition mt-auto"
+                                        className="cursor-pointer w-full py-2.5 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 rounded-lg font-bold text-xs uppercase tracking-wide transition "
                                       >
                                         Xóa sản phẩm
                                       </button>
@@ -997,7 +1065,7 @@ const Product = () => {
                                             {p.variants.map((v, idx) => (
                                               <tr
                                                 key={idx}
-                                                className="border-t bg-white hover:bg-gray-50"
+                                                className="border-t border-gray-200 bg-white hover:bg-gray-50"
                                               >
                                                 <td className="p-3 font-mono text-xs font-semibold text-gray-700">
                                                   {v.sku || "—"}
@@ -1153,29 +1221,37 @@ const Product = () => {
                 {filteredProducts.length}
               </span>{" "}
               / {products.length} sản phẩm
-              {hasActiveFilter && (
-                <button
-                  onClick={clearAllFilters}
-                  className="ml-4 text-blue-500 hover:text-blue-700 font-medium cursor-pointer text-xs"
-                >
-                  ✕ Xóa tất cả bộ lọc
-                </button>
-              )}
             </span>
             <div className="flex gap-1.5 items-center">
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &laquo;
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &lt;
               </button>
-              <button className="px-3.5 py-1.5 bg-blue-600 text-white rounded-md font-bold shadow-sm">
-                1
+              <button className="px-2.5 bg-blue-600 text-white rounded-md font-bold shadow-sm cursor-default">
+                {currentPage}
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &gt;
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &raquo;
               </button>
             </div>
@@ -1269,44 +1345,98 @@ const Product = () => {
         </div>
       )}
       {isAddSupplierOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/50 p-4">
           <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-800">Thêm Nhà Cung Cấp</h3>
+            <div className="px-6 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+              <h3 className="font-medium text-gray-800 text-xl">
+                Thêm Nhà Cung Cấp
+              </h3>
               <button
-                onClick={() => setIsAddSupplierOpen(false)}
-                className="text-2xl cursor-pointer hover:text-red-500 leading-none"
+                onClick={() => {
+                  setIsAddSupplierOpen(false);
+                  setEditingSupplier(null);
+                  setNewSupplierName("");
+                }}
+                className="text-3xl cursor-pointer hover:text-red-500 leading-none"
               >
                 &times;
               </button>
             </div>
-            <form onSubmit={handleQuickSaveSupplier}>
-              <div className="p-6">
+
+            <form
+              onSubmit={handleQuickSaveSupplier}
+              className="p-5 border-b border-gray-100 shrink-0"
+            >
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {editingSupplier ? "Cập nhật tên:" : "Thêm mới:"}
+              </label>
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={newSupplierName}
                   onChange={(e) => setNewSupplierName(e.target.value)}
-                  className="w-full p-3 border rounded-xl outline-none focus:border-blue-500 font-medium"
-                  placeholder="Tên nhà cung cấp..."
+                  className="flex-1 p-2.5 border border-gray-300 rounded-lg outline-none focus:border-blue-500 font-medium text-sm"
                   autoFocus
                 />
-              </div>
-              <div className="px-6 py-4 bg-gray-50 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddSupplierOpen(false)}
-                  className="flex-1 py-2 bg-white border rounded-xl font-bold cursor-pointer hover:bg-gray-100"
-                >
-                  Hủy
-                </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold cursor-pointer hover:bg-blue-700"
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg font-bold cursor-pointer hover:bg-blue-700 text-sm whitespace-nowrap"
                 >
-                  Tạo mới
+                  {editingSupplier ? "Cập nhật" : "Thêm"}
                 </button>
+                {editingSupplier && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingSupplier(null);
+                      setNewSupplierName("");
+                    }}
+                    className="px-3 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-bold cursor-pointer hover:bg-gray-300 text-sm"
+                  >
+                    Hủy
+                  </button>
+                )}
               </div>
             </form>
+
+            {/* Danh sách hiện tại */}
+            <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">
+                Danh sách hiện tại
+              </h4>
+              {suppliers.length === 0 ? (
+                <p className="text-sm text-gray-400 italic text-center py-4">
+                  Chưa có nhà cung cấp nào.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {suppliers.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded-lg shadow-sm hover:border-blue-300 transition-colors"
+                    >
+                      <span className="font-semibold text-gray-700 text-sm">
+                        {s.ten_nha_cc}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditSupplierClick(s)}
+                          className="text-blue-500 hover:text-blue-700 text-xs font-bold px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded cursor-pointer"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSupplier(s)}
+                          className="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 hover:bg-red-100 rounded cursor-pointer"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1315,7 +1445,9 @@ const Product = () => {
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}
         message={confirmModal.message}
-        type={confirmModal.actionType === "delete" ? "danger" : "warning"}
+        type={
+          confirmModal.actionType?.includes("delete") ? "danger" : "warning"
+        }
         onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={executeConfirmAction}
       />

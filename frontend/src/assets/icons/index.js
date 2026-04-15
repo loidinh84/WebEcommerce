@@ -40,8 +40,12 @@ import Star from "./Star.svg?react";
 import Share from "./Share.svg?react";
 import Memory from "./Memory.svg?react";
 import Comment from "./Comment.svg?react";
+import Delete from "./Delete.svg?react";
+import Picture from "./Picture.svg?react";
 
 export {
+  Picture,
+  Delete,
   Comment,
   Memory,
   Bill,
