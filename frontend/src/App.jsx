@@ -12,7 +12,6 @@ import ProductDetail from "./pages/ProductDetail";
 import UserProfile from "./pages/UserProfile";
 import OrderHistory from "./pages/OrderHistory";
 import OrderDetail from "./pages/OrderDetail";
-import Category from "./pages/admin/Categories";
 import Categories from "./pages/admin/Categories";
 import Order from "./pages/admin/Order";
 import Customer from "./pages/admin/Customer";

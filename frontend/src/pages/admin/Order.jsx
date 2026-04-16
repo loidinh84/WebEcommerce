@@ -2,110 +2,25 @@ import React, { useEffect, useState } from "react";
 import * as Icons from "../../assets/icons/index";
 import ConfirmModal from "./ConfirmModal";
 import axios from "axios";
+import BASE_URL from "../../config/api";
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale/vi";
+import { useReactToPrint } from "react-to-print";
+import InvoiceTemplate from "./InvoiceTemplate";
+
+registerLocale("vi", vi);
+
+const API_URL = BASE_URL;
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("vi-VN").format(price || 0);
 
-const mockOrders = [
-  {
-    id: "DH001",
-    customerName: "Nguyễn Văn A",
-    phone: "0901234567",
-    address: "123 Lê Lợi, Q1, TP.HCM",
-    date: "09/04/2026 14:30",
-    total: 34990000,
-    paymentMethod: "COD",
-    paymentStatus: "Chưa thanh toán",
-    orderStatus: "pending",
-    items: [
-      {
-        name: "iPhone 16 Pro Max",
-        variant: "Titan Đen - 256GB",
-        qty: 1,
-        price: 34990000,
-      },
-    ],
-  },
-  {
-    id: "DH002",
-    customerName: "Trần Thị B",
-    phone: "0987654321",
-    address: "456 Nguyễn Trãi, Ba Đình, HN",
-    date: "09/04/2026 10:15",
-    total: 27490000,
-    paymentMethod: "Chuyển khoản",
-    paymentStatus: "Đã thanh toán",
-    orderStatus: "processing",
-    items: [
-      {
-        name: "Laptop ASUS ROG Strix G15",
-        variant: "Xám Eclipse",
-        qty: 1,
-        price: 25990000,
-      },
-      { name: "Bàn phím cơ AKKO", variant: "Hồng", qty: 1, price: 1500000 },
-    ],
-  },
-  {
-    id: "DH003",
-    customerName: "Lê Văn C",
-    phone: "0911223344",
-    address: "789 Điện Biên Phủ, Đà Nẵng",
-    date: "08/04/2026 16:45",
-    total: 1500000,
-    paymentMethod: "VNPAY",
-    paymentStatus: "Đã thanh toán",
-    orderStatus: "completed",
-    items: [
-      { name: "Bàn phím cơ AKKO", variant: "Xanh", qty: 1, price: 1500000 },
-    ],
-  },
-  {
-    id: "DH004",
-    customerName: "Phạm Thị D",
-    phone: "0933445566",
-    address: "12 Trần Hưng Đạo, Q5, TP.HCM",
-    date: "07/04/2026 09:00",
-    total: 5990000,
-    paymentMethod: "COD",
-    paymentStatus: "Chưa thanh toán",
-    orderStatus: "cancelled",
-    items: [
-      {
-        name: "Tai nghe Sony WH-1000XM5",
-        variant: "Đen",
-        qty: 1,
-        price: 5990000,
-      },
-    ],
-  },
-  {
-    id: "DH005",
-    customerName: "Hoàng Văn E",
-    phone: "0966778899",
-    address: "88 Lý Tự Trọng, Hải Châu, Đà Nẵng",
-    date: "06/04/2026 11:20",
-    total: 52000000,
-    paymentMethod: "Chuyển khoản",
-    paymentStatus: "Đã thanh toán",
-    orderStatus: "completed",
-    items: [
-      {
-        name: "MacBook Air M3",
-        variant: "Midnight 16GB",
-        qty: 1,
-        price: 52000000,
-      },
-    ],
-  },
-];
-
-// Parse "dd/mm/yyyy HH:MM" → Date object để so sánh
-const parseDate = (dateStr) => {
-  if (!dateStr) return null;
-  const [datePart] = dateStr.split(" ");
-  const [dd, mm, yyyy] = datePart.split("/");
-  return new Date(`${yyyy}-${mm}-${dd}`);
+const getAuthHeader = () => {
+  const token =
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+  return { headers: { Authorization: `Bearer ${token}` } };
 };
 
 const Order = () => {
@@ -113,14 +28,19 @@ const Order = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState([]);
 
-  // ── BỘ LỌC ──────────────────────────────────────────────
+  // BỘ LỌC
   const [searchTerm, setSearchTerm] = useState("");
-  const [orderTab, setOrderTab] = useState("all"); // Tab trạng thái đơn hàng
-  const [filterPaymentMethod, setFilterPaymentMethod] = useState("all"); // Phương thức TT
-  const [filterPaymentStatus, setFilterPaymentStatus] = useState("all"); // Trạng thái TT
-  const [filterDateFrom, setFilterDateFrom] = useState(""); // Từ ngày (yyyy-mm-dd)
-  const [filterDateTo, setFilterDateTo] = useState(""); // Đến ngày (yyyy-mm-dd)
-  // ────────────────────────────────────────────────────────
+  const [orderTab, setOrderTab] = useState("all");
+  const [filterPaymentMethod, setFilterPaymentMethod] = useState("all");
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
+  const [filterDateFrom, setFilterDateFrom] = useState(null);
+  const [filterDateTo, setFilterDateTo] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const componentRef = React.useRef();
+  const [selectedOrderForPrint, setSelectedOrderForPrint] = useState(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const [toast, setToast] = useState({
     show: false,
@@ -137,27 +57,62 @@ const Order = () => {
   });
 
   const fetchOrders = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await axios.get("${BASE_URL}/api/donhang");
-      setOrders(response.data);
+      const params = {
+        page: currentPage,
+        limit: 10,
+        search: searchTerm,
+        status: orderTab,
+        paymentMethod: filterPaymentMethod,
+        paymentStatus: filterPaymentStatus,
+        fromDate: filterDateFrom ? format(filterDateFrom, "yyyy-MM-dd") : "",
+        toDate: filterDateTo ? format(filterDateTo, "yyyy-MM-dd") : "",
+      };
+
+      // const token = localStorage.getItem("token");
+      const response = await axios.get(`${BASE_URL}/api/donHang`, {
+        params: params,
+        headers: getAuthHeader().headers,
+      });
+
+      setOrders(response.data.orders);
+      setTotalPages(response.data.totalPages);
+      setTotalItems(response.data.totalItems);
     } catch (error) {
-      console.error("Lỗi API Đơn hàng, đang dùng dữ liệu mẫu:", error);
-      setOrders(mockOrders);
+      console.error(error);
+      showToast("Không thể tải danh sách đơn hàng!", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [
+    currentPage,
+    orderTab,
+    filterPaymentMethod,
+    filterPaymentStatus,
+    filterDateFrom,
+    filterDateTo,
+    debouncedSearchTerm,
+  ]);
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(
       () => setToast({ show: false, message: "", type: "success" }),
-      2500,
+      2000,
     );
   };
 
@@ -170,17 +125,20 @@ const Order = () => {
   const executeConfirmAction = async () => {
     try {
       const { orderId, newStatus } = confirmModal;
-      setOrders(
-        orders.map((order) =>
-          order.id === orderId ? { ...order, orderStatus: newStatus } : order,
-        ),
+      await axios.put(
+        `${BASE_URL}/api/donHang/${orderId}/status`,
+        { trang_thai: newStatus },
+        getAuthHeader(),
       );
+      fetchOrders();
+
       let msg = "Cập nhật thành công!";
-      if (newStatus === "processing") msg = "Đã duyệt đơn hàng thành công!";
-      if (newStatus === "completed") msg = "Xác nhận đã giao hàng thành công!";
+      if (newStatus === "confirmed") msg = "Đã duyệt đơn hàng thành công!";
+      if (newStatus === "delivered") msg = "Xác nhận đã giao hàng thành công!";
       if (newStatus === "cancelled") msg = "Đã hủy đơn hàng!";
       showToast(msg, "success");
     } catch (error) {
+      console.error(error);
       showToast("Có lỗi xảy ra khi cập nhật trạng thái!", "error");
     } finally {
       setConfirmModal({ ...confirmModal, isOpen: false });
@@ -196,16 +154,28 @@ const Order = () => {
             Chờ xác nhận
           </span>
         );
-      case "processing":
+      case "confirmed":
+        return (
+          <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
+            Đang xử lý
+          </span>
+        );
+      case "shipping":
         return (
           <span className="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
             Đang giao
           </span>
         );
-      case "completed":
+      case "delivered":
         return (
           <span className="bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
             Hoàn thành
+          </span>
+        );
+      case "refunded":
+        return (
+          <span className="bg-orange-100 text-orange-700 border border-orange-200 px-2 py-1 rounded text-xs font-bold uppercase whitespace-nowrap">
+            Hoàn tiền
           </span>
         );
       case "cancelled":
@@ -219,81 +189,15 @@ const Order = () => {
     }
   };
 
-  // ── XÓA TẤT CẢ BỘ LỌC ──────────────────────────────────
-  const hasActiveFilter =
-    orderTab !== "all" ||
-    filterPaymentMethod !== "all" ||
-    filterPaymentStatus !== "all" ||
-    filterDateFrom !== "" ||
-    filterDateTo !== "" ||
-    searchTerm !== "";
-
-  const clearAllFilters = () => {
-    setOrderTab("all");
-    setFilterPaymentMethod("all");
-    setFilterPaymentStatus("all");
-    setFilterDateFrom("");
-    setFilterDateTo("");
-    setSearchTerm("");
-  };
-  // ────────────────────────────────────────────────────────
-
-  // ── LỌC DỮ LIỆU ─────────────────────────────────────────
-  const filteredOrders = orders.filter((order) => {
-    // 1. Tab trạng thái đơn
-    if (orderTab !== "all" && order.orderStatus !== orderTab) return false;
-
-    // 2. Phương thức thanh toán
-    if (
-      filterPaymentMethod !== "all" &&
-      order.paymentMethod !== filterPaymentMethod
-    )
-      return false;
-
-    // 3. Trạng thái thanh toán
-    if (
-      filterPaymentStatus !== "all" &&
-      order.paymentStatus !== filterPaymentStatus
-    )
-      return false;
-
-    // 4. Lọc ngày
-    const orderDate = parseDate(order.date);
-    if (filterDateFrom && orderDate) {
-      const from = new Date(filterDateFrom);
-      if (orderDate < from) return false;
-    }
-    if (filterDateTo && orderDate) {
-      const to = new Date(filterDateTo);
-      to.setHours(23, 59, 59); // bao gồm cả ngày to
-      if (orderDate > to) return false;
-    }
-
-    // 5. Tìm kiếm
-    if (searchTerm) {
-      const s = searchTerm.toLowerCase();
-      const matchId = order.id?.toLowerCase().includes(s);
-      const matchName = order.customerName?.toLowerCase().includes(s);
-      const matchPhone = order.phone?.includes(searchTerm);
-      return matchId || matchName || matchPhone;
-    }
-
-    return true;
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: `HoaDon_${selectedOrderForPrint?.id || "LTL_Store"} `,
   });
-
-  // Đếm cho từng tab
-  const countByStatus = (status) =>
-    status === "all"
-      ? orders.length
-      : orders.filter((o) => o.orderStatus === status).length;
-  // ────────────────────────────────────────────────────────
 
   return (
     <div className="flex w-full h-full bg-[#f0f2f5] overflow-hidden justify-center relative font-sans">
-      <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-6">
-        {/* ================================================ */}
-        {/* CỘT TRÁI: BỘ LỌC                                 */}
-        {/* ================================================ */}
+      <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-4">
+        {/* CỘT TRÁI: BỘ LỌC */}
         <div className="w-64 shrink-0 flex flex-col gap-4 overflow-y-auto hide-scrollbar pb-4 pr-1">
           {/* -- Tìm kiếm -- */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -316,8 +220,10 @@ const Order = () => {
               {[
                 { value: "all", label: "Tất cả" },
                 { value: "pending", label: "Chờ xác nhận" },
-                { value: "processing", label: "Đang giao" },
-                { value: "completed", label: "Hoàn thành" },
+                { value: "confirmed", label: "Đang xử lý" },
+                { value: "shipping", label: "Đang giao" },
+                { value: "delivered", label: "Hoàn thành" },
+                { value: "refunded", label: "Trả hàng/Hoàn tiền" },
                 { value: "cancelled", label: "Đã hủy" },
               ].map((item) => (
                 <button
@@ -327,9 +233,6 @@ const Order = () => {
                     ${orderTab === item.value ? "bg-gray-100 text-gray-900 font-bold" : "text-gray-600 hover:bg-gray-50"}`}
                 >
                   <span>{item.label}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                    {countByStatus(item.value)}
-                  </span>
                 </button>
               ))}
             </div>
@@ -390,10 +293,15 @@ const Order = () => {
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Từ ngày
                 </label>
-                <input
-                  type="date"
-                  value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                <DatePicker
+                  selected={filterDateFrom}
+                  onChange={(date) => setFilterDateFrom(date)}
+                  selectsStart
+                  startDate={filterDateFrom}
+                  endDate={filterDateTo}
+                  dateFormat="dd/MM/yyyy"
+                  locale="vi"
+                  placeholderText="dd/mm/yyyy"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white cursor-pointer"
                 />
               </div>
@@ -401,11 +309,16 @@ const Order = () => {
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                   Đến ngày
                 </label>
-                <input
-                  type="date"
-                  value={filterDateTo}
-                  min={filterDateFrom} // không cho chọn ngày kết thúc trước ngày bắt đầu
-                  onChange={(e) => setFilterDateTo(e.target.value)}
+                <DatePicker
+                  selected={filterDateTo}
+                  onChange={(date) => setFilterDateTo(date)}
+                  selectsEnd
+                  startDate={filterDateFrom}
+                  endDate={filterDateTo}
+                  minDate={filterDateFrom}
+                  dateFormat="dd/MM/yyyy"
+                  locale="vi"
+                  placeholderText="dd/mm/yyyy"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white cursor-pointer"
                 />
               </div>
@@ -415,53 +328,16 @@ const Order = () => {
                     setFilterDateFrom("");
                     setFilterDateTo("");
                   }}
-                  className="w-full text-xs text-gray-500 hover:text-red-500 font-medium cursor-pointer py-1 transition-colors"
+                  className="w-full text-xs text-gray-500 hover:text-red-500 font-medium cursor-pointer py-1 transition-colors flex items-center justify-center gap-1 border border-gray-200 rounded-lg"
                 >
-                  ✕ Xóa bộ lọc ngày
+                  <Icons.Delete className="w-4 h-4" /> Xóa bộ lọc ngày
                 </button>
               )}
             </div>
           </div>
-
-          {/* -- Thống kê nhanh -- */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-            <h3 className="font-bold text-gray-800 mb-3 text-sm">Thống kê</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tổng đơn</span>
-                <span className="font-bold text-gray-800">{orders.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Chờ xác nhận</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("pending")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Đang giao</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("processing")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Hoàn thành</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("completed")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Đã hủy</span>
-                <span className="font-bold text-gray-800">
-                  {countByStatus("cancelled")}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* ================================================ */}
-        {/* CỘT PHẢI: BẢNG DỮ LIỆU                          */}
-        {/* ================================================ */}
+        {/* CỘT PHẢI: BẢNG DỮ LIỆU */}
         <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-0">
           {/* Header */}
           <div className="px-6 py-5 flex justify-between items-center border-b border-gray-100 bg-white shrink-0">
@@ -475,8 +351,10 @@ const Order = () => {
             {[
               { id: "all", label: "Tất cả đơn" },
               { id: "pending", label: "Chờ xác nhận" },
-              { id: "processing", label: "Đang giao" },
-              { id: "completed", label: "Hoàn thành" },
+              { id: "confirmed", label: "Đang xử lý" },
+              { id: "shipping", label: "Đang giao" },
+              { id: "delivered", label: "Hoàn thành" },
+              { id: "refunded", label: "Trả hàng/Hoàn tiền" },
               { id: "cancelled", label: "Đã hủy" },
             ].map((tab) => (
               <button
@@ -488,7 +366,7 @@ const Order = () => {
                     : "border-transparent text-gray-500 hover:text-gray-800"
                 }`}
               >
-                {tab.label} ({countByStatus(tab.id)})
+                {tab.label}
               </button>
             ))}
           </div>
@@ -499,7 +377,7 @@ const Order = () => {
               <thead className="sticky top-0 bg-gray-50 text-gray-600 z-10 text-sm">
                 <tr>
                   <th className="py-3 px-6 font-bold border-b border-gray-200">
-                    Mã ĐH
+                    Mã đơn hàng
                   </th>
                   <th className="py-3 px-6 font-bold border-b border-gray-200">
                     Khách hàng
@@ -531,7 +409,7 @@ const Order = () => {
                       </div>
                     </td>
                   </tr>
-                ) : filteredOrders.length === 0 ? (
+                ) : orders.length === 0 ? (
                   <tr>
                     <td
                       colSpan="6"
@@ -541,7 +419,7 @@ const Order = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((order) => {
+                  orders.map((order) => {
                     const isExpanded = expandedRows.includes(order.id);
                     return (
                       <React.Fragment key={order.id}>
@@ -592,7 +470,7 @@ const Order = () => {
                             <td colSpan="6" className="p-6">
                               <div className="flex flex-col xl:flex-row gap-6">
                                 <div className="flex-1 bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 uppercase text-xs tracking-wider">
+                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-1 mb-4  text-sm tracking-wider">
                                     Thông tin giao hàng
                                   </h4>
                                   <div className="space-y-3 text-sm">
@@ -620,11 +498,20 @@ const Order = () => {
                                         {order.address}
                                       </span>
                                     </div>
+                                    <div className="mt-4 pt-4 border-t border-dashed border-gray-100">
+                                      <span className="text-gray-500 block mb-1 font-medium">
+                                        Ghi chú khách hàng:
+                                      </span>
+                                      <div className="p-2 bg-yellow-50 rounded-lg text-gray-600 italic">
+                                        {order.note ||
+                                          "Không có ghi chú cho đơn hàng này."}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
 
                                 <div className="flex-1 bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 uppercase text-xs tracking-wider">
+                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4  text-sm tracking-wider">
                                     Sản phẩm đặt mua
                                   </h4>
                                   <div className="space-y-3">
@@ -644,12 +531,63 @@ const Order = () => {
                                               {item.qty}
                                             </span>
                                           </p>
+                                          <span className="font-medium text-red-500">
+                                            {formatPrice(item.price)}
+                                          </span>
                                         </div>
                                         <p className="font-bold text-blue-600">
-                                          {formatPrice(item.price)}
+                                          {formatPrice(item.price * item.qty)}
                                         </p>
                                       </div>
                                     ))}
+                                  </div>
+                                  <div className="bg-gray-50 p-4 rounded-lg space-y-2.5">
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-gray-500">
+                                        Tạm tính:
+                                      </span>
+                                      <span className="font-medium text-gray-800">
+                                        {formatPrice(
+                                          order.items?.reduce(
+                                            (total, item) =>
+                                              total + item.price * item.qty,
+                                            0,
+                                          ),
+                                        )}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                      <span className="text-gray-500">
+                                        Phí vận chuyển:
+                                      </span>
+                                      <span className="font-medium text-gray-800">
+                                        {formatPrice(
+                                          order.shippingFee ||
+                                            order.total -
+                                              order.items?.reduce(
+                                                (total, item) =>
+                                                  total + item.price * item.qty,
+                                                0,
+                                              ),
+                                        )}
+                                      </span>
+                                    </div>
+                                    {order.discount > 0 && (
+                                      <div className="flex justify-between text-sm text-red-500">
+                                        <span>Giảm giá (Voucher):</span>
+                                        <span className="font-medium">
+                                          -{formatPrice(order.discount)}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                                      <span className="font-medium text-gray-900 text-sm">
+                                        Tổng thanh toán:
+                                      </span>
+                                      <span className="text-lg font-medium text-blue-600">
+                                        {formatPrice(order.total)}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
 
@@ -664,7 +602,7 @@ const Order = () => {
                                           isOpen: true,
                                           actionType: "process",
                                           orderId: order.id,
-                                          newStatus: "processing",
+                                          newStatus: "confirmed",
                                           title: "Xác nhận duyệt đơn",
                                           message: `Duyệt và chuyển đơn hàng ${order.id} sang trạng thái Đang giao?`,
                                         })
@@ -674,14 +612,31 @@ const Order = () => {
                                       Duyệt đơn này
                                     </button>
                                   )}
-                                  {order.orderStatus === "processing" && (
+                                  {order.orderStatus === "confirmed" && (
+                                    <button
+                                      onClick={() =>
+                                        setConfirmModal({
+                                          isOpen: true,
+                                          actionType: "ship",
+                                          orderId: order.id,
+                                          newStatus: "shipping",
+                                          title: "Bàn giao vận chuyển",
+                                          message: `Đơn hàng ${order.id} đã được giao cho Shipper?`,
+                                        })
+                                      }
+                                      className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
+                                    >
+                                      Giao hàng
+                                    </button>
+                                  )}
+                                  {order.orderStatus === "shipping" && (
                                     <button
                                       onClick={() =>
                                         setConfirmModal({
                                           isOpen: true,
                                           actionType: "complete",
                                           orderId: order.id,
-                                          newStatus: "completed",
+                                          newStatus: "delivered",
                                           title: "Xác nhận giao thành công",
                                           message: `Đơn hàng ${order.id} đã được giao thành công?`,
                                         })
@@ -692,7 +647,7 @@ const Order = () => {
                                     </button>
                                   )}
                                   {(order.orderStatus === "pending" ||
-                                    order.orderStatus === "processing") && (
+                                    order.orderStatus === "confirmed") && (
                                     <button
                                       onClick={() =>
                                         setConfirmModal({
@@ -709,7 +664,13 @@ const Order = () => {
                                       Hủy đơn hàng
                                     </button>
                                   )}
-                                  <button className="w-full py-2.5 bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors mt-auto cursor-pointer">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedOrderForPrint(order);
+                                      setTimeout(() => handlePrint(), 150);
+                                    }}
+                                    className="w-full py-2.5 bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors mt-auto cursor-pointer"
+                                  >
                                     In hóa đơn
                                   </button>
                                 </div>
@@ -726,36 +687,46 @@ const Order = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center text-sm text-gray-600 shrink-0">
+          <div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center text-sm text-gray-600 shrink-0">
             <span className="font-medium">
               Hiển thị{" "}
               <span className="font-semibold text-gray-800">
-                {filteredOrders.length}
+                {orders.length}
               </span>{" "}
-              / {orders.length} đơn hàng
-              {hasActiveFilter && (
-                <button
-                  onClick={clearAllFilters}
-                  className="ml-4 text-blue-500 hover:text-blue-700 font-medium cursor-pointer text-xs"
-                >
-                  ✕ Xóa tất cả bộ lọc
-                </button>
-              )}
+              / {totalItems} đơn hàng
             </span>
             <div className="flex gap-1.5 items-center">
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &laquo;
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &lt;
               </button>
-              <button className="px-3.5 py-1.5 bg-blue-600 text-white rounded-md font-bold shadow-sm">
-                1
+              <button className="px-2.5  bg-blue-600 text-white rounded-md font-bold shadow-sm">
+                {currentPage}
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &gt;
               </button>
-              <button className="px-3 py-1.5 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer">
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="px-2 border border-gray-200 hover:bg-gray-50 rounded-md font-medium transition-colors cursor-pointer"
+              >
                 &raquo;
               </button>
             </div>
@@ -779,6 +750,9 @@ const Order = () => {
           {toast.message}
         </div>
       )}
+      <div className="absolute left-[-9999px] top-[-9999px]">
+        <InvoiceTemplate ref={componentRef} order={selectedOrderForPrint} />
+      </div>
     </div>
   );
 };

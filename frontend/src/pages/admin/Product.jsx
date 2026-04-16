@@ -274,7 +274,7 @@ const Product = () => {
     return true;
   });
 
-  // ── HANDLERS ──
+  // HANDLERS 
   const handleQuickSaveCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryName.trim())
@@ -1224,7 +1224,7 @@ const Product = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-white flex justify-between items-center text-sm text-gray-600 shrink-0">
+          <div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center text-sm text-gray-600 shrink-0">
             <span className="font-medium">
               Hiển thị{" "}
               <span className="font-semibold text-gray-800">

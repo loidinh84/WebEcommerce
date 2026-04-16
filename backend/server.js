@@ -21,7 +21,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/taiKhoan", TaiKhoanRoutes);
 app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/api/donhang", DonHangRoutes);
+app.use("/api/donHang", DonHangRoutes);
 
 const PORT = process.env.PORT || 5000;
 sequelize

@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { Op } = require("sequelize");
 const DonHang = require("../models/DonHang");
 const ChiTietDonHang = require("../models/ChiTietDonHang");
 const HoaDonDienTu = require("../models/HoaDonDienTu");
@@ -10,6 +11,8 @@ const LichSuDungVoucher = require("../models/LichSuDungVoucher");
 const TaiKhoan = require("../models/TaiKhoan");
 const emailService = require("../services/emailService");
 const TheThanhVien = require("../models/TheThanhVien");
+const GiaoDichThanhToan = require("../models/GiaoDichThanhToan");
+const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
 
 exports.createDonHang = async (req, res) => {
   const t = await db.transaction();
@@ -52,7 +55,7 @@ exports.createDonHang = async (req, res) => {
         throw new Error("Mã giảm giá đã hết lượt sử dụng!");
       }
 
-      // 3. QUAN TRỌNG: Chặn mỗi người dùng chỉ dùng 1 lần
+      // 3.Chặn mỗi người dùng chỉ dùng 1 lần
       const usageCount = await LichSuDungVoucher.count({
         where: { tai_khoan_id, khuyen_mai_id: voucherData.id },
         transaction: t,
@@ -279,5 +282,163 @@ exports.checkVoucher = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Lỗi kiểm tra voucher!" });
+  }
+};
+
+// Admin
+exports.getAdminOrders = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    const whereCondition = {};
+    if (search) {
+      whereCondition[Op.or] = [
+        { ma_don_hang: { [Op.like]: `%${search}%` } },
+        { "$dia_chi.ho_ten_nguoi_nhan$": { [Op.like]: `%${search}%` } },
+        { "$dia_chi.so_dien_thoai$": { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (status && status !== "all") {
+      whereCondition.trang_thai = status;
+    }
+
+    if (fromDate || toDate) {
+      whereCondition.created_at = {};
+      if (fromDate) whereCondition.created_at[Op.gte] = new Date(fromDate);
+      if (toDate) {
+        const endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+        whereCondition.created_at[Op.lte] = endDate;
+      }
+    }
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const { count, rows: orders } = await DonHang.findAndCountAll({
+      where: whereCondition,
+      include: [
+        { model: DiaChiGiaoHang, as: "dia_chi" },
+        { model: ChiTietDonHang, as: "chi_tiet" },
+        {
+          model: GiaoDichThanhToan,
+          as: "giao_dich",
+          include: [{ model: PhuongThucThanhToan, as: "phuong_thuc" }],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+      limit: parseInt(limit),
+      offset: offset,
+      distinct: true,
+      subQuery: false,
+    });
+
+    // Format dữ liệu
+    const formattedOrders = orders.map((order) => {
+      const diaChi = order.dia_chi || {};
+      const giaoDich = order.giao_dich || {};
+      const phuongThuc = giaoDich.phuong_thuc || {};
+
+      // Xử lý ngày tháng thành chuỗi dd/mm/yyyy HH:MM
+      const d = new Date(order.created_at);
+      const dateStr = `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+
+      // Xử lý chuỗi địa chỉ
+      const fullAddress = [
+        diaChi.dia_chi_cu_the,
+        diaChi.phuong_xa,
+        diaChi.quan_huyen,
+        diaChi.tinh_thanh,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      return {
+        id: order.ma_don_hang,
+        customerName: diaChi.ho_ten_nguoi_nhan || "Khách vãng lai",
+        phone: diaChi.so_dien_thoai || "Chưa cập nhật",
+        address: fullAddress || "Chưa cập nhật",
+        date: dateStr,
+        total: order.tong_thanh_toan,
+        shippingFee: order.phi_van_chuyen,
+        discount: order.tien_giam_gia,
+        subTotal: order.tong_tien_hang,
+        note: order.ghi_chu,
+        paymentMethod: phuongThuc.ten_phuong_thuc || "COD",
+        paymentStatus:
+          giaoDich.trang_thai === "thanh_cong"
+            ? "Đã thanh toán"
+            : "Chưa thanh toán",
+        orderStatus: order.trang_thai,
+        items: order.chi_tiet.map((item) => ({
+          name: item.ten_sp_luc_mua,
+          variant: item.sku_luc_mua,
+          qty: item.so_luong,
+          price: item.don_gia,
+        })),
+      };
+    });
+
+    res.status(200).json({
+      orders: formattedOrders,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(count / parseInt(limit)),
+      totalItems: count,
+    });
+  } catch (error) {
+    console.error("Lỗi lấy danh sách đơn hàng:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy đơn hàng" });
+  }
+};
+
+// Cập nhật trạng thái đơn hàng
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { trang_thai } = req.body;
+
+    // Tìm đơn hàng trong DB
+    const donHang = await DonHang.findOne({ where: { ma_don_hang: id } });
+
+    if (!donHang) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng này!" });
+    }
+
+    // Không cho phép đổi trạng thái nếu đơn đã Hủy hoặc Hoàn thành
+    if (
+      donHang.trang_thai === "cancelled" ||
+      donHang.trang_thai === "delivered"
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Đơn hàng đã đóng, không thể thay đổi trạng thái!" });
+    }
+
+    if (trang_thai === "cancelled") {
+      if (donHang.trang_thai === "shipping") {
+        return res.status(400).json({
+          message: "Đơn hàng đã được giao cho Shipper, không thể hủy!",
+        });
+      }
+    }
+
+    donHang.trang_thai = trang_thai;
+    donHang.update_at = new Date();
+    await donHang.save();
+
+    res.status(200).json({
+      message: "Cập nhật trạng thái thành công!",
+      data: donHang,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
+    res.status(500).json({ message: "Lỗi server khi cập nhật trạng thái!" });
   }
 };

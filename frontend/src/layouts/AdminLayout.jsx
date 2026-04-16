@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import ProfileModal from "../components/ProfileModal";
+import * as Icons from "../assets/icons/index";
 
 const menuItems = [
   { path: "/admin", label: "Tổng quan" },
@@ -13,7 +14,7 @@ const menuItems = [
     hasDropdown: true,
     subPaths: ["/admin/inventory", "/admin/inventory-check"],
     children: [
-      { path: "/admin/inventory",       label: "Danh sách kho" },
+      { path: "/admin/inventory", label: "Danh sách kho" },
       { path: "/admin/inventory-check", label: "Kiểm kho" },
     ],
   },
@@ -31,28 +32,13 @@ const AdminLayout = () => {
     return location.pathname.startsWith(item.path);
   };
 
-  const currentPageLabel =
-    (() => {
-      for (const item of menuItems) {
-        if (item.hasDropdown) {
-          const child = item.children.find((c) => location.pathname.startsWith(c.path));
-          if (child) return child.label;
-        } else if (checkIsActive(item)) {
-          return item.label;
-        }
-      }
-      return "Hệ thống Quản trị";
-    })();
-
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
-      <header className="bg-gray-900 text-white flex items-center justify-between px-6 h-16 shadow-md shrink-0 z-20">
+      <header className="bg-blue-600 text-white flex items-center justify-between px-6 h-16 shadow-md shrink-0 z-20">
         <div className="flex items-center h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-center mr-10 cursor-pointer">
-            <h1 className="text-2xl font-bold tracking-wider">
-              <span className="text-blue-500">LTL</span> Admin
-            </h1>
+            <h1 className="text-2xl font-bold tracking-wider">LTL Store</h1>
           </div>
 
           {/* Nav */}
@@ -65,20 +51,22 @@ const AdminLayout = () => {
                     <li key={item.label} className="relative group h-full">
                       {/* Nút cha */}
                       <div
-                        className={`flex items-center h-full px-5 font-medium transition-colors border-b-4 cursor-pointer select-none
-                          ${isActive
-                            ? "bg-gray-800 border-blue-500 text-white"
-                            : "border-transparent text-gray-400 hover:bg-gray-800 hover:text-white"
+                        className={`flex items-center h-full px-5 font-medium transition-colors border-b-4 cursor-pointer select-none text-lg font-semibold
+                          ${
+                            isActive
+                              ? "bg-blue-500 border-blue-500 text-white"
+                              : "border-transparent text-white hover:bg-blue-500 hover:text-white"
                           }`}
                       >
                         <span>{item.label}</span>
-
                       </div>
 
                       {/* Dropdown panel */}
-                      <div className="absolute top-[60px] left-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100
+                      <div
+                        className="absolute top-[60px] left-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100
                         opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                        transition-all duration-200 z-50 overflow-hidden">
+                        transition-all duration-200 z-50 overflow-hidden"
+                      >
                         {item.children.map((child) => {
                           const childActive = location.pathname === child.path;
                           return (
@@ -86,9 +74,10 @@ const AdminLayout = () => {
                               key={child.path}
                               to={child.path}
                               className={`flex items-center px-5 py-3.5 text-sm font-semibold transition-colors
-                                ${childActive
-                                  ? "bg-blue-50 text-blue-600"
-                                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                                ${
+                                  childActive
+                                    ? "bg-blue-50 text-blue-600"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 }`}
                             >
                               {child.label}
@@ -103,10 +92,11 @@ const AdminLayout = () => {
                   <li key={item.path} className="h-full">
                     <Link
                       to={item.path}
-                      className={`flex items-center h-full px-5 font-medium transition-colors border-b-4
-                        ${isActive
-                          ? "bg-gray-800 border-blue-500 text-white"
-                          : "border-transparent text-gray-400 hover:bg-gray-800 hover:text-white"
+                      className={`flex items-center h-full px-5 font-medium transition-colors border-b-4 text-lg font-semibold
+                        ${
+                          isActive
+                            ? "bg-blue-500 border-white text-white"
+                            : "border-transparent text-white hover:bg-blue-500 hover:text-white"
                         }`}
                     >
                       <span>{item.label}</span>
@@ -119,27 +109,31 @@ const AdminLayout = () => {
         </div>
 
         {/* Khối Phải: Thiết lập & User Dropdown */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-1">
           <Link
             to="/admin/settings"
-            className="text-gray-400 hover:text-white text-sm font-medium transition-colors hidden sm:block"
+            className="text-white hover:bg-blue-500 rounded-lg p-2.5 text-sm font-medium transition-colors hidden sm:block"
           >
             Thiết lập cửa hàng
           </Link>
 
           <div className="relative group h-16 flex items-center">
-            <div className="flex items-center gap-4 cursor-pointer hover:bg-gray-800 px-3 py-2 rounded-lg transition-colors">
-              <span className="text-sm font-medium text-gray-300">Xin chào, Admin</span>
-              <div className="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-bold border border-gray-400">
-                👤
-              </div>
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-blue-500 px-3 py-2 rounded-lg transition-colors">
+              <span className="text-sm font-medium text-white">
+                Xin chào, Admin
+              </span>
+              <Icons.User className="w-7 h-7" />
             </div>
 
-            <div className="absolute top-[60px] right-0 w-56 bg-white rounded-lg shadow-xl border border-gray-100
+            <div
+              className="absolute top-[60px] right-0 w-56 bg-white rounded-lg shadow-xl border border-gray-100
               opacity-0 invisible group-hover:opacity-100 group-hover:visible
-              transition-all duration-200 z-50 overflow-hidden">
+              transition-all duration-200 z-50 overflow-hidden"
+            >
               <div className="px-5 py-3 border-b border-gray-100">
-                <p className="text-xs text-gray-500 font-medium mb-1">Vai trò</p>
+                <p className="text-xs text-gray-500 font-medium mb-1">
+                  Vai trò
+                </p>
                 <p className="text-blue-600 font-bold tracking-wide">Admin</p>
               </div>
               <div className="py-2">

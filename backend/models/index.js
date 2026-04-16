@@ -5,8 +5,11 @@ const ChiTietDonHang = require("./ChiTietDonHang");
 const SanPham = require("./SanPham");
 const DanhMuc = require("./DanhMuc");
 const NhaCungCap = require("./NhaCungCap");
+const GiaoDichThanhToan = require("./GiaoDichThanhToan");
+const PhuongThucThanhToan = require("./PhuongThucThanhToan");
+const DiaChiGiaoHang = require("./DiaChiGiaoHang");
 
-// 1. Quan hệ Tài Khoản <-> Thẻ Thành Viên
+// Quan hệ Tài Khoản <-> Thẻ Thành Viên
 // Một tài khoản thuộc về một hạng thành viên
 TaiKhoan.belongsTo(TheThanhVien, {
   foreignKey: "the_thanh_vien_id",
@@ -18,7 +21,7 @@ TheThanhVien.hasMany(TaiKhoan, {
   as: "thanh_vien",
 });
 
-// 2. Quan hệ Tài Khoản <-> Đơn Hàng
+// Quan hệ Tài Khoản <-> Đơn Hàng
 // Một tài khoản có nhiều đơn hàng
 TaiKhoan.hasMany(DonHang, {
   foreignKey: "tai_khoan_id",
@@ -26,9 +29,21 @@ TaiKhoan.hasMany(DonHang, {
 });
 
 DonHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "nguoi_mua" });
+// Đơn hàng liên kết với Địa chỉ giao hàng
+DonHang.belongsTo(DiaChiGiaoHang, { foreignKey: "dia_chi_id", as: "dia_chi" });
 
-// 3. Quan hệ Đơn Hàng <-> Chi Tiết Đơn Hàng
+// Quan hệ Đơn Hàng <-> Chi Tiết Đơn Hàng
 DonHang.hasMany(ChiTietDonHang, { foreignKey: "don_hang_id", as: "chi_tiet" });
+// Đơn hàng liên kết với Giao dịch thanh toán
+DonHang.hasOne(GiaoDichThanhToan, {
+  foreignKey: "don_hang_id",
+  as: "giao_dich",
+});
+// Giao dịch thanh toán liên kết với Phương thức thanh toán
+GiaoDichThanhToan.belongsTo(PhuongThucThanhToan, {
+  foreignKey: "phuong_thuc_id",
+  as: "phuong_thuc",
+});
 ChiTietDonHang.belongsTo(DonHang, { foreignKey: "don_hang_id" });
 
 SanPham.belongsTo(DanhMuc, { foreignKey: "danh_muc_id", as: "danh_muc" });
@@ -55,4 +70,7 @@ module.exports = {
   SanPham,
   DanhMuc,
   NhaCungCap,
+  GiaoDichThanhToan,
+  PhuongThucThanhToan,
+  DiaChiGiaoHang,
 };
