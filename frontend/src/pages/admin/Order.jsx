@@ -136,6 +136,8 @@ const Order = () => {
       if (newStatus === "confirmed") msg = "Đã duyệt đơn hàng thành công!";
       if (newStatus === "delivered") msg = "Xác nhận đã giao hàng thành công!";
       if (newStatus === "cancelled") msg = "Đã hủy đơn hàng!";
+      if (newStatus === "refunded")
+        msg = "Đã xử lý hoàn tiền/trả hàng thành công!";
       showToast(msg, "success");
     } catch (error) {
       console.error(error);
@@ -644,6 +646,41 @@ const Order = () => {
                                       className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
                                     >
                                       Đã giao xong
+                                    </button>
+                                  )}
+                                  {order.orderStatus === "cancelled" && (
+                                    <button
+                                      onClick={() =>
+                                        setConfirmModal({
+                                          isOpen: true,
+                                          actionType: "refund",
+                                          orderId: order.id,
+                                          newStatus: "refunded",
+                                          title: "Xác nhận Hoàn tiền",
+                                          message: `Đơn hàng ${order.id} đã bị hủy. Xác nhận hoàn tiền cho khách hàng?`,
+                                        })
+                                      }
+                                      className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
+                                    >
+                                      Xác nhận hoàn tiền
+                                    </button>
+                                  )}
+                                  {order.orderStatus === "delivered" && (
+                                    <button
+                                      onClick={() =>
+                                        setConfirmModal({
+                                          isOpen: true,
+                                          actionType: "return",
+                                          orderId: order.id,
+                                          newStatus: "refunded",
+                                          title:
+                                            "Xác nhận Trả hàng & Hoàn tiền",
+                                          message: `Bạn đã nhận lại kiện hàng của đơn ${order.id} và đồng ý hoàn tiền cho khách?`,
+                                        })
+                                      }
+                                      className="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer mt-3"
+                                    >
+                                      Trả hàng & Hoàn tiền
                                     </button>
                                   )}
                                   {(order.orderStatus === "pending" ||
