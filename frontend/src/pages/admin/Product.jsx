@@ -110,6 +110,7 @@ const Product = () => {
 
   // ── BỘ LỌC ──
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSupplier, setSelectedSupplier] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -234,6 +235,14 @@ const Product = () => {
     filterStatus,
     searchTerm,
   ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const fetchFormOptions = async () => {
     try {
@@ -587,9 +596,9 @@ const Product = () => {
               type="text"
               placeholder="Tên, thương hiệu..."
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
-              value={searchTerm}
+              value={searchInput}
               onChange={(e) => {
-                setSearchTerm(e.target.value);
+                setSearchInput(e.target.value);
                 setCurrentPage(1);
               }}
             />
@@ -1185,6 +1194,7 @@ const Product = () => {
                                                 src={`${API_BASE}${img.url_anh}`}
                                                 alt={img.alt_text || p.name}
                                                 className="w-full h-24 object-cover"
+                                                loading="lazy"
                                                 onError={(e) => {
                                                   e.target.src =
                                                     "../../assets/images/NoImage.webp";

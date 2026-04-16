@@ -18,15 +18,15 @@ const CategoryNode = ({
 }) => {
   // Tìm danh mục này con
   const children = allCategories.filter((c) => c.parent === category.id);
-  const isExpanded = expandedParents.has(category.name);
-  const isSelected = selected === category.name;
+  const isExpanded = expandedParents.has(category.id);
+  const isSelected = selected === category.id;
 
   return (
     <div className="w-full">
       <button
         onClick={() => {
-          onSelect(category.name);
-          toggleExpand(category.name);
+          onSelect(category.id);
+          toggleExpand(category.id);
         }}
         // Càng sâu cấp thì lùi padding-left càng nhiều
         style={{ paddingLeft: `${level * 1.2 + 0.75}rem` }}
@@ -236,7 +236,7 @@ const Categories = () => {
     if (statusTab === "inactive" && c.status !== "inactive") return false;
 
     if (filterSelected !== "all") {
-      if (c.name !== filterSelected && c.parent !== filterSelected) {
+      if (c.id !== filterSelected && c.parent !== filterSelected) {
         return false;
       }
     }
@@ -422,7 +422,7 @@ const Categories = () => {
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-700">
                         {cat.parent ? (
-                          cat.parent
+                          cat.parentName
                         ) : (
                           <span className="text-gray-500 font-medium">
                             Danh mục cha
