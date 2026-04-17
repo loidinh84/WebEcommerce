@@ -27,6 +27,11 @@ TaiKhoan.hasMany(DonHang, {
   foreignKey: "tai_khoan_id",
   as: "danh_sach_don_hang",
 });
+TaiKhoan.hasMany(DiaChiGiaoHang, {
+  foreignKey: "tai_khoan_id",
+  as: "dia_chi_giao_hang",
+});
+DiaChiGiaoHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id" });
 
 DonHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "nguoi_mua" });
 // Đơn hàng liên kết với Địa chỉ giao hàng
@@ -34,12 +39,11 @@ DonHang.belongsTo(DiaChiGiaoHang, { foreignKey: "dia_chi_id", as: "dia_chi" });
 
 // Quan hệ Đơn Hàng <-> Chi Tiết Đơn Hàng
 DonHang.hasMany(ChiTietDonHang, { foreignKey: "don_hang_id", as: "chi_tiet" });
-// Đơn hàng liên kết với Giao dịch thanh toán
 DonHang.hasOne(GiaoDichThanhToan, {
   foreignKey: "don_hang_id",
   as: "giao_dich",
 });
-// Giao dịch thanh toán liên kết với Phương thức thanh toán
+
 GiaoDichThanhToan.belongsTo(PhuongThucThanhToan, {
   foreignKey: "phuong_thuc_id",
   as: "phuong_thuc",

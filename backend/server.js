@@ -10,6 +10,7 @@ const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");
 const DonHangRoutes = require("./routers/donHangRoutes");
 const DashBoardRoutes = require("./routers/dashBoardRoutes");
+const KhachHangRoutes = require("./routers/khachHangRoutes");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/donHang", DonHangRoutes);
 app.use("/api/dashboard", DashBoardRoutes);
+app.use("/api/customers", KhachHangRoutes);
 
 const PORT = process.env.PORT || 5000;
 sequelize

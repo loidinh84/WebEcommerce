@@ -129,6 +129,13 @@ exports.loginTaiKhoan = async (req, res) => {
       });
     }
 
+    if (user.trang_thai === "banned") {
+      return res.status(403).json({
+        message:
+          "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản lý để biết thêm chi tiết!",
+      });
+    }
+
     // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa
     const isMatch = await bcrypt.compare(mat_khau, user.mat_khau);
     if (!isMatch) {

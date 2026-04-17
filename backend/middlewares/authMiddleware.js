@@ -1,7 +1,8 @@
 const jwt = require("jsonwebtoken");
+const TaiKhoan = require("../models/TaiKhoan");
 
 // 1. Kiểm tra xem user có đăng nhập chưa
-exports.verifyToken = (req, res, next) => {
+exports.verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -16,8 +17,16 @@ exports.verifyToken = (req, res, next) => {
     const secretKey = process.env.JWT_SECRET;
 
     const decoded = jwt.verify(token, secretKey);
-    req.user = decoded;
 
+    const user = await TaiKhoan.findByPk(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "Tài khoản không tồn tại!" });
+    }
+    if (user.trang_thai === "banned") {
+      return res.status(403).json({ message: "Tài khoản của bạn đã bị khóa!" });
+    }
+
+    req.user = decoded;
     next();
   } catch (error) {
     return res
