@@ -110,12 +110,52 @@ const AdminLayout = () => {
 
         {/* Khối Phải: Thiết lập & User Dropdown */}
         <div className="flex items-center gap-1">
-          <Link
-            to="/admin/settings"
-            className="text-white hover:bg-blue-500 rounded-lg p-2.5 text-sm font-medium transition-colors hidden sm:block"
-          >
-            Thiết lập cửa hàng
+          <div className="relative group h-full hidden sm:flex items-center">
+          <Link to="/admin/settings">
+            <div className="text-white hover:bg-blue-500 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5">
+              <Icons.Setting className="w-5 h-5" />
+              Thiết lập cửa hàng
+            </div>
           </Link>
+            <div
+              className="absolute top-[37px] left-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100
+              opacity-0 invisible group-hover:opacity-100 group-hover:visible
+              transition-all duration-200 z-50 overflow-hidden"
+            >
+              <div className="py-2">
+                <Link
+                  to="/admin/settings"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Thiết lập cửa hàng
+                </Link>
+                <Link
+                  to="/admin/settings/banners"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Quản lý Banner
+                </Link>
+                <Link
+                  to="/admin/settings/shipping"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Đơn vị vận chuyển
+                </Link>
+                <Link
+                  to="/admin/settings/payments"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Phương thức thanh toán
+                </Link>
+                <Link
+                  to="/admin/settings/templates"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Quản lý mẫu in
+                </Link>
+              </div>
+            </div>
+          </div>
 
           <div className="relative group h-16 flex items-center">
             <div className="flex items-center gap-2 cursor-pointer hover:bg-blue-500 px-3 py-2 rounded-lg transition-colors">

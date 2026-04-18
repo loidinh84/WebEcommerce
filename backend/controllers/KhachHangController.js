@@ -2,7 +2,11 @@ const TaiKhoan = require("../models/TaiKhoan");
 const DonHang = require("../models/DonHang");
 const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
 const TheThanhVien = require("../models/TheThanhVien");
-const nodemailer = require("nodemailer");
+const ThietLapCuaHang = require("../models/ThietLapCuaHang");
+const {
+  sendCustomEmail,
+  sendOrderConfirmation,
+} = require("../services/emailService");
 
 // LẤY DANH SÁCH KHÁCH HÀNG
 const getCustomers = async (req, res) => {
@@ -151,30 +155,17 @@ const sendEmailToCustomer = async (req, res) => {
         .json({ success: false, message: "Vui lòng điền đủ thông tin!" });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
-    });
-
     // Cấu hình bức thư
-    const mailOptions = {
-      from: `"LTL Store Admin" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: subject,
-      html: `
+    const html = `
         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
-          <h2 style="color: #2563eb;">Thông báo từ LTL Store</h2>
+          <h2 style="color: #2563eb;">Thông báo từ ${storeName}</h2>
           <p>${message.replace(/\n/g, "<br>")}</p>
           <hr style="border: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #666;">Đây là email tự động, vui lòng không trả lời.</p>
         </div>
-      `,
-    };
+      `;
 
-    await transporter.sendMail(mailOptions);
+    await sendCustomEmail(email, subject, htmlMessage);
 
     res.status(200).json({ success: true, message: "Gửi email thành công!" });
   } catch (error) {
@@ -185,4 +176,9 @@ const sendEmailToCustomer = async (req, res) => {
   }
 };
 
-module.exports = { getCustomers, toggleStatus, sendEmailToCustomer };
+module.exports = {
+  getCustomers,
+  toggleStatus,
+  sendEmailToCustomer,
+  sendOrderConfirmation,
+};

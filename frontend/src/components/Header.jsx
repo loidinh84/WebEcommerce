@@ -3,6 +3,7 @@ import * as Icons from "../assets/icons/index";
 import Logo from "../assets/images/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import BASE_URL from "../config/api";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -11,6 +12,22 @@ const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
+  const [storeConfig, setStoreConfig] = useState(null);
+
+  useEffect(() => {
+    const fetchStoreConfig = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/store-settings`);
+        const result = await response.json();
+        if (result.success) {
+          setStoreConfig(result.data);
+        }
+      } catch (error) {
+        console.error("Lỗi tải cấu hình cửa hàng:", error);
+      }
+    };
+    fetchStoreConfig();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,7 +45,6 @@ const Header = () => {
         setIsScrolled(false);
       }
 
-      // Lưu lại tọa độ hiện tại cho lần lăn chuột tiếp theo
       lastScrollY.current = currentScrollY;
     };
 
@@ -78,7 +94,7 @@ const Header = () => {
 
             <span className="font-semibold cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90">
               <Icons.Call className="w-4 h-4 gap-2 brightness-0 invert" />
-              055.956.9340
+              {storeConfig?.so_dien_thoai}
             </span>
           </div>
         </div>
@@ -98,12 +114,16 @@ const Header = () => {
             }}
           >
             <img
-              src={Logo}
-              alt="LTL Shop Logo"
+              src={
+                storeConfig?.logo_url
+                  ? `${BASE_URL}${storeConfig.logo_url}`
+                  : Logo
+              }
+              alt={storeConfig?.ten_cua_hang}
               className="h-10 w-auto object-contain"
             />{" "}
             <span className="brightness font-bold pl-1.5  text-xl justify-center items-center flex">
-              LTLShop
+              {storeConfig?.ten_cua_hang || ""}
             </span>
           </div>
         </Link>

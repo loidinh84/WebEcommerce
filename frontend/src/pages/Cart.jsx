@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import * as Icons from "../assets/icons/index";
@@ -6,9 +6,11 @@ import * as Images from "../assets/images/index";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import BASE_URL from "../config/api";
+import { StoreContext } from "../context/StoreContext";
 
 const Cart = () => {
   const navigate = useNavigate();
+  const { storeConfig } = useContext(StoreContext);
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
     return savedCart.map((item) => ({
@@ -16,6 +18,12 @@ const Cart = () => {
       selected: true,
     }));
   });
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      localStorage.setItem("cart", JSON.stringify(cartItems));
+    }
+  }, []);
 
   const saveCartToLocal = (newCart) => {
     localStorage.setItem("cart", JSON.stringify(newCart));
@@ -241,7 +249,11 @@ const Cart = () => {
                 </span>{" "}
                 Sản phẩm):
                 <span className="text-2xl font-bold text-[#e30019] ml-2">
-                  {formatPrice(totalAmount)}
+                  {formatPrice(
+                    storeConfig?.lam_tron_tien
+                      ? Math.round(totalAmount / 1000) * 1000
+                      : totalAmount,
+                  )}
                 </span>
               </div>
               <button

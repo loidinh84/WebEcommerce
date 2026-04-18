@@ -6,9 +6,11 @@ import toast, { Toaster } from "react-hot-toast";
 import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
 import * as Icons from "../assets/icons/index";
+import { StoreContext } from "../context/StoreContext";
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { storeConfig } = useContext(StoreContext);
   const { user } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
@@ -116,9 +118,9 @@ const Checkout = () => {
   const shippingFee = selectedShipping
     ? Number(selectedShipping.phi_co_ban)
     : 0;
-  const memberDiscountRate = user?.ty_le_giam_gia || 0;
+  const memberDiscountRate = (user?.ty_le_giam_gia || 0) / 100;
   const paymentFee = paymentMethod ? Number(paymentMethod.phi_thanh_toan) : 0;
-  const discountAmount = subtotal * memberDiscountRate;
+  const discountAmount = Math.round(subtotal * memberDiscountRate);
   const total =
     subtotal + shippingFee - discountAmount - voucherDiscount - paymentFee;
 
@@ -331,7 +333,9 @@ const Checkout = () => {
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN */}
             <div className="bg-white rounded-lg shadow-sm px-6 py-3 border border-gray-100">
-              <h2 className="text-lg font-medium mb-4">Phương thức thanh toán</h2>
+              <h2 className="text-lg font-medium mb-4">
+                Phương thức thanh toán
+              </h2>
               <div
                 onClick={() => setIsPaymentModalOpen(true)}
                 className="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-all"
@@ -485,7 +489,11 @@ const Checkout = () => {
                   Tổng cộng:
                 </span>
                 <span className="text-2xl font-bold text-[#e30019]">
-                  {formatPrice(total)}
+                  {formatPrice(
+                    storeConfig?.lam_tron_tien
+                      ? Math.round(total / 1000) * 1000
+                      : total,
+                  )}
                 </span>
               </div>
 

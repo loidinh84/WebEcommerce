@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
 import BASE_URL from "../config/api";
+import { StoreContext } from "../context/StoreContext";
 
 const ContactSupport = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -12,11 +13,12 @@ const ContactSupport = () => {
   const [messages, setMessages] = useState([]);
   const chatEndRef = useRef(null);
 
+  const { storeConfig } = useContext(StoreContext);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 2. LẤY LỊCH SỬ TỪ DATABASE KHI VỪA LOAD TRANG (GIỐNG SHOPEE)
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -101,7 +103,9 @@ const ContactSupport = () => {
             Khiếu nại | Góp ý
           </button>
           <button
-            onClick={() => window.open("https://zalo.me/SĐT_CỦA_BẠN", "_blank")}
+            onClick={() =>
+              window.open(storeConfig?.zalo || "https://zalo.me/", "_blank")
+            }
             className="bg-white px-4 py-2.5 rounded-lg shadow-lg border border-gray-100 hover:bg-gray-100 flex items-center gap-2 text-sm font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 group"
           >
             <img

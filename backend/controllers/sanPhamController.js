@@ -276,7 +276,7 @@ exports.createSanPham = async (req, res) => {
       await ThuocTinhSanPham.bulkCreate(dataThuocTinh, { transaction: t });
     }
 
-    // 6. XỬ LÝ LƯU HÌNH ẢNH (Từ req.files của multer)
+    // 6. XỬ LÝ LƯU HÌNH ẢNH
     if (req.files && req.files.length > 0) {
       const dataHinhAnh = req.files.map((file, index) => ({
         san_pham_id: newProductId,

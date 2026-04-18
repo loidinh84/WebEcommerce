@@ -197,6 +197,13 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập!");
+      navigate("/login");
+      return;
+    } else {
+      navigate("/cart");
+    }
     if (!selectedVariant) {
       return toast.error("Vui lòng chọn phân loại sản phẩm!");
     }
@@ -517,7 +524,6 @@ const ProductDetail = () => {
                 <button
                   onClick={() => {
                     handleAddToCart();
-                    navigate("/cart");
                   }}
                   disabled={!selectedVariant || selectedVariant.ton_kho === 0}
                   className={`flex-1 text-white cursor-pointer h-12 rounded-lg font-bold transition shadow-md leading-tight ${
@@ -744,7 +750,7 @@ const ProductDetail = () => {
       {showTopBtn && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-[100] w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center text-2xl shadow-xl hover:bg-red-600 transition-colors animate-fade-in-up"
+          className="fixed bottom-8 right-8 z-[100] w-12 h-12 bg-gray-800 text-white rounded-full text-2xl shadow-xl hover:bg-red-600 transition-colors cursor-pointer"
         >
           ↑
         </button>

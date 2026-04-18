@@ -11,6 +11,8 @@ const aiRoutes = require("./routers/aiRoutes");
 const DonHangRoutes = require("./routers/donHangRoutes");
 const DashBoardRoutes = require("./routers/dashBoardRoutes");
 const KhachHangRoutes = require("./routers/khachHangRoutes");
+const ThietLapRoutes = require("./routers/thietLapRoutes");
+const maintenanceMiddleware = require("./middlewares/maintenanceMiddleware");
 
 const app = express();
 
@@ -20,12 +22,14 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+app.use(maintenanceMiddleware);
 app.use("/api/taiKhoan", TaiKhoanRoutes);
 app.use("/api/sanPham", sanPhamRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/donHang", DonHangRoutes);
 app.use("/api/dashboard", DashBoardRoutes);
 app.use("/api/customers", KhachHangRoutes);
+app.use("/api/store-settings", ThietLapRoutes);
 
 const PORT = process.env.PORT || 5000;
 sequelize

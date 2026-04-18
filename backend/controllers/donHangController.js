@@ -13,6 +13,7 @@ const emailService = require("../services/emailService");
 const TheThanhVien = require("../models/TheThanhVien");
 const GiaoDichThanhToan = require("../models/GiaoDichThanhToan");
 const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
+const ThietLapCuaHang = require("../models/ThietLapCuaHang");
 
 exports.createDonHang = async (req, res) => {
   const t = await db.transaction();
@@ -79,6 +80,33 @@ exports.createDonHang = async (req, res) => {
     // 1. Tạo mã đơn hàng tự động
     const maDonHang = generateOrderCode();
 
+    const config = await ThietLapCuaHang.findOne({
+      where: { id: 1 },
+      transaction: t,
+    });
+    let final_thanh_toan = tong_thanh_toan;
+    if (config && config.lam_tron_tien) {
+      final_thanh_toan = Math.round(tong_thanh_toan / 1000) * 1000;
+    }
+
+    const phuongThucDinhDanh = await PhuongThucThanhToan.findByPk(
+      phuong_thuc_tt,
+      {
+        transaction: t,
+      },
+    );
+
+    let initialStatus = "pending";
+
+    if (
+      config &&
+      config.tu_dong_duyet_don &&
+      phuongThucDinhDanh &&
+      phuongThucDinhDanh.loai === "cod"
+    ) {
+      initialStatus = "confirmed";
+    }
+
     // 2. Lưu vào bảng DonHang
     const newOrder = await DonHang.create(
       {
@@ -88,9 +116,9 @@ exports.createDonHang = async (req, res) => {
         don_vi_vc_id,
         tong_tien_hang,
         phi_van_chuyen,
-        tong_thanh_toan,
-        tien_giam_gia: tien_giam_gia || 0,
-        trang_thai: "pending",
+        tong_thanh_toan: final_thanh_toan,
+        tien_giam_gia: Math.round(tien_giam_gia || 0),
+        trang_thai: initialStatus,
         ghi_chu: ghi_chu || "",
         created_at: new Date(),
       },
@@ -168,7 +196,7 @@ exports.createDonHang = async (req, res) => {
 
     try {
       const tongChiTieuMoi =
-        Number(taiKhoan.tong_chi_tieu || 0) + Number(tong_thanh_toan);
+        Number(taiKhoan.tong_chi_tieu || 0) + Number(final_thanh_toan);
 
       const hangMoi = await TheThanhVien.findOne({
         where: { muc_chi_tieu_tu: { [Op.lte]: tongChiTieuMoi } },
@@ -196,7 +224,7 @@ exports.createDonHang = async (req, res) => {
         .sendOrderConfirmation(taiKhoan.email, {
           customerName: taiKhoan.ho_ten,
           maDonHang: maDonHang,
-          total: currencyFormatter.format(tong_thanh_toan),
+          total: currencyFormatter.format(final_thanh_toan),
           paymentMethod:
             phuong_thuc_tt === 1 ? "Tiền mặt (COD)" : "Chuyển khoản",
           address: addressText,

@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import Logo from "../assets/images/logo.png";
+import { StoreContext } from "../context/StoreContext";
 import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
 
 const Footer = () => {
+  
+  const { storeConfig } = useContext(StoreContext);
+
   return (
     <footer className="bg-[#568FDE] text-white font-sans mt-10">
       {/* --- PHẦN NỘI DUNG CHÍNH --- */}
@@ -17,14 +21,21 @@ const Footer = () => {
             <ul className="text-sm space-y-3">
               <li>
                 Mua hàng - bảo hành -{" "}
-                <span className="hover:underline">0333914514</span>
+                <span className="hover:underline">
+                  {storeConfig?.so_dien_thoai || ""}
+                </span>
               </li>
               <li>
-                Khiếu nại - <span className="hover:underline">0333914514</span>
+                Khiếu nại -{" "}
+                <span className="hover:underline">
+                  {storeConfig?.so_dien_thoai || ""}
+                </span>
               </li>
               <li>
                 Chăm sóc khách hàng -{" "}
-                <span className="hover:underline">0333914514</span>
+                <span className="hover:underline">
+                  {storeConfig?.so_dien_thoai || ""}
+                </span>
               </li>
               <li>
                 Gmail:{" "}
@@ -32,7 +43,7 @@ const Footer = () => {
                   href="mailto:dinhhoangloibt@gmail.com"
                   className="text-[#201D8A] font-semibold hover:underline hover:underline"
                 >
-                  dinhhoangloibt@gmail.com
+                  {storeConfig?.email || ""}
                 </a>
               </li>
             </ul>
@@ -96,28 +107,58 @@ const Footer = () => {
 
           {/* Cột 4: Kết nối mạng xã hội */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Kết nối với LTLShop</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              Kết nối với {storeConfig?.ten_cua_hang || "LTLShop"}
+            </h3>
             <div className="flex items-center gap-3">
-              <img
-                src={Images.Facebook}
-                alt="Facebook"
-                className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
-              />
-              <img
-                src={Images.TikTok}
-                alt="TikTok"
-                className="w-11 h-11 cursor-pointer hover:scale-110 transition-transform"
-              />
-              <img
-                src={Images.Instagram}
-                alt="Instagram"
-                className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-              />
-              <img
-                src={Images.Zalo}
-                alt="Zalo"
-                className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
-              />
+              {storeConfig?.facebook_url && (
+                <a
+                  href={storeConfig.facebook_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={Images.Facebook}
+                    alt="Facebook"
+                    className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
+                  />
+                </a>
+              )}
+              {storeConfig?.tiktok_url && (
+                <a
+                  href={storeConfig.tiktok_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={Images.TikTok}
+                    alt="TikTok"
+                    className="w-11 h-11 cursor-pointer hover:scale-110 transition-transform"
+                  />
+                </a>
+              )}
+              {storeConfig?.instagram_url && (
+                <a
+                  href={storeConfig.instagram_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img
+                    src={Images.Instagram}
+                    alt="Instagram"
+                    className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
+                  />
+                </a>
+              )}
+              {storeConfig?.zalo && (
+                <a href={storeConfig.zalo} target="_blank" rel="noreferrer">
+                  <img
+                    src={Images.Zalo}
+                    alt="Zalo"
+                    className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
+                  />
+                </a>
+              )}
             </div>
           </div>
         </div>
