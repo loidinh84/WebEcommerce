@@ -12,5 +12,11 @@ router.put(
   upload.single("logo"),
   ThietLapController.updateStoreSettings,
 );
+router.post(
+  "/test-email",
+  verifyToken,
+  isAdmin,
+  ThietLapController.testEmailConfig,
+);
 
 module.exports = router;

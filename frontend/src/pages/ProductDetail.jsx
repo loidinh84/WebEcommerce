@@ -9,11 +9,13 @@ import SpecsModal from "../components/SpecsModal";
 import CompareModal from "../components/CompareModal";
 import { AuthContext } from "../context/AuthContext";
 import { Helmet } from "react-helmet-async";
+import { StoreContext } from "../context/StoreContext";
 
 const ProductDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const { storeConfig } = useContext(StoreContext);
 
   // 1. Quản lý trạng thái dữ liệu
   const [product, setProduct] = useState(null);
@@ -640,108 +642,110 @@ const ProductDetail = () => {
         )}
 
         {/* ================= KHỐI 4: ĐÁNH GIÁ & HỎI ĐÁP ================= */}
-        <div
-          id="review-section"
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8"
-        >
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            Đánh giá sản phẩm
-          </h2>
-          <div className="flex flex-col lg:flex-row gap-4 border-b border-gray-100 pb-8 mb-6">
-            <div className="w-full lg:w-1/3 flex flex-col items-center justify-center border-r border-gray-100">
-              {/* Tính trung bình sao */}
-              <span className="text-3xl font-bold text-yellow-500">
-                {reviews.length > 0
-                  ? (
-                      reviews.reduce((acc, curr) => acc + curr.so_sao, 0) /
-                      reviews.length
-                    ).toFixed(1)
-                  : "5.0"}
-              </span>
-              <div className="flex text-yellow-400 text-xl my-2">★★★★★</div>
-              <span className="text-sm text-gray-500">
-                {reviews.length} đánh giá
-              </span>
-            </div>
-
-            <div className="w-full lg:w-2/3">
-              <h4 className="font-semibold text-gray-800 mb-3">
-                Gửi đánh giá của bạn
-              </h4>
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-sm text-gray-600">
-                    Bạn chấm mấy sao?
-                  </span>
-                  <div className="flex text-2xl cursor-pointer">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        onClick={() => setUserRating(star)}
-                        className={`transition ${star <= userRating ? "text-yellow-400" : "text-gray-300 hover:text-yellow-200"}`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  placeholder="Mời bạn chia sẻ cảm nhận về sản phẩm..."
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-blue-500 resize-none h-24 mb-3"
-                ></textarea>
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSubmitReview}
-                    className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition"
-                  >
-                    Gửi đánh giá
-                  </button>
-                </div>
+        {storeConfig?.cho_phep_danh_gia && (
+          <div
+            id="review-section"
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8"
+          >
+            <h2 className="text-xl font-bold text-gray-800 mb-6">
+              Đánh giá sản phẩm
+            </h2>
+            <div className="flex flex-col lg:flex-row gap-4 border-b border-gray-100 pb-8 mb-6">
+              <div className="w-full lg:w-1/3 flex flex-col items-center justify-center border-r border-gray-100">
+                {/* Tính trung bình sao */}
+                <span className="text-3xl font-bold text-yellow-500">
+                  {reviews.length > 0
+                    ? (
+                        reviews.reduce((acc, curr) => acc + curr.so_sao, 0) /
+                        reviews.length
+                      ).toFixed(1)
+                    : "5.0"}
+                </span>
+                <div className="flex text-yellow-400 text-xl my-2">★★★★★</div>
+                <span className="text-sm text-gray-500">
+                  {reviews.length} đánh giá
+                </span>
               </div>
-            </div>
-          </div>
 
-          {/* HIỂN THỊ DANH SÁCH ĐÁNH GIÁ (Thay vì Anh Tú cứng) */}
-          <div className="space-y-6">
-            {reviews.length > 0 ? (
-              reviews.map((rv) => (
-                <div key={rv.id} className="border-b border-gray-50 pb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full overflow-hidden flex items-center justify-center font-bold">
-                      {rv.nguoi_dung?.anh_dai_dien ? (
-                        <img
-                          src={getImageUrl(rv.nguoi_dung.anh_dai_dien)}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        rv.nguoi_dung?.ho_ten?.charAt(0).toUpperCase() || "U"
-                      )}
+              <div className="w-full lg:w-2/3">
+                <h4 className="font-semibold text-gray-800 mb-3">
+                  Gửi đánh giá của bạn
+                </h4>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-sm text-gray-600">
+                      Bạn chấm mấy sao?
+                    </span>
+                    <div className="flex text-2xl cursor-pointer">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                          key={star}
+                          onClick={() => setUserRating(star)}
+                          className={`transition ${star <= userRating ? "text-yellow-400" : "text-gray-300 hover:text-yellow-200"}`}
+                        >
+                          ★
+                        </span>
+                      ))}
                     </div>
-                    <span className="font-bold text-gray-800">
-                      {rv.nguoi_dung?.ho_ten || "Khách hàng"}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      ·{formatTimeAgo(rv.created_at)}
-                    </span>
                   </div>
-                  <div className="flex text-yellow-400 text-sm mb-2">
-                    {"★".repeat(rv.so_sao)}
-                    {"☆".repeat(5 - rv.so_sao)}
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Mời bạn chia sẻ cảm nhận về sản phẩm..."
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-blue-500 resize-none h-24 mb-3"
+                  ></textarea>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleSubmitReview}
+                      className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition"
+                    >
+                      Gửi đánh giá
+                    </button>
                   </div>
-                  <p className="text-sm text-gray-700 whitespace-pre-line">
-                    {rv.noi_dung}
-                  </p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500 py-4">
-                Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!
               </div>
-            )}
+            </div>
+
+            {/* HIỂN THỊ DANH SÁCH ĐÁNH GIÁ (Thay vì Anh Tú cứng) */}
+            <div className="space-y-6">
+              {reviews.length > 0 ? (
+                reviews.map((rv) => (
+                  <div key={rv.id} className="border-b border-gray-50 pb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full overflow-hidden flex items-center justify-center font-bold">
+                        {rv.nguoi_dung?.anh_dai_dien ? (
+                          <img
+                            src={getImageUrl(rv.nguoi_dung.anh_dai_dien)}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          rv.nguoi_dung?.ho_ten?.charAt(0).toUpperCase() || "U"
+                        )}
+                      </div>
+                      <span className="font-bold text-gray-800">
+                        {rv.nguoi_dung?.ho_ten || "Khách hàng"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        ·{formatTimeAgo(rv.created_at)}
+                      </span>
+                    </div>
+                    <div className="flex text-yellow-400 text-sm mb-2">
+                      {"★".repeat(rv.so_sao)}
+                      {"☆".repeat(5 - rv.so_sao)}
+                    </div>
+                    <p className="text-sm text-gray-700 whitespace-pre-line">
+                      {rv.noi_dung}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên!
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />

@@ -90,7 +90,7 @@ exports.sendNewOrderNotification = async (orderInfo) => {
     const { transporter, storeName, senderEmail } = await _getMailConfig();
 
     await transporter.sendMail({
-      from: `"${storeName} System" <${senderEmail}>`,
+      from: `"${storeName}" <${senderEmail}>`,
       to: adminEmail,
       subject: `Đơn hàng mới #${orderInfo.maDonHang}`,
       html: `
@@ -111,6 +111,44 @@ exports.sendNewOrderNotification = async (orderInfo) => {
     return true;
   } catch (error) {
     console.error("Lỗi gửi email thông báo admin:", error.message);
+    return false;
+  }
+};
+
+exports.sendLowStockAlert = async (productInfo) => {
+  try {
+    const config = await ThietLapCuaHang.findOne({ where: { id: 1 } });
+    const adminEmail = config?.email_nhan_thong_bao;
+
+    if (!adminEmail) return false;
+
+    const { transporter, storeName, senderEmail } = await _getMailConfig();
+
+    await transporter.sendMail({
+      from: `"${storeName}" <${senderEmail}>`,
+      to: adminEmail,
+      subject: `[CẢNH BÁO KHO] Sản phẩm sắp hết hàng - ${productInfo.productName}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+          <div style="background:#dc2626;padding:16px 20px">
+            <h2 style="color:#fff;margin:0;font-size:16px">Báo động sắp hết hàng!</h2>
+          </div>
+          <div style="padding:20px;font-size:14px;color:#374151">
+            <p>Hệ thống ghi nhận sản phẩm dưới đây vừa chạm ngưỡng báo động:</p>
+            <div style="background:#fef2f2;border:1px solid #f87171;border-radius:8px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px 0">Sản phẩm: <b>${productInfo.productName}</b></p>
+              ${productInfo.variantName ? `<p style="margin:0 0 8px 0">Phân loại: <b>${productInfo.variantName}</b></p>` : ""}
+              <p style="margin:0">Tồn kho hiện tại: <b style="color:#dc2626;font-size:18px">${productInfo.remaining}</b> (Ngưỡng: ${productInfo.threshold})</p>
+            </div>
+            <p>Vui lòng kiểm tra và nhập thêm hàng để không làm gián đoạn việc kinh doanh.</p>
+          </div>
+        </div>
+      `,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Lỗi gửi email cảnh báo hết hàng:", error.message);
     return false;
   }
 };

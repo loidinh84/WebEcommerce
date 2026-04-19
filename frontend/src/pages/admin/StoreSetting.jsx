@@ -60,6 +60,12 @@ const DEFAULT_EMAIL_CFG = {
   nguongHetHang: 10,
 };
 
+const SMTP_PRESETS = {
+  gmail: { host: "smtp.gmail.com", port: 587 },
+  outlook: { host: "smtp-mail.outlook.com", port: 587 },
+  yahoo: { host: "smtp.mail.yahoo.com", port: 587 },
+};
+
 function StoreSettings() {
   const [activeTab, setActiveTab] = useState("thong-tin");
   const [logoFile, setLogoFile] = useState(null);
@@ -865,19 +871,44 @@ function StoreSettings() {
                     </h3>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">
-                        SMTP HOST
+                        Chọn nhà cung cấp email
                       </label>
-                      <input
-                        type="text"
-                        value={emailConfig.smtpHost}
-                        onChange={(e) =>
-                          setEmailConfig({
-                            ...emailConfig,
-                            smtpHost: e.target.value,
-                          })
-                        }
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500"
-                      />
+                      <select
+                        defaultValue=""
+                        onChange={(e) => {
+                          const presets = {
+                            gmail: {
+                              smtpHost: "smtp.gmail.com",
+                              smtpPort: 587,
+                            },
+                            outlook: {
+                              smtpHost: "smtp-mail.outlook.com",
+                              smtpPort: 587,
+                            },
+                            yahoo: {
+                              smtpHost: "smtp.mail.yahoo.com",
+                              smtpPort: 587,
+                            },
+                          };
+                          const preset = presets[e.target.value];
+                          if (preset)
+                            setEmailConfig((prev) => ({ ...prev, ...preset }));
+                        }}
+                        className="w-full border border-blue-300 rounded-lg px-3 py-2 appearance-none text-sm bg-white outline-none focus:border-blue-500 cursor-pointer"
+                      >
+                        <option value="" disabled>
+                          Chọn để tự điền HOST và PORT
+                        </option>
+                        <option value="gmail">
+                          Gmail (smtp.gmail.com : 587)
+                        </option>
+                        <option value="outlook">
+                          Outlook / Hotmail (smtp-mail.outlook.com : 587)
+                        </option>
+                        <option value="yahoo">
+                          Yahoo Mail (smtp.mail.yahoo.com : 587)
+                        </option>
+                      </select>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="col-span-1">
@@ -909,7 +940,7 @@ function StoreSettings() {
                               smtpUser: e.target.value,
                             })
                           }
-                          placeholder="example@gmail.com"
+                          placeholder="gmailCuaBan@gmail.com"
                           className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500"
                         />
                       </div>
@@ -917,6 +948,15 @@ function StoreSettings() {
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">
                         Mật khẩu ứng dụng (App Password)
+                        <a
+                          href="https://myaccount.google.com/apppasswords"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline font-normal text-[10px]"
+                        >
+                          {" "}
+                          Lấy ở đâu?
+                        </a>
                       </label>
                       <input
                         type="password"
@@ -972,7 +1012,7 @@ function StoreSettings() {
                           })
                         }
                         className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm outline-none focus:border-blue-500"
-                        placeholder="admin@ltlstore.vn"
+                        placeholder="gmailNhanThongBao@gmail.com"
                       />
                     </div>
                     <div>

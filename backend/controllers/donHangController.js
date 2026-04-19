@@ -68,9 +68,24 @@ exports.createDonHang = async (req, res) => {
       }
     }
 
+    const config = await ThietLapCuaHang.findOne({
+      where: { id: 1 },
+      transaction: t,
+    });
+
     const generateOrderCode = () => {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-      let result = "LTL";
+      let storeName =
+        config && config.ten_cua_hang ? config.ten_cua_hang : "HD";
+      let prefix = storeName
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase() // Chuyển thành IN HOA
+        .substring(0, 8);
+      let result = `${prefix}-`;
       for (let i = 0; i < 6; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
       }
@@ -80,10 +95,6 @@ exports.createDonHang = async (req, res) => {
     // 1. Tạo mã đơn hàng tự động
     const maDonHang = generateOrderCode();
 
-    const config = await ThietLapCuaHang.findOne({
-      where: { id: 1 },
-      transaction: t,
-    });
     let final_thanh_toan = tong_thanh_toan;
     if (config && config.lam_tron_tien) {
       final_thanh_toan = Math.round(tong_thanh_toan / 1000) * 1000;
@@ -147,16 +158,35 @@ exports.createDonHang = async (req, res) => {
       const bienThe = await BienTheSanPham.findByPk(item.variantId, {
         transaction: t,
       });
-      if (!bienThe || bienThe.so_luong < item.so_luong) {
+
+      if (!bienThe || bienThe.ton_kho < item.so_luong) {
         throw new Error(
           `Sản phẩm ${item.ten_san_pham} đã hết hàng hoặc không đủ số lượng!`,
         );
       }
+
+      const tonKhoCu = bienThe.ton_kho;
+      const tonKhoMoi = tonKhoCu - item.so_luong;
+
       // Trừ kho
-      await bienThe.update(
-        { so_luong: bienThe.so_luong - item.so_luong },
-        { transaction: t },
-      );
+      await bienThe.update({ ton_kho: tonKhoMoi }, { transaction: t });
+
+      if (config && config.nguong_bao_het_hang) {
+        if (
+          tonKhoCu > config.nguong_bao_het_hang &&
+          tonKhoMoi <= config.nguong_bao_het_hang
+        ) {
+          emailService
+            .sendLowStockAlert({
+              productName: item.ten_san_pham,
+              variantName:
+                `${item.dung_luong || ""} ${item.mau_sac || ""}`.trim(),
+              remaining: tonKhoMoi,
+              threshold: config.nguong_bao_het_hang,
+            })
+            .catch((err) => console.log("Lỗi gửi mail báo hết hàng:", err));
+        }
+      }
 
       // Đẩy dữ liệu vào mảng để dùng bulkCreate
       orderDetailsData.push({
@@ -211,25 +241,34 @@ exports.createDonHang = async (req, res) => {
       console.log("Lỗi cập nhật thẻ thành viên:", err);
     }
 
-    if (taiKhoan && taiKhoan.email && receive_email) {
+    if (config && config.gui_email_tu_dong) {
       const currencyFormatter = new Intl.NumberFormat("vi-VN", {
         style: "currency",
         currency: "VND",
       });
+
       const addressText = ghi_chu.includes("Địa chỉ:")
         ? ghi_chu
         : "Xem trong lịch sử đơn hàng";
 
+      const orderInfoForEmail = {
+        customerName: taiKhoan?.ho_ten || "Khách hàng",
+        maDonHang: maDonHang,
+        total: currencyFormatter.format(final_thanh_toan),
+        paymentMethod:
+          phuongThucDinhDanh.loai === "cod" ? "Tiền mặt (COD)" : "Chuyển khoản",
+        address: addressText,
+      };
+
+      if (taiKhoan && taiKhoan.email) {
+        emailService
+          .sendOrderConfirmation(taiKhoan.email, orderInfoForEmail)
+          .catch((err) => console.log("Lỗi gửi mail cho khách:", err));
+      }
+
       emailService
-        .sendOrderConfirmation(taiKhoan.email, {
-          customerName: taiKhoan.ho_ten,
-          maDonHang: maDonHang,
-          total: currencyFormatter.format(final_thanh_toan),
-          paymentMethod:
-            phuong_thuc_tt === 1 ? "Tiền mặt (COD)" : "Chuyển khoản",
-          address: addressText,
-        })
-        .catch((err) => console.log("Lỗi gửi mail:", err));
+        .sendNewOrderNotification(orderInfoForEmail)
+        .catch((err) => console.log("Lỗi gửi mail cho admin:", err));
     }
 
     res.status(201).json({

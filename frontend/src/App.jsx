@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { StoreContext } from "./context/StoreContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Maintenance from "./pages/Maintenance";
@@ -22,6 +22,9 @@ import Inventory from "./pages/admin/Inventory";
 import InventoryCheck from "./pages/admin/InventoryCheck";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import BASE_URL from "./config/api";
+
+const API_URL = BASE_URL;
 
 function App() {
   const { storeConfig } = useContext(StoreContext);
@@ -29,37 +32,53 @@ function App() {
 
   const isAdminPath = location.pathname.startsWith("/admin");
 
+  useEffect(() => {
+    if (storeConfig) {
+      document.title = storeConfig.ten_cua_hang || "LTL Shop";
+
+      if (storeConfig.logo_url) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.head.appendChild(link);
+        }
+        link.href = `${API_URL}${storeConfig.logo_url}`;
+      }
+    }
+  }, [storeConfig]);
+
   if (storeConfig?.bao_tri_he_thong && !isAdminPath) {
     return <Maintenance />;
   }
 
   return (
-      <Routes>
-        {/* Nhánh khách hàng */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/product/:slug" element={<ProductDetail />} />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/orders" element={<OrderHistory />} />
-        <Route path="/order-detail/:id" element={<OrderDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
+    <Routes>
+      {/* Nhánh khách hàng */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/product/:slug" element={<ProductDetail />} />
+      <Route path="/profile" element={<UserProfile />} />
+      <Route path="/orders" element={<OrderHistory />} />
+      <Route path="/order-detail/:id" element={<OrderDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
 
-        {/* Nhánh Admin */}
-        <Route path="/admin" element={<PrivateRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="products" element={<Product />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="orders" element={<Order />} />
-            <Route path="customers" element={<Customer />} />
-            <Route path="inventory" element={<Inventory />} />
-            <Route path="inventory-check" element={<InventoryCheck />} />
-            <Route path="settings" element={<StoreSettings />} />
-          </Route>
+      {/* Nhánh Admin */}
+      <Route path="/admin" element={<PrivateRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<Product />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="orders" element={<Order />} />
+          <Route path="customers" element={<Customer />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="inventory-check" element={<InventoryCheck />} />
+          <Route path="settings" element={<StoreSettings />} />
         </Route>
-      </Routes>
+      </Route>
+    </Routes>
   );
 }
 
