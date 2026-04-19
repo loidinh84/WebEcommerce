@@ -40,7 +40,7 @@ const Dashboard = () => {
       const response = await axios.get(
         `${BASE_URL}/api/dashboard/summary`,
         getAuthHeader(),
-      );
+      );   
 
       const data = response.data;
 

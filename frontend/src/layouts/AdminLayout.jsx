@@ -130,7 +130,7 @@ const AdminLayout = () => {
                   Thiết lập cửa hàng
                 </Link>
                 <Link
-                  to="/admin/settings/banners"
+                  to="/admin/banners"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
                   Quản lý Banner

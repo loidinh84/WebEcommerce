@@ -44,6 +44,7 @@ import Delete from "./Delete.svg?react";
 import Picture from "./Picture.svg?react";
 
 export {
+
   Picture,
   Delete,
   Comment,

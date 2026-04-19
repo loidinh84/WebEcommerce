@@ -4,6 +4,7 @@ import React, { useContext, useEffect } from "react";
 import { StoreContext } from "./context/StoreContext";
 import PrivateRoute from "./components/PrivateRoute";
 import Maintenance from "./pages/Maintenance";
+import BASE_URL from "./config/api";
 import StoreSettings from "./pages/admin/StoreSetting";
 import Home from "./pages/Home";
 import AdminLayout from "./layouts/AdminLayout";
@@ -22,7 +23,7 @@ import Inventory from "./pages/admin/Inventory";
 import InventoryCheck from "./pages/admin/InventoryCheck";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
-import BASE_URL from "./config/api";
+import Banner from "./pages/admin/Banner";
 
 const API_URL = BASE_URL;
 
@@ -76,6 +77,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="inventory-check" element={<InventoryCheck />} />
           <Route path="settings" element={<StoreSettings />} />
+          <Route path="banners" element={<Banner />} />
         </Route>
       </Route>
     </Routes>

@@ -3,47 +3,33 @@ import Logo from "../assets/images/logo.png";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import * as Icons from "../assets/icons/index";
-
-const slides = [
-  {
-    image:
-      "https://cdn.hstatic.net/files/200000722513/article/gearvn-pc-gvn-t9-slider_b3446f40a7e44494846d5b8cb88cbbe0_master.png",
-    tag: "Flash Sale hôm nay",
-    title: "PC Gaming GVN T9",
-    desc: "Hiệu năng đỉnh cao — giá ưu đãi chỉ trong hôm nay",
-    cta: "Xem ngay",
-    ctaLink: "/products",
-    accent: "#4A44F2",
-  },
-  {
-    image:
-      "https://tinhocpnn.com/wp-content/uploads/2022/11/banner-may-tinh-choi-game-gia-re-may-tinh-do-hoa-gia-re-tphcm-1.png",
-    tag: "Mới về",
-    title: "Máy tính Gaming giá rẻ",
-    desc: "Cấu hình mạnh — chiến mọi tựa game AAA mượt mà",
-    cta: "Khám phá",
-    ctaLink: "/products?cat=pc",
-    accent: "#E85D04",
-  },
-  {
-    image: "https://hqcomputer.com/assets/uploads/banner-03.jpg",
-    tag: "Ưu đãi sinh viên",
-    title: "Laptop học tập & làm việc",
-    desc: "Giảm thêm 5% cho sinh viên — xuất trình thẻ khi nhận hàng",
-    cta: "Đăng ký ngay",
-    ctaLink: "/student-deal",
-    accent: "#0D9488",
-  },
-];
+import BASE_URL from "../config/api";
 
 const HeroBanner = () => {
+  const [slides, setSlides] = useState([]);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const { user } = useContext(AuthContext);
   const isLoggedIn = !!user;
 
+  useEffect(() => {
+    const fetchActiveBanners = async () => {
+      try {
+        // Chỉ lấy những banner có vi_tri là main_slider và đang active
+        const res = await fetch(`${BASE_URL}/api/banners?vi_tri=homepage`);
+        if (res.ok) {
+          const data = await res.json();
+          setSlides(data);
+        }
+      } catch (error) {
+        console.error("Lỗi tải banner trang chủ:", error);
+      }
+    };
+    fetchActiveBanners();
+  }, []);
+
   const goTo = (idx) => {
-    if (animating) return;
+    if (animating || slides.length === "0") return;
     setAnimating(true);
     setTimeout(() => {
       setCurrent(idx);
@@ -52,84 +38,96 @@ const HeroBanner = () => {
   };
 
   useEffect(() => {
+    if (slides.length <= 1) return;
     const interval = setInterval(
       () => goTo((current + 1) % slides.length),
       4500,
     );
     return () => clearInterval(interval);
-  }, [current]);
+  }, [current, slides.length]);
 
   const slide = slides[current];
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full h-full">
       {/* === SLIDESHOW CHÍNH === */}
-      <div className="flex-1 relative rounded-xl overflow-hidden shadow-md min-h-[300px] group">
-        {/* Ảnh nền */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 ${animating ? "opacity-0" : "opacity-100"}`}
-        >
-          <img
-            src={slide.image}
-            alt={slide.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/20 to-transparent" />
-        </div>
-
-        <div
-          className={`absolute inset-0 flex flex-col justify-end p-6 transition-all duration-300 ${
-            animating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
-          }`}
-        >
-          <span
-            className="inline-block text-xs font-bold tracking-widest px-3 py-1 rounded-full mb-2 w-fit"
-            style={{ background: slide.accent, color: "#fff" }}
-          >
-            {slide.tag}
-          </span>
-          <h2 className="text-white text-2xl font-bold leading-tight mb-1 drop-shadow">
-            {slide.title}
-          </h2>
-          <p className="text-white/80 text-sm mb-4 max-w-xs">{slide.desc}</p>
-          <Link to={slide.ctaLink}>
-            <button
-              className="text-sm font-bold px-5 py-2 rounded-full w-fit transition hover:scale-105 active:scale-95 shadow"
-              style={{ background: slide.accent, color: "#fff" }}
-            >
-              {slide.cta}
-            </button>
-          </Link>
-        </div>
-
-        {/* Dots điều hướng */}
-        <div className="absolute bottom-3 right-4 flex gap-1.5">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === current
-                  ? "w-6 h-2 bg-white"
-                  : "w-2 h-2 bg-white/50 hover:bg-white/80"
+      <div className="flex-1 relative rounded-xl overflow-hidden shadow-md min-h-[300px] group bg-gray-100">
+        {slides.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+            Đang tải Banner...
+          </div>
+        ) : (
+          <>
+            <div
+              className={`absolute inset-0 transition-opacity loading="eager" duration-300 ${
+                animating ? "opacity-0" : "opacity-100"
               }`}
-            />
-          ))}
-        </div>
+            >
+              <img
+                src={`${BASE_URL}${slide.hinh_anh_url}`}
+                alt={slide.tieu_de || "Banner"}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent" />
+            </div>
 
-        {/* Nút prev/next */}
-        <button
-          onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm"
-        >
-          ‹
-        </button>
-        <button
-          onClick={() => goTo((current + 1) % slides.length)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm"
-        >
-          ›
-        </button>
+            {/* Nội dung Overlay */}
+            <div
+              className={`absolute inset-0 flex flex-col justify-end p-6 transition-all duration-300 ${
+                animating
+                  ? "opacity-0 translate-y-2"
+                  : "opacity-100 translate-y-0"
+              }`}
+            >
+              {/* Chỉ hiện tiêu đề nếu Admin có nhập */}
+              {slide.tieu_de && (
+                <h2 className="text-white text-xl font-bold leading-tight mb-4 drop-shadow-lg max-w-lg">
+                  {slide.tieu_de}
+                </h2>
+              )}
+
+              {/* Nút Xem ngay trỏ về đường dẫn Admin nhập */}
+              {slide.duong_dan && (
+                <Link to={slide.duong_dan}>
+                  <button className="text-sm font-bold px-6 py-2.5 rounded-full w-fit transition hover:scale-105 active:scale-95 shadow-lg bg-[#4A44F2] text-white cursor-pointer">
+                    Xem ngay
+                  </button>
+                </Link>
+              )}
+            </div>
+
+            {/* Dots điều hướng */}
+            <div className="absolute bottom-3 right-4 flex gap-1.5">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === current
+                      ? "w-6 h-2 bg-white"
+                      : "w-2 h-2 bg-white/50 hover:bg-white/80"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Nút prev/next */}
+            <button
+              onClick={() =>
+                goTo((current - 1 + slides.length) % slides.length)
+              }
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm"
+            >
+              <Icons.ArrowLeftLong />
+            </button>
+            <button
+              onClick={() => goTo((current + 1) % slides.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-sm"
+            >
+              <Icons.ArrowRightLong />
+            </button>
+          </>
+        )}
       </div>
 
       {/* === CỘT PHẢI: Đăng nhập + Deal sinh viên === */}
