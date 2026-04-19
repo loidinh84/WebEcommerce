@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import ProfileModal from "../components/ProfileModal";
 import * as Icons from "../assets/icons/index";
+import { StoreContext } from "../context/StoreContext";
+import BASE_URL from "../config/api";
 
 const menuItems = [
   { path: "/admin", label: "Tổng quan" },
@@ -22,6 +24,7 @@ const menuItems = [
 
 const AdminLayout = () => {
   const location = useLocation();
+  const { storeConfig } = useContext(StoreContext);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const checkIsActive = (item) => {
@@ -38,7 +41,18 @@ const AdminLayout = () => {
         <div className="flex items-center h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-center mr-10 cursor-pointer">
-            <h1 className="text-2xl font-bold tracking-wider">LTL Store</h1>
+            <img
+              src={
+                storeConfig?.logo_url
+                  ? `${BASE_URL}${storeConfig.logo_url}`
+                  : "../assets/images/NoImage.webp"
+              }
+              alt={storeConfig?.ten_cua_hang}
+              className="h-10 w-auto object-contain"
+            />
+            <h1 className="text-2xl font-bold tracking-wider">
+              {storeConfig?.ten_cua_hang || ""}
+            </h1>
           </div>
 
           {/* Nav */}
@@ -111,12 +125,12 @@ const AdminLayout = () => {
         {/* Khối Phải: Thiết lập & User Dropdown */}
         <div className="flex items-center gap-1">
           <div className="relative group h-full hidden sm:flex items-center">
-          <Link to="/admin/settings">
-            <div className="text-white hover:bg-blue-500 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5">
-              <Icons.Setting className="w-5 h-5" />
-              Thiết lập cửa hàng
-            </div>
-          </Link>
+            <Link to="/admin/settings">
+              <div className="text-white hover:bg-blue-500 rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer flex items-center gap-1.5">
+                <Icons.Setting className="w-5 h-5" />
+                Thiết lập cửa hàng
+              </div>
+            </Link>
             <div
               className="absolute top-[37px] left-0 w-64 bg-white rounded-lg shadow-xl border border-gray-100
               opacity-0 invisible group-hover:opacity-100 group-hover:visible
@@ -136,16 +150,16 @@ const AdminLayout = () => {
                   Quản lý Banner
                 </Link>
                 <Link
-                  to="/admin/settings/shipping"
+                  to="/admin/checkout-settings"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
-                  Đơn vị vận chuyển
+                  Thanh toán và vận chuyển
                 </Link>
                 <Link
                   to="/admin/settings/payments"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
-                  Phương thức thanh toán
+                  Thẻ thành viên
                 </Link>
                 <Link
                   to="/admin/settings/templates"

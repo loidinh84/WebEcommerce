@@ -56,7 +56,7 @@ const Checkout = () => {
         });
 
       // Lấy Đơn vị vận chuyển
-      fetch(`${BASE_URL}/api/donhang/vanchuyen`)
+      fetch(`${BASE_URL}/api/logistics`)
         .then((res) => res.json())
         .then((data) => {
           setShippingUnits(data);
@@ -64,7 +64,7 @@ const Checkout = () => {
         });
 
       // Lấy Phương thức thanh toán
-      fetch(`${BASE_URL}/api/donhang/thanhtoan`)
+      fetch(`${BASE_URL}/api/payments`)
         .then((res) => res.json())
         .then((data) => {
           setPaymentMethods(data);
@@ -105,7 +105,7 @@ const Checkout = () => {
         setVoucherDiscount(0);
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi kết nối máy chủ!");
     }
   };
@@ -119,10 +119,8 @@ const Checkout = () => {
     ? Number(selectedShipping.phi_co_ban)
     : 0;
   const memberDiscountRate = (user?.ty_le_giam_gia || 0) / 100;
-  const paymentFee = paymentMethod ? Number(paymentMethod.phi_thanh_toan) : 0;
   const discountAmount = Math.round(subtotal * memberDiscountRate);
-  const total =
-    subtotal + shippingFee - discountAmount - voucherDiscount - paymentFee;
+  const total = subtotal + shippingFee - discountAmount - voucherDiscount;
 
   const handleConfirmOrder = async () => {
     if (!user) return toast.error("Vui lòng đăng nhập!");
@@ -184,7 +182,7 @@ const Checkout = () => {
       } else {
         toast.error(result.message || "Lỗi đặt hàng!");
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi kết nối server!");
     } finally {
       setLoading(false);
@@ -254,7 +252,6 @@ const Checkout = () => {
                 </p>
               )}
             </div>
-
             {/* 2. KIỂM TRA SẢN PHẨM  */}
             <div className="bg-white rounded-lg shadow-sm px-6 pt-3 border border-gray-100">
               <h2 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
@@ -294,7 +291,6 @@ const Checkout = () => {
                 ))}
               </div>
             </div>
-
             {/* 2. VẬN CHUYỂN */}
             <div className="bg-white rounded-lg shadow-sm px-6 pt-3">
               <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -332,27 +328,47 @@ const Checkout = () => {
             </div>
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN */}
-            <div className="bg-white rounded-lg shadow-sm px-6 py-3 border border-gray-100">
-              <h2 className="text-lg font-medium mb-4">
+            <div className="bg-white rounded-lg shadow-sm px-6 py-4 border border-gray-100">
+              <h2 className="text-lg font-medium mb-4 text-gray-800">
                 Phương thức thanh toán
               </h2>
               <div
                 onClick={() => setIsPaymentModalOpen(true)}
-                className="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-all"
+                className="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-blue-100 transition-all"
               >
                 <div className="flex items-center gap-4">
-                  <img
-                    src={getImageUrl(paymentMethod?.logo_url)}
-                    className="w-10 h-10 object-contain"
-                    alt="logo"
-                  />
+                  {/* Khối chứa Logo được thiết kế lại an toàn 100% */}
+                  <div className="w-12 h-12 rounded-lg border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                    {paymentMethod?.logo_url ? (
+                      <img
+                        src={`${BASE_URL}${paymentMethod.logo_url}`}
+                        className="w-full h-full object-contain p-1.5"
+                        alt="logo"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400">
+                        LOGO
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Khối chứa Tên và Ghi chú */}
                   <div>
-                    <p className="font-bold text-gray-800">
-                      {paymentMethod?.ten_phuong_thuc || "Chọn phương thức"}
+                    <p className="font-bold text-gray-800 text-base">
+                      {paymentMethod?.ten_phuong_thuc ||
+                        "Chọn phương thức thanh toán"}
                     </p>
+                    {paymentMethod && (
+                      <p className="text-[11px] text-gray-500 mt-0.5">
+                        {paymentMethod.loai === "bank_transfer"
+                          ? "Quét mã QR để thanh toán nhanh chóng"
+                          : "Thanh toán an toàn khi nhận hàng (COD)"}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <button className="text-blue-600 font-bold text-xs cursor-pointer">
+
+                <button className="text-blue-600 font-bold text-sm cursor-pointer hover:underline">
                   Thay đổi
                 </button>
               </div>
@@ -530,13 +546,28 @@ const Checkout = () => {
                 <div key={method.id}>
                   <div
                     onClick={() => setTempPaymentMethod(method)}
-                    className={`flex items-center gap-4 p-4 border border-gray-300 rounded-xl cursor-pointer transition-all ${tempPaymentMethod?.id === method.id ? "border-blue-600 bg-blue-50" : "border-gray-100 hover:border-gray-200"}`}
+                    className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${
+                      tempPaymentMethod?.id === method.id
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
                   >
-                    <img
-                      src={getImageUrl(method.logo_url)}
-                      className="w-10 h-10 object-contain"
-                      alt="bank"
-                    />
+                    {/* ==== ĐOẠN ĐƯỢC SỬA: HIỂN THỊ LOGO AN TOÀN ==== */}
+                    {method.logo_url ? (
+                      <img
+                        src={`${BASE_URL}${method.logo_url}`}
+                        className="w-10 h-10 object-contain p-1 bg-white border border-gray-100 rounded-md shrink-0"
+                        alt="bank"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center shrink-0">
+                        <span className="text-[9px] font-bold text-gray-400">
+                          LOGO
+                        </span>
+                      </div>
+                    )}
+                    {/* ============================================== */}
+
                     <div className="flex-1">
                       <p className="font-bold text-sm text-gray-800">
                         {method.ten_phuong_thuc}
@@ -547,8 +578,13 @@ const Checkout = () => {
                           : "Thanh toán an toàn"}
                       </p>
                     </div>
+
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${tempPaymentMethod?.id === method.id ? "border-blue-600" : "border-gray-300"}`}
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        tempPaymentMethod?.id === method.id
+                          ? "border-blue-600"
+                          : "border-gray-300"
+                      }`}
                     >
                       {tempPaymentMethod?.id === method.id && (
                         <div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>
@@ -573,6 +609,7 @@ const Checkout = () => {
           </div>
         </div>
       )}
+
       {isAddressModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up">

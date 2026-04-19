@@ -22,6 +22,7 @@
     "react-router-dom": "^7.13.2",
     "react-to-print": "^3.3.0",
     "react-toastify": "^11.0.5",
+    "sweetalert2": "^11.26.24",
     "vite-plugin-svgr": "^5.2.0"
   },
   "devDependencies": {

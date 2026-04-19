@@ -478,6 +478,29 @@ const Order = () => {
                                   <div className="space-y-3 text-sm">
                                     <div className="flex">
                                       <span className="text-gray-500 w-28 font-medium">
+                                        Phương thức:
+                                      </span>
+                                      <span className="font-bold text-gray-800">
+                                        {order.paymentMethod}
+                                      </span>
+                                    </div>
+                                    <div className="flex">
+                                      <span className="text-gray-500 w-28 font-medium">
+                                        Trạng thái:
+                                      </span>
+                                      <span
+                                        className={`font-bold text-xs ${
+                                          order.paymentStatus ===
+                                          "Đã thanh toán"
+                                            ? "text-green-600"
+                                            : "text-amber-600"
+                                        }`}
+                                      >
+                                        {order.paymentStatus}
+                                      </span>
+                                    </div>
+                                    <div className="flex">
+                                      <span className="text-gray-500 w-28 font-medium">
                                         Người nhận:
                                       </span>
                                       <span className="font-bold text-gray-900">
@@ -576,7 +599,14 @@ const Order = () => {
                                     </div>
                                     {order.discount > 0 && (
                                       <div className="flex justify-between text-sm text-red-500">
-                                        <span>Giảm giá (Voucher):</span>
+                                        <div className="flex flex-col">
+                                          <span>Giảm giá:</span>{" "}
+                                          <span className="text-[10px] text-gray-400 italic">
+                                            {order.voucherCode
+                                              ? `(Mã: ${order.voucherCode})`
+                                              : "(Ưu đãi hạng thẻ thành viên)"}
+                                          </span>
+                                        </div>
                                         <span className="font-medium">
                                           -{formatPrice(order.discount)}
                                         </span>

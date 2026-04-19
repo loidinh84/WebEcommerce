@@ -83,7 +83,7 @@ exports.createDonHang = async (req, res) => {
         .replace(/đ/g, "d")
         .replace(/Đ/g, "D")
         .replace(/[^a-zA-Z0-9]/g, "")
-        .toUpperCase() // Chuyển thành IN HOA
+        .toUpperCase()
         .substring(0, 8);
       let result = `${prefix}-`;
       for (let i = 0; i < 6; i++) {
@@ -132,6 +132,17 @@ exports.createDonHang = async (req, res) => {
         trang_thai: initialStatus,
         ghi_chu: ghi_chu || "",
         created_at: new Date(),
+      },
+      { transaction: t },
+    );
+
+    await GiaoDichThanhToan.create(
+      {
+        don_hang_id: newOrder.id,
+        phuong_thuc_id: phuong_thuc_tt,
+        so_tien: final_thanh_toan,
+        trang_thai: "cho_thanh_toan",
+        ngay_tao: new Date(),
       },
       { transaction: t },
     );
@@ -283,20 +294,6 @@ exports.createDonHang = async (req, res) => {
   }
 };
 
-exports.getAllShippingUnits = async (req, res) => {
-  const list = await DonViVanChuyen.findAll({
-    where: { trang_thai: "active" },
-  });
-  res.json(list);
-};
-
-exports.getAllPaymentMethods = async (req, res) => {
-  const list = await PhuongThucThanhToan.findAll({
-    where: { trang_thai: "active" },
-  });
-  res.json(list);
-};
-
 exports.checkVoucher = async (req, res) => {
   try {
     const { code, userId, totalAmount } = req.body;
@@ -410,6 +407,12 @@ exports.getAdminOrders = async (req, res) => {
     // Format dữ liệu
     const formattedOrders = orders.map((order) => {
       const diaChi = order.dia_chi || {};
+      if (Array.isArray(order.giao_dich) && order.giao_dich.length > 0) {
+        giaoDich = order.giao_dich[0];
+      } else if (order.giao_dich && !Array.isArray(order.giao_dich)) {
+        giaoDich = order.giao_dich;
+      }
+
       const giaoDich = order.giao_dich || {};
       const phuongThuc = giaoDich.phuong_thuc || {};
 
@@ -436,6 +439,7 @@ exports.getAdminOrders = async (req, res) => {
         total: order.tong_thanh_toan,
         shippingFee: order.phi_van_chuyen,
         discount: order.tien_giam_gia,
+        voucherCode: order.voucher_code,
         subTotal: order.tong_tien_hang,
         note: order.ghi_chu,
         paymentMethod: phuongThuc.ten_phuong_thuc || "COD",

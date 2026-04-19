@@ -24,6 +24,7 @@ import InventoryCheck from "./pages/admin/InventoryCheck";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Banner from "./pages/admin/Banner";
+import CheckoutSetting from "./pages/admin/CheckoutSetting";
 
 const API_URL = BASE_URL;
 
@@ -78,6 +79,7 @@ function App() {
           <Route path="inventory-check" element={<InventoryCheck />} />
           <Route path="settings" element={<StoreSettings />} />
           <Route path="banners" element={<Banner />} />
+          <Route path="checkout-settings" element={<CheckoutSetting />} />
         </Route>
       </Route>
     </Routes>
