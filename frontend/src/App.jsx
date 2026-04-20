@@ -25,6 +25,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Banner from "./pages/admin/Banner";
 import CheckoutSetting from "./pages/admin/CheckoutSetting";
+import Memberships from "./pages/admin/TheThanhVienList";
+// import { TheThanhVien } from "../../backend/models";
 
 const API_URL = BASE_URL;
 
@@ -80,6 +82,7 @@ function App() {
           <Route path="settings" element={<StoreSettings />} />
           <Route path="banners" element={<Banner />} />
           <Route path="checkout-settings" element={<CheckoutSetting />} />
+          <Route path="memberships" element={<Memberships />} />
         </Route>
       </Route>
     </Routes>

@@ -156,7 +156,7 @@ const AdminLayout = () => {
                   Thanh toán và vận chuyển
                 </Link>
                 <Link
-                  to="/admin/settings/payments"
+                  to="/admin/memberships"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
                   Thẻ thành viên
