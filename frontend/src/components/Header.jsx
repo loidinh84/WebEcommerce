@@ -66,7 +66,8 @@ const Header = () => {
           isScrolled ? "max-h-0 py-0 opacity-0" : "max-h-[50px] opacity-100"
         }`}
       >
-        <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+        {/* ĐÃ SỬA: Thay 'container' thành 'w-full max-w-7xl' */}
+        <div className="w-full max-w-7xl mx-auto px-4 py-2 flex justify-between items-center">
           <div className="flex items-center gap-6 hidden lg:flex">
             <span className="flex items-center text-sm gap-1.5 hover:text-gray-200">
               <Icons.ChinhHang className=" w-4 h-4 brightness-0 invert" />
@@ -101,7 +102,8 @@ const Header = () => {
       </div>
 
       {/* --- 2. THANH HEADER CHÍNH --- */}
-      <div className="container mx-auto flex items-center px-4 justify-start gap-4">
+      {/* ĐÃ SỬA: Thay 'container' thành 'w-full max-w-7xl' */}
+      <div className="w-full max-w-7xl mx-auto flex items-center px-4 justify-start gap-4">
         <Link to="/">
           <div
             className="flex gap-1 bg-white/10 shadow cursor-pointer px-3 py-1.5 rounded-full shadow-lg my-3"

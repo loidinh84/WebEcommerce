@@ -43,7 +43,7 @@ const OrderHistory = () => {
     <div className="bg-[#F3F4F6] min-h-screen font-sans flex flex-col">
       <Header />
 
-      <main className="container mx-auto px-4 max-w-[900px] py-8 flex-grow">
+      <main className="container mx-auto px-4 max-w-[1280px] py-8 flex-grow">
         {/* Breadcrumb sạch sẽ */}
         <div className="text-sm text-gray-500 mb-6 flex gap-2">
           <Link to="/" className="hover:text-[#4A44F2]">

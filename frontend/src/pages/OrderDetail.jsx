@@ -44,7 +44,7 @@ const OrderDetail = () => {
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 max-w-[900px] py-8 flex-grow">
+      <main className="container mx-auto px-4 max-w-[1280px] py-8 flex-grow">
         {/* Nút quay lại */}
         <button
           onClick={() => navigate(-1)}

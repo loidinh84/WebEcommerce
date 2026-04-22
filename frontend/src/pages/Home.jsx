@@ -58,57 +58,6 @@ const DealCountdownWidget = () => {
   }, []);
 
   const pad = (n) => String(n).padStart(2, "0");
-
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Countdown */}
-      <div className="bg-gradient-to-br from-[#4A44F2] to-[#7C78FF] rounded-xl p-4 text-white">
-        <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">
-          Flash Sale
-        </p>
-        <p className="text-sm font-bold mb-3">Kết thúc sau</p>
-        <div className="flex items-center gap-2 justify-center">
-          {[pad(time.h), pad(time.m), pad(time.s)].map((val, i) => (
-            <React.Fragment key={i}>
-              <div className="bg-white/20 rounded-lg w-12 h-12 flex items-center justify-center text-xl font-bold">
-                {val}
-              </div>
-              {i < 2 && (
-                <span className="text-xl font-bold text-white/80">:</span>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-        <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1">
-          Đang xem nhiều
-        </p>
-        {[
-          { name: "iPhone 16 Pro Max", views: "1.2k" },
-          { name: "Samsung S25 Ultra", views: "890" },
-          { name: "OPPO Find X8", views: "654" },
-          { name: "Xiaomi 15 Ultra", views: "430" },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0 cursor-pointer hover:text-[#4A44F2] transition"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-400 w-4">
-                {i + 1}
-              </span>
-              <span className="text-sm text-gray-700 hover:text-[#4A44F2]">
-                {item.name}
-              </span>
-            </div>
-            <span className="text-xs text-gray-400">{item.views} lượt</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 };
 
 const AINeedsWidget = () => {
@@ -121,31 +70,6 @@ const AINeedsWidget = () => {
     { label: "hàng cận cao cấp", desc: "giá từ 10 - 20 triệu VNĐ" },
     { label: "Hàng cao cấp", desc: "giá trên 20 triệu VNĐ" },
   ];
-  return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p className="text-sm font-bold text-gray-800 mb-1">Gợi ý theo nhu cầu</p>
-      <p className="text-xs text-gray-500 mb-3">
-        Nhu cầu bạn mua laptop như thế nào?
-      </p>
-      <div className="flex flex-col gap-2">
-        {needs.map((n, i) => (
-          <button
-            key={i}
-            onClick={() => setSelected(i)}
-            className={`text-left px-3 py-2.5 rounded-lg border transition text-sm ${
-              selected === i
-                ? "border-[#4A44F2] bg-[#4A44F2]/5 text-[#4A44F2] font-semibold"
-                : "border-gray-200 text-gray-700 hover:border-[#4A44F2]"
-            }`}
-          >
-            <span className="font-medium">{n.label}</span>
-            <br />
-            <span className="text-xs text-gray-400">{n.desc}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 };
 
 const PCConfigWidget = () => {
@@ -174,45 +98,16 @@ const PCConfigWidget = () => {
   ];
   const [active, setActive] = React.useState(0);
   const c = configs[active];
-  return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <p className="text-sm font-bold text-gray-800 mb-3">
-        Bạn có muốn tự build PC ?
-      </p>
-      <div className="flex flex-col gap-2">
-        {[
-          ["CPU", c.cpu],
-          ["GPU", c.gpu],
-          ["RAM", c.ram],
-        ].map(([k, v]) => (
-          <div
-            key={k}
-            className="flex justify-between items-center py-1.5 border-b border-gray-50"
-          >
-            <span className="text-xs text-gray-500">{k}</span>
-            <span className="text-xs font-semibold text-gray-800">{v}</span>
-          </div>
-        ))}
-        <div className="flex justify-between items-center pt-1">
-          <span className="text-xs text-gray-500">Tổng chi phí ~</span>
-          <span className="text-sm font-bold text-[#4A44F2]">{c.price}</span>
-        </div>
-      </div>
-      <button className="mt-3 w-full border border-[#4A44F2] text-[#4A44F2] text-sm font-semibold rounded-lg py-2 hover:bg-[#4A44F2] hover:text-white transition">
-        Kiểm tra cấu hình
-      </button>
-    </div>
-  );
 };
 
 function Home() {
-
 
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
       <Header />
 
-      <main className="flex-grow container mx-auto px-4 mt-4 mb-10">
+      {/* SỬA TẠI ĐÂY: Thay 'container' thành 'w-full max-w-7xl' để ép cứng 1280px */}
+      <main className="flex-grow w-full max-w-7xl mx-auto px-4 mt-4 mb-10">
         {/* TẦNG 1: Sidebar + Hero Slideshow */}
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-1/4 xl:w-1/5">
@@ -239,7 +134,7 @@ function Home() {
             "TECNO",
             "ASUS",
           ]}
-          danhMucId={5}
+          danhMucId={7}
         />
 
         {/* TẦNG 4: Phụ kiện */}

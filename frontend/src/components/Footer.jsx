@@ -5,13 +5,13 @@ import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
 
 const Footer = () => {
-  
   const { storeConfig } = useContext(StoreContext);
 
   return (
     <footer className="bg-[#568FDE] text-white font-sans mt-10">
       {/* --- PHẦN NỘI DUNG CHÍNH --- */}
-      <div className="container mx-auto px-4 py-10">
+      {/* ĐÃ SỬA: Thay 'container' bằng 'w-full max-w-7xl' để thẳng hàng 100% với Header và Main Content */}
+      <div className="w-full max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Cột 1: Liên hệ hỗ trợ */}
           <div>
@@ -21,29 +21,29 @@ const Footer = () => {
             <ul className="text-sm space-y-3">
               <li>
                 Mua hàng - bảo hành -{" "}
-                <span className="hover:underline">
-                  {storeConfig?.so_dien_thoai || ""}
+                <span className="hover:underline cursor-pointer">
+                  {storeConfig?.so_dien_thoai || "0123456789"}
                 </span>
               </li>
               <li>
                 Khiếu nại -{" "}
-                <span className="hover:underline">
-                  {storeConfig?.so_dien_thoai || ""}
+                <span className="hover:underline cursor-pointer">
+                  {storeConfig?.so_dien_thoai || "0123456789"}
                 </span>
               </li>
               <li>
                 Chăm sóc khách hàng -{" "}
-                <span className="hover:underline">
-                  {storeConfig?.so_dien_thoai || ""}
+                <span className="hover:underline cursor-pointer">
+                  {storeConfig?.so_dien_thoai || "0123456789"}
                 </span>
               </li>
               <li>
                 Gmail:{" "}
                 <a
                   href="mailto:dinhhoangloibt@gmail.com"
-                  className="text-[#201D8A] font-semibold hover:underline hover:underline"
+                  className="text-[#201D8A] font-semibold hover:underline"
                 >
-                  {storeConfig?.email || ""}
+                  {storeConfig?.email || "admin@gmail.com"}
                 </a>
               </li>
             </ul>
@@ -91,6 +91,9 @@ const Footer = () => {
             </h3>
             <ul className="text-sm space-y-3">
               <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
+                Khách hàng doanh nghiệp (B2B)
+              </li>
+              <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
                 Ưu đãi thanh toán
               </li>
               <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
@@ -98,6 +101,9 @@ const Footer = () => {
               </li>
               <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
                 Chính sách bảo hành
+              </li>
+              <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
+                Liên hệ hợp tác kinh doanh
               </li>
               <li className="cursor-pointer hover:text-gray-200 transition hover:underline">
                 So sánh sản phẩm
@@ -108,7 +114,7 @@ const Footer = () => {
           {/* Cột 4: Kết nối mạng xã hội */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              Kết nối với {storeConfig?.ten_cua_hang || "LTLShop"}
+              Kết nối với {storeConfig?.ten_cua_hang || "Cửa hàng của bạn"}
             </h3>
             <div className="flex items-center gap-3">
               {storeConfig?.facebook_url && (
@@ -166,7 +172,8 @@ const Footer = () => {
 
       {/* --- Copyright --- */}
       <div className="bg-[#497BC5] py-4 text-center text-sm">
-        <div className="container mx-auto px-4">
+        {/* ĐÃ SỬA TƯƠNG TỰ Ở ĐÂY */}
+        <div className="w-full max-w-7xl mx-auto px-4">
           <p>
             Nhóm 5 thuộc học phần Đồ án cơ sở với 3 thành viên tham gia: Đinh
             Thành Lợi - 2380601285. Vũ Thái Tài - 2380601285. Đỗ khắc levis -
