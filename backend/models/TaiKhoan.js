@@ -51,6 +51,11 @@ const TaiKhoan = sequelize.define(
         key: "id",
       },
     },
+    diem_tich_luy: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: true,
+    },
     tong_chi_tieu: { type: DataTypes.DECIMAL(15, 2), defaultValue: 0 },
   },
   {

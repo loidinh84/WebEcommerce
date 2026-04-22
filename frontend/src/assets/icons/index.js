@@ -42,9 +42,16 @@ import Memory from "./Memory.svg?react";
 import Comment from "./Comment.svg?react";
 import Delete from "./Delete.svg?react";
 import Picture from "./Picture.svg?react";
+import Tick from "./Tick.svg?react";
+import Crown from "./Crown.svg?react";
+import Lock from "./Lock.svg?react";
+import Unlock from "./Unlock.svg?react";
 
 export {
-
+  Unlock,
+  Lock,
+  Crown,
+  Tick,
   Picture,
   Delete,
   Comment,

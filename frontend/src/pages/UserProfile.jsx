@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import MembershipCarousel from "../components/MembershipCarousel";
 import BASE_URL from "../config/api";
 
 const Icons = {
@@ -179,16 +180,23 @@ const UserProfile = () => {
   const { user, logout } = useContext(AuthContext);
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTier, setSelectedTier] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const response = await fetch(
-          `${BASE_URL}/api/taikhoan/dashboard/${user.id}`,
+          `${BASE_URL}/api/taiKhoan/dashboard/${user.id}`,
         );
         const data = await response.json();
         setProfileData(data);
+        if (data?.allMemberships?.length > 0) {
+          const currentTier = data.allMemberships.find(
+            (t) => t.id === data.userInfo.the_thanh_vien_id,
+          );
+          setSelectedTier(currentTier || data.allMemberships[0]);
+        }
         setIsLoading(false);
       } catch (error) {
         console.error("Lỗi:", error);
@@ -238,7 +246,7 @@ const UserProfile = () => {
       <Header />
       <Toaster position="top-right" />
 
-      <main className="container mx-auto px-4 max-w-[1200px] py-6 flex-grow">
+      <main className="container mx-auto px-4 max-w-[1500px] py-6 flex-grow">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-500 mb-4 flex gap-2">
           <span
@@ -377,73 +385,10 @@ const UserProfile = () => {
 
             {/* TAB: THẺ THÀNH VIÊN */}
             {activeTab === "CardMember" && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-6">
-                  Hạng thành viên của tôi
-                </h2>
-                <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
-                  <div
-                    className="w-full max-w-[350px] h-52 rounded-2xl p-6 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden"
-                    style={{
-                      backgroundColor:
-                        profileData?.userInfo?.hang_thanh_vien?.mau_the ||
-                        "#4b5563",
-                    }}
-                  >
-                    <div className="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-                    <div>
-                      <p className="text-[10px] opacity-80 uppercase tracking-widest font-bold">
-                        LTL Member Rank
-                      </p>
-                      <h3 className="text-3xl font-black italic">
-                        {profileData?.userInfo?.hang_thanh_vien?.ten_hang ||
-                          "S-NEW"}
-                      </h3>
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold tracking-widest uppercase">
-                        {profileData?.userInfo?.ho_ten}
-                      </p>
-                      <p className="text-[10px] opacity-60 font-medium">
-                        TECHNOLOGY CUSTOMER SYSTEM
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex-1 w-full space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">
-                          Tổng chi tiêu
-                        </p>
-                        <p className="text-xl font-black">
-                          {new Intl.NumberFormat("vi-VN").format(
-                            profileData?.userInfo?.tong_chi_tieu || 0,
-                          )}
-                          đ
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <p className="text-gray-400 text-[10px] font-bold uppercase mb-1">
-                          Giảm giá
-                        </p>
-                        <p className="text-xl font-black text-red-500">
-                          {profileData?.userInfo?.hang_thanh_vien
-                            ?.ty_le_giam_gia || 0}
-                          %
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
-                      <p className="text-gray-600 italic text-sm">
-                        "
-                        {profileData?.userInfo?.hang_thanh_vien
-                          ?.mo_ta_quyen_loi || "Mua sắm để thăng hạng!"}
-                        "
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <MembershipCarousel
+                memberships={profileData?.allMemberships || []}
+                userInfo={profileData?.userInfo}
+              />
             )}
 
             {/* TAB 2: THÔNG TIN TÀI KHOẢN */}

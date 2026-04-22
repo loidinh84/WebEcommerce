@@ -163,7 +163,7 @@ const Checkout = () => {
     };
 
     try {
-      const response = await fetch(`${BASE_URL}/api/donhang/dat-hang`, {
+      const response = await fetch(`${BASE_URL}/api/donHang/dat-hang`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
@@ -178,7 +178,7 @@ const Checkout = () => {
         const remainingCart = fullCart.filter((item) => !item.selected);
         localStorage.setItem("cart", JSON.stringify(remainingCart));
 
-        setTimeout(() => navigate("/order-history"), 1500);
+        setTimeout(() => navigate("/orders"), 1500);
       } else {
         toast.error(result.message || "Lỗi đặt hàng!");
       }

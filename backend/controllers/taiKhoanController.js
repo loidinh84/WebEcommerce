@@ -44,10 +44,15 @@ exports.getUserFullDashboard = async (req, res) => {
       order: [["created_at", "DESC"]],
     });
 
+    const allMemberships = await TheThanhVien.findAll({
+      order: [["muc_chi_tieu_tu", "ASC"]],
+    });
+
     res.json({
       userInfo: user,
       orderCount: allOrders.length,
       allOrders: allOrders,
+      allMemberships: allMemberships,
     });
   } catch (error) {
     res.status(500).json({ message: "Lỗi lấy dữ liệu dashboard" });
@@ -114,8 +119,6 @@ exports.createTaiKhoan = async (req, res) => {
 exports.loginTaiKhoan = async (req, res) => {
   try {
     const { email, mat_khau } = req.body;
-
-    // Kiểm tra xem email có tồn tại trong CSDL
     const user = await TaiKhoan.findOne({
       where: {
         [Op.or]: [{ email: email }, { so_dien_thoai: email }],
@@ -136,13 +139,10 @@ exports.loginTaiKhoan = async (req, res) => {
       });
     }
 
-    // So sánh mật khẩu nhập vào với mật khẩu đã mã hóa
     const isMatch = await bcrypt.compare(mat_khau, user.mat_khau);
     if (!isMatch) {
       return res.status(400).json({ message: "Mật khẩu không chính xác!" });
     }
-
-    // Tạo mã Token để người dùng không phải đăng nhập lại
     const token = jwt.sign(
       { id: user.id, email: user.email, vai_tro: user.vai_tro },
       process.env.JWT_SECRET,
@@ -159,6 +159,8 @@ exports.loginTaiKhoan = async (req, res) => {
         vai_tro: user.vai_tro,
         so_dien_thoai: user.so_dien_thoai,
         anh_dai_dien: user.anh_dai_dien,
+        diem_tich_luy: user.diem_tich_luy || 0,
+        mau_the: user.hang_thanh_vien?.mau_the || "#9ca3af",
         ty_le_giam_gia: user.hang_thanh_vien?.ty_le_giam_gia || 0,
         ten_hang: user.hang_thanh_vien?.ten_hang,
       },
@@ -216,6 +218,8 @@ exports.loginWithGoogle = async (req, res) => {
         vai_tro: user.vai_tro,
         anh_dai_dien: user.anh_dai_dien,
         so_dien_thoai: user.so_dien_thoai,
+        diem_tich_luy: user.diem_tich_luy || 0,
+        mau_the: userWithCard.hang_thanh_vien?.mau_the || "#9ca3af",
         ty_le_giam_gia: userWithCard.hang_thanh_vien?.ty_le_giam_gia || 0,
         ten_hang: userWithCard.hang_thanh_vien?.ten_hang,
       },
