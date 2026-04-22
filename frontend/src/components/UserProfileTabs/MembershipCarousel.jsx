@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import * as Icons from "../assets/icons/index";
+import * as Icons from "../../assets/icons/index";
 
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n ?? 0);
 const GAP = 16;

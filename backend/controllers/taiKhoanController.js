@@ -6,6 +6,9 @@ const TheThanhVien = require("../models/TheThanhVien");
 const DonHang = require("../models/DonHang");
 const ChiTietDonHang = require("../models/ChiTietDonHang");
 const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
+const BienTheSanPham = require("../models/BienTheSanPham");
+const SanPham = require("../models/SanPham");
+const HinhAnhSanPham = require("../models/HinhAnhSanPham");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -40,7 +43,25 @@ exports.getUserFullDashboard = async (req, res) => {
 
     const allOrders = await DonHang.findAll({
       where: { tai_khoan_id: id },
-      include: [{ model: ChiTietDonHang, as: "chi_tiet", limit: 1 }],
+      include: [
+        {
+          model: ChiTietDonHang,
+          as: "chi_tiet",
+          include: [
+            {
+              model: BienTheSanPham,
+              as: "bien_the",
+              include: [
+                {
+                  model: SanPham,
+                  as: "san_pham",
+                  include: [{ model: HinhAnhSanPham, as: "hinh_anh" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
       order: [["created_at", "DESC"]],
     });
 
@@ -55,6 +76,7 @@ exports.getUserFullDashboard = async (req, res) => {
       allMemberships: allMemberships,
     });
   } catch (error) {
+    console.error("🚨 LỖI API DASHBOARD:", error);
     res.status(500).json({ message: "Lỗi lấy dữ liệu dashboard" });
   }
 };
@@ -263,5 +285,141 @@ exports.getDiaChiByUser = async (req, res) => {
     res.json(diaChiList);
   } catch (error) {
     res.status(500).json({ message: "Lỗi lấy danh sách địa chỉ!" });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let { ho_ten, so_dien_thoai, gioi_tinh, ngay_sinh } = req.body;
+    let anh_dai_dien = req.body.anh_dai_dien;
+
+    if (!ngay_sinh) ngay_sinh = null;
+    if (!so_dien_thoai) so_dien_thoai = null;
+
+    if (req.file) {
+      anh_dai_dien = `/uploads/${req.file.filename}`;
+    }
+
+    await TaiKhoan.update(
+      { ho_ten, so_dien_thoai, gioi_tinh, ngay_sinh, anh_dai_dien },
+      { where: { id } },
+    );
+    res.status(200).json({ message: "Cập nhật thành công!" });
+  } catch (error) {
+    console.error("LỖI UPDATE PROFILE:", error);
+    res.status(500).json({ message: "Lỗi server khi cập nhật!" });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await TaiKhoan.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng!" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.mat_khau);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Mật khẩu hiện tại không chính xác!" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedMatKhau = await bcrypt.hash(newPassword, salt);
+
+    await TaiKhoan.update({ mat_khau: hashedMatKhau }, { where: { id } });
+
+    res.status(200).json({ message: "Đổi mật khẩu thành công!" });
+  } catch (error) {
+    console.error("Lỗi đổi mật khẩu:", error);
+    res.status(500).json({ message: "Lỗi server khi đổi mật khẩu!" });
+  }
+};
+
+exports.addAddress = async (req, res) => {
+  try {
+    const {
+      tai_khoan_id,
+      ho_ten_nguoi_nhan,
+      so_dien_thoai,
+      dia_chi_cu_the,
+      tinh_thanh,
+      quan_huyen,
+      phuong_xa,
+      la_mac_dinh,
+    } = req.body;
+
+    if (la_mac_dinh) {
+      await DiaChiGiaoHang.update(
+        { la_mac_dinh: 0 },
+        { where: { tai_khoan_id } },
+      );
+    }
+
+    await DiaChiGiaoHang.create({
+      tai_khoan_id,
+      ho_ten_nguoi_nhan,
+      so_dien_thoai,
+      dia_chi_cu_the,
+      tinh_thanh,
+      quan_huyen,
+      phuong_xa,
+      la_mac_dinh: la_mac_dinh ? 1 : 0,
+    });
+    res.status(201).json({ message: "Đã thêm địa chỉ!" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server khi thêm địa chỉ!" });
+  }
+};
+
+exports.updateAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    const {
+      ho_ten_nguoi_nhan,
+      so_dien_thoai,
+      dia_chi_cu_the,
+      tinh_thanh,
+      quan_huyen,
+      phuong_xa,
+      la_mac_dinh,
+      tai_khoan_id,
+    } = req.body;
+
+    if (la_mac_dinh && tai_khoan_id) {
+      await DiaChiGiaoHang.update(
+        { la_mac_dinh: 0 },
+        { where: { tai_khoan_id } },
+      );
+    }
+
+    await DiaChiGiaoHang.update(
+      {
+        ho_ten_nguoi_nhan,
+        so_dien_thoai,
+        dia_chi_cu_the,
+        tinh_thanh,
+        quan_huyen,
+        phuong_xa,
+        la_mac_dinh: la_mac_dinh ? 1 : 0,
+      },
+      { where: { id: addressId } },
+    );
+    res.status(200).json({ message: "Cập nhật địa chỉ thành công!" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server khi cập nhật địa chỉ!" });
+  }
+};
+
+exports.deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    await DiaChiGiaoHang.destroy({ where: { id: addressId } });
+    res.status(200).json({ message: "Đã xóa địa chỉ!" });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server khi xóa địa chỉ!" });
   }
 };

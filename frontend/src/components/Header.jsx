@@ -183,8 +183,11 @@ const Header = () => {
                 </span>
                 <img
                   src={
-                    user.anh_dai_dien ||
-                    `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
+                    user.anh_dai_dien?.startsWith("http")
+                      ? user.anh_dai_dien
+                      : user.anh_dai_dien
+                      ? `${BASE_URL}${user.anh_dai_dien}`
+                      : `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
                   }
                   alt="Avatar"
                   className="w-8 h-8 rounded-full border border-white object-cover"

@@ -8,6 +8,7 @@ import AccessoryBar from "../components/AccessoryBar";
 import ContactSupport from "../components/ContactSupport";
 import ShopReviews from "../components/ShopReviews";
 import * as Images from "../assets/images/index";
+import { toast, Toaster } from "react-hot-toast";
 
 const phuKienData = [
   { name: "Tai nghe", icon: <img src={Images.TayNghe} alt="Tai nghe" /> },
@@ -28,7 +29,6 @@ const hangCuData = [
     icon: <img src={Images.ManHinhCu} alt="Màn hình cũ" />,
   },
 ];
-
 
 // Widget bên trái cho từng ProductSection
 const DealCountdownWidget = () => {
@@ -101,13 +101,12 @@ const PCConfigWidget = () => {
 };
 
 function Home() {
-
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
       <Header />
+      <Toaster position="bottom-center" />
 
-      {/* SỬA TẠI ĐÂY: Thay 'container' thành 'w-full max-w-7xl' để ép cứng 1280px */}
-      <main className="flex-grow w-full max-w-7xl mx-auto px-4 mt-4 mb-10">
+      <main className="flex-grow w-full max-w-[1280px] mx-auto px-4 mt-4 mb-10">
         {/* TẦNG 1: Sidebar + Hero Slideshow */}
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-1/4 xl:w-1/5">

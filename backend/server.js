@@ -16,6 +16,7 @@ const BannerRoutes = require("./routers/bannerRoutes");
 const DonViVanChuyenRoutes = require("./routers/donViVanChuyenRoutes");
 const MethodPayRoutes = require("./routers/methodPayRoutes");
 const TheThanhVienRoutes = require("./routers/theThanhVienRoutes");
+const yeuThichRoutes = require("./routers/yeuThichRoutes");
 const maintenanceMiddleware = require("./middlewares/maintenanceMiddleware");
 
 const app = express();
@@ -38,6 +39,7 @@ app.use("/api/banners", BannerRoutes);
 app.use("/api/logistics", DonViVanChuyenRoutes);
 app.use("/api/payments", MethodPayRoutes);
 app.use("/api/memberships", TheThanhVienRoutes);
+app.use("/api/wishlist", yeuThichRoutes);
 
 const PORT = process.env.PORT || 5000;
 sequelize

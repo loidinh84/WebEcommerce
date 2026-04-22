@@ -8,6 +8,9 @@ const NhaCungCap = require("./NhaCungCap");
 const GiaoDichThanhToan = require("./GiaoDichThanhToan");
 const PhuongThucThanhToan = require("./PhuongThucThanhToan");
 const DiaChiGiaoHang = require("./DiaChiGiaoHang");
+const YeuThich = require("./YeuThich");
+const BienTheSanPham = require("./BienTheSanPham");
+const HinhAnhSanPham = require("./HinhAnhSanPham");
 
 // Quan hệ Tài Khoản <-> Thẻ Thành Viên
 // Một tài khoản thuộc về một hạng thành viên
@@ -66,6 +69,41 @@ NhaCungCap.hasMany(SanPham, {
   as: "danh_sach_san_pham",
 });
 
+YeuThich.belongsTo(SanPham, { foreignKey: "san_pham_id", as: "san_pham" });
+SanPham.hasMany(YeuThich, {
+  foreignKey: "san_pham_id",
+  as: "danh_sach_yeu_thich",
+});
+
+// Quan hệ giữa YeuThich và TaiKhoan
+YeuThich.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "tai_khoan" });
+TaiKhoan.hasMany(YeuThich, {
+  foreignKey: "tai_khoan_id",
+  as: "danh_sach_yeu_thich",
+});
+
+// ========================================
+// 2. Quan hệ Chi Tiết Đơn Hàng <-> Biến Thể
+// ========================================
+ChiTietDonHang.belongsTo(BienTheSanPham, {
+  foreignKey: "bien_the_id",
+  as: "bien_the",
+});
+
+BienTheSanPham.hasMany(ChiTietDonHang, {
+  foreignKey: "bien_the_id",
+  as: "don_hang_chi_tiet",
+});
+
+// ========================================
+// 3. Quan hệ Biến Thể <-> Sản Phẩm
+// ========================================
+BienTheSanPham.belongsTo(SanPham, {
+  foreignKey: "san_pham_id",
+  as: "san_pham",
+});
+
+
 module.exports = {
   TaiKhoan,
   TheThanhVien,
@@ -77,4 +115,6 @@ module.exports = {
   GiaoDichThanhToan,
   PhuongThucThanhToan,
   DiaChiGiaoHang,
+  BienTheSanPham,
+  HinhAnhSanPham,
 };

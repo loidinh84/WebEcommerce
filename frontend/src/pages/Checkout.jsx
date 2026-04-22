@@ -48,11 +48,11 @@ const Checkout = () => {
 
     if (user) {
       // Lấy địa chỉ
-      fetch(`${BASE_URL}/api/taiKhoan/${user.id}/dia-chi`)
+      fetch(`${BASE_URL}/api/taiKhoan/diachi/${user.id}`)
         .then((res) => res.json())
         .then((data) => {
           setAddresses(data);
-          setSelectedAddress(data.find((a) => a.la_mac_dinh) || data[0]);
+          setSelectedAddress(data.find((a) => a.la_mac_dinh === 1 || a.la_mac_dinh === true) || data[0]);
         });
 
       // Lấy Đơn vị vận chuyển
@@ -643,7 +643,7 @@ const Checkout = () => {
                     <div className="flex justify-between items-start mb-2">
                       <p className="font-bold text-gray-800 flex items-center gap-2">
                         {addr.ho_ten_nguoi_nhan || user?.ho_ten}
-                        {addr.la_mac_dinh && (
+                        {(addr.la_mac_dinh === 1 || addr.la_mac_dinh === true) && (
                           <span className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
                             Mặc định
                           </span>
@@ -666,7 +666,7 @@ const Checkout = () => {
               <button
                 onClick={() => {
                   setIsAddressModalOpen(false);
-                  navigate("/profile");
+                  navigate("/profile", { state: { activeTab: "profile" } });
                 }}
                 className="w-full border border-green-400 bg-green-500 text-white py-2.5 rounded-lg font-medium hover:bg-green-600 transition cursor-pointer flex justify-center items-center gap-2"
               >

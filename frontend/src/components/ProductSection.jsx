@@ -6,7 +6,6 @@ import BASE_URL from "../config/api";
 const ProductSection = ({
   tab1,
   tab2,
-  sideWidget,
   filters = [],
   isLoading,
   danhMucId,
@@ -110,7 +109,6 @@ const ProductSection = ({
         </div>
 
         {/* 3. Grid sản phẩm */}
-        {/* ĐÃ SỬA: Lên màn hình to (lg) sẽ hiển thị 5 sản phẩm/hàng cho vừa vặn với 1280px */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {loading ? (
             Array(10)

@@ -400,18 +400,21 @@ exports.updateSanPham = async (req, res) => {
     let thuoc_tinh = [];
     let hinh_anh_giu_lai = [];
 
-    if (req.body.bien_the)
+    if (req.body.bien_the) {
       try {
         bien_the = JSON.parse(req.body.bien_the);
       } catch (e) {}
-    if (req.body.thuoc_tinh)
+    }
+    if (req.body.thuoc_tinh) {
       try {
         thuoc_tinh = JSON.parse(req.body.thuoc_tinh);
       } catch (e) {}
-    if (req.body.hinh_anh)
+    }
+    if (req.body.hinh_anh) {
       try {
         hinh_anh_giu_lai = JSON.parse(req.body.hinh_anh);
       } catch (e) {}
+    }
 
     const sanPham = await SanPham.findByPk(id);
     if (!sanPham) {
@@ -433,29 +436,38 @@ exports.updateSanPham = async (req, res) => {
       { transaction: t },
     );
 
-    await BienTheSanPham.destroy({
-      where: { san_pham_id: id },
-      transaction: t,
-    });
+    if (bien_the && bien_the.length > 0) {
+      for (const bt of bien_the) {
+        if (bt.id) {
+          const { id: variantId, san_pham_id, ...updateData } = bt;
+          await BienTheSanPham.update(
+            {
+              ...updateData,
+              gia_goc: Number(bt.gia_goc) || 0,
+              gia_ban: Number(bt.gia_ban) || 0,
+              ton_kho: Number(bt.ton_kho) || 0,
+            },
+            { where: { id: bt.id, san_pham_id: id }, transaction: t },
+          );
+        } else {
+          await BienTheSanPham.create(
+            {
+              ...bt,
+              san_pham_id: id,
+              gia_goc: Number(bt.gia_goc) || 0,
+              gia_ban: Number(bt.gia_ban) || 0,
+              ton_kho: Number(bt.ton_kho) || 0,
+            },
+            { transaction: t },
+          );
+        }
+      }
+    }
+
     await ThuocTinhSanPham.destroy({
       where: { san_pham_id: id },
       transaction: t,
     });
-    await HinhAnhSanPham.destroy({
-      where: { san_pham_id: id },
-      transaction: t,
-    });
-
-    if (bien_the && bien_the.length > 0) {
-      const newBienThe = bien_the.map((bt) => ({
-        ...bt,
-        san_pham_id: id,
-        gia_goc: Number(bt.gia_goc) || 0,
-        gia_ban: Number(bt.gia_ban) || 0,
-        ton_kho: Number(bt.ton_kho) || 0,
-      }));
-      await BienTheSanPham.bulkCreate(newBienThe, { transaction: t });
-    }
 
     if (thuoc_tinh && thuoc_tinh.length > 0) {
       const newThuocTinh = thuoc_tinh.map((tt) => ({
@@ -465,6 +477,11 @@ exports.updateSanPham = async (req, res) => {
       }));
       await ThuocTinhSanPham.bulkCreate(newThuocTinh, { transaction: t });
     }
+
+    await HinhAnhSanPham.destroy({
+      where: { san_pham_id: id },
+      transaction: t,
+    });
 
     let tatCaAnh = [];
 

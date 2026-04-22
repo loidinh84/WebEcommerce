@@ -20,6 +20,8 @@ const ProductDetail = () => {
   // 1. Quản lý trạng thái dữ liệu
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   // 2. Quản lý lựa chọn của người dùng
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -40,6 +42,67 @@ const ProductDetail = () => {
   // 5. State cho Sản phẩm tương tự & Đánh giá
   const [similarProducts, setSimilarProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!user?.id || !product?.id) return;
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/wishlist/check/${user.id}/${product.id}`,
+        );
+        const data = await res.json();
+        setIsLiked(data.isLiked);
+      } catch (error) {
+        console.error("Lỗi kiểm tra yêu thích:", error);
+      }
+    };
+    checkLikeStatus();
+  }, [user?.id, product?.id]);
+
+  // 3. Hàm xử lý nút bấm Yêu thích
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để sử dụng tính năng này!");
+      navigate("/login");
+      return;
+    }
+
+    if (isLiking) return;
+    setIsLiking(true);
+
+    try {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/wishlist/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          tai_khoan_id: user.id,
+          san_pham_id: product.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setIsLiked(data.isLiked);
+        toast.success(
+          data.isLiked
+            ? "Đã thêm vào danh sách yêu thích!"
+            : "Đã bỏ yêu thích sản phẩm.",
+        );
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra!");
+      }
+    } catch {
+      toast.error("Lỗi kết nối máy chủ!");
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -119,15 +182,6 @@ const ProductDetail = () => {
   const getImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/400x400?text=No+Image";
     return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
-  };
-
-  const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    if (!isWishlisted) {
-      toast.success("Đã thêm vào danh sách yêu thích!");
-    } else {
-      toast("Đã bỏ khỏi danh sách yêu thích");
-    }
   };
 
   const scrollToReview = () => {
@@ -349,10 +403,26 @@ const ProductDetail = () => {
               {/* 3. Bốn Nút Action */}
               <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-gray-600 mb-3 border-b border-gray-100 pb-4">
                 <button
-                  onClick={handleWishlist}
-                  className={`flex items-center gap-1.5 text-blue-600 cursor-pointer transition ${isWishlisted ? "text-red-500" : "hover:text-blue-400"}`}
+                  onClick={handleToggleFavorite}
+                  disabled={isLiking}
+                  className={`flex items-center justify-center gap-2 rounded-xl cursor-pointer font-medium transition-all ${
+                    isLiked
+                      ? " text-red-500 hover:text-red-400"
+                      : " text-blue-600 hover:text-blue-400 "
+                  } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <Icons.Favorite />
+                  {isLiked ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-6 h-6 animate-scale-up"
+                    >
+                      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                    </svg>
+                  ) : (
+                    <Icons.Favorite className="w-6 h-6" />
+                  )}
                   Yêu thích
                 </button>
                 <button
