@@ -26,6 +26,8 @@ import Checkout from "./pages/Checkout";
 import Banner from "./pages/admin/Banner";
 import CheckoutSetting from "./pages/admin/CheckoutSetting";
 import Memberships from "./pages/admin/TheThanhVienList";
+import DienThoai from "./pages/DienThoai";
+
 // import { TheThanhVien } from "../../backend/models";
 
 const API_URL = BASE_URL;
@@ -68,6 +70,7 @@ function App() {
       <Route path="/order-detail/:id" element={<OrderDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/dienthoai" element={<DienThoai />} />
 
       {/* Nhánh Admin */}
       <Route path="/admin" element={<PrivateRoute />}>

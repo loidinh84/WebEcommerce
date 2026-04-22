@@ -295,7 +295,7 @@ const ProductDetail = () => {
       <Header />
 
       <Toaster position="bottom-right" reverseOrder={false} />
-      <main className="container mx-auto px-4 max-w-[1200px] py-4">
+      <main className="container mx-auto px-4 max-w-[1280px] py-4">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-500 mb-4 flex gap-2">
           <span
