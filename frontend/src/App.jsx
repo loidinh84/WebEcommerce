@@ -14,7 +14,7 @@ import Register from "./pages/register";
 import Product from "./pages/admin/Product";
 import ProductDetail from "./pages/ProductDetail";
 import UserProfile from "./pages/UserProfile";
-import OrderHistory from "./pages/OrderHistory";
+
 import OrderDetail from "./pages/OrderDetail";
 import Categories from "./pages/admin/Categories";
 import Order from "./pages/admin/Order";
@@ -66,7 +66,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/product/:slug" element={<ProductDetail />} />
       <Route path="/profile" element={<UserProfile />} />
-      <Route path="/orders" element={<OrderHistory />} />
+
       <Route path="/order-detail/:id" element={<OrderDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />

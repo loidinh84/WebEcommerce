@@ -14,6 +14,7 @@ const TheThanhVien = require("../models/TheThanhVien");
 const GiaoDichThanhToan = require("../models/GiaoDichThanhToan");
 const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
 const ThietLapCuaHang = require("../models/ThietLapCuaHang");
+const LichSuGiaoHang = require("../models/LichSuGiaoHang");
 
 exports.createDonHang = async (req, res) => {
   const t = await db.transaction();
@@ -232,6 +233,22 @@ exports.createDonHang = async (req, res) => {
     }
 
     await t.commit();
+
+    // Tự động tạo log lịch sử đầu tiên
+    await LichSuGiaoHang.create({
+      don_hang_id: newOrder.id,
+      tieu_de: "Đơn Hàng Đã Đặt",
+      mo_ta: "Cảm ơn bạn đã đặt hàng! Đơn hàng của bạn đã được ghi nhận.",
+      thoi_gian: new Date(),
+    });
+    if (initialStatus === "confirmed") {
+      await LichSuGiaoHang.create({
+        don_hang_id: newOrder.id,
+        tieu_de: "Đã Xác Nhận Đơn Hàng",
+        mo_ta: "Đơn hàng được tự động xác nhận, đang chuẩn bị hàng.",
+        thoi_gian: new Date(),
+      });
+    }
 
     const taiKhoan = await TaiKhoan.findByPk(tai_khoan_id);
 
@@ -504,6 +521,22 @@ exports.updateOrderStatus = async (req, res) => {
     donHang.update_at = new Date();
     await donHang.save();
 
+    // Tự động tạo log lịch sử giao hàng
+    const statusLogs = {
+      confirmed: { tieu_de: "Đã Xác Nhận Đơn Hàng", mo_ta: "Người bán đã xác nhận và đang chuẩn bị hàng" },
+      shipping: { tieu_de: "Đã Giao Cho ĐVVC", mo_ta: "Đơn hàng đã được bàn giao cho đơn vị vận chuyển" },
+      delivered: { tieu_de: "Giao Hàng Thành Công", mo_ta: "Khách hàng đã nhận được hàng" },
+      cancelled: { tieu_de: "Đơn Hàng Đã Hủy", mo_ta: "Đơn hàng đã bị hủy" },
+      refunded: { tieu_de: "Hoàn Tiền Đã Xử Lý", mo_ta: "Tiền đã được hoàn lại cho khách hàng" },
+    };
+    if (statusLogs[trang_thai]) {
+      await LichSuGiaoHang.create({
+        don_hang_id: donHang.id,
+        ...statusLogs[trang_thai],
+        thoi_gian: new Date(),
+      });
+    }
+
     res.status(200).json({
       message: "Cập nhật trạng thái thành công!",
       data: donHang,
@@ -511,5 +544,31 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật trạng thái!" });
+  }
+};
+
+// Thêm log lịch sử giao hàng
+exports.addTrackingLog = async (req, res) => {
+  try {
+    const { id } = req.params; // ma_don_hang
+    const { tieu_de, mo_ta, lat, lng } = req.body;
+
+    const donHang = await DonHang.findOne({ where: { ma_don_hang: id } });
+    if (!donHang)
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng!" });
+
+    const log = await LichSuGiaoHang.create({
+      don_hang_id: donHang.id,
+      tieu_de,
+      mo_ta,
+      lat: lat || null,
+      lng: lng || null,
+      thoi_gian: new Date(),
+    });
+
+    res.status(201).json({ message: "Thêm tracking thành công!", data: log });
+  } catch (error) {
+    console.error("Lỗi thêm tracking log:", error);
+    res.status(500).json({ message: "Lỗi server!" });
   }
 };

@@ -9,6 +9,9 @@ const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
 const BienTheSanPham = require("../models/BienTheSanPham");
 const SanPham = require("../models/SanPham");
 const HinhAnhSanPham = require("../models/HinhAnhSanPham");
+const LichSuGiaoHang = require("../models/LichSuGiaoHang");
+const DonViVanChuyen = require("../models/DonViVanChuyen");
+const ThietLapCuaHang = require("../models/ThietLapCuaHang");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -76,7 +79,6 @@ exports.getUserFullDashboard = async (req, res) => {
       allMemberships: allMemberships,
     });
   } catch (error) {
-    console.error("🚨 LỖI API DASHBOARD:", error);
     res.status(500).json({ message: "Lỗi lấy dữ liệu dashboard" });
   }
 };
@@ -258,17 +260,52 @@ exports.getOrderDetail = async (req, res) => {
     const order = await DonHang.findByPk(id, {
       include: [
         {
+          model: DiaChiGiaoHang,
+          as: "dia_chi",
+        },
+        {
+          model: DonViVanChuyen,
+          as: "don_vi_vc",
+        },
+        {
+          model: LichSuGiaoHang,
+          as: "lich_su_giao_hang",
+        },
+        {
           model: ChiTietDonHang,
           as: "chi_tiet",
+          include: [
+            {
+              model: BienTheSanPham,
+              as: "bien_the",
+              include: [
+                {
+                  model: SanPham,
+                  as: "san_pham",
+                  include: [{ model: HinhAnhSanPham, as: "hinh_anh" }],
+                },
+              ],
+            },
+          ],
         },
       ],
+      order: [
+        [{ model: LichSuGiaoHang, as: "lich_su_giao_hang" }, "thoi_gian", "DESC"]
+      ],
     });
+
+    const thietLap = await ThietLapCuaHang.findOne();
 
     if (!order)
       return res
         .status(404)
         .json({ message: "Không tìm thấy thông tin đơn hàng!" });
-    res.json(order);
+    
+    // Attach shop settings to the response if needed
+    const orderData = order.toJSON();
+    orderData.cua_hang = thietLap;
+
+    res.json(orderData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi Server khi lấy chi tiết đơn hàng" });
@@ -307,7 +344,6 @@ exports.updateProfile = async (req, res) => {
     );
     res.status(200).json({ message: "Cập nhật thành công!" });
   } catch (error) {
-    console.error("LỖI UPDATE PROFILE:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật!" });
   }
 };

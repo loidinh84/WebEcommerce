@@ -12,5 +12,11 @@ router.put(
   isAdmin,
   DonHangController.updateOrderStatus,
 );
+router.post(
+  "/:id/tracking",
+  verifyToken,
+  isAdmin,
+  DonHangController.addTrackingLog,
+);
 
 module.exports = router;

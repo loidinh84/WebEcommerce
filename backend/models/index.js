@@ -11,6 +11,9 @@ const DiaChiGiaoHang = require("./DiaChiGiaoHang");
 const YeuThich = require("./YeuThich");
 const BienTheSanPham = require("./BienTheSanPham");
 const HinhAnhSanPham = require("./HinhAnhSanPham");
+const LichSuGiaoHang = require("./LichSuGiaoHang");
+const DonViVanChuyen = require("./DonViVanChuyen");
+const ThietLapCuaHang = require("./ThietLapCuaHang");
 
 // Quan hệ Tài Khoản <-> Thẻ Thành Viên
 // Một tài khoản thuộc về một hạng thành viên
@@ -39,6 +42,11 @@ DiaChiGiaoHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id" });
 DonHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "nguoi_mua" });
 // Đơn hàng liên kết với Địa chỉ giao hàng
 DonHang.belongsTo(DiaChiGiaoHang, { foreignKey: "dia_chi_id", as: "dia_chi" });
+DonHang.belongsTo(DonViVanChuyen, { foreignKey: "don_vi_vc_id", as: "don_vi_vc" });
+
+// Quan hệ Đơn Hàng <-> Lịch Sử Giao Hàng
+DonHang.hasMany(LichSuGiaoHang, { foreignKey: "don_hang_id", as: "lich_su_giao_hang" });
+LichSuGiaoHang.belongsTo(DonHang, { foreignKey: "don_hang_id" });
 
 // Quan hệ Đơn Hàng <-> Chi Tiết Đơn Hàng
 DonHang.hasMany(ChiTietDonHang, { foreignKey: "don_hang_id", as: "chi_tiet" });
@@ -117,4 +125,7 @@ module.exports = {
   DiaChiGiaoHang,
   BienTheSanPham,
   HinhAnhSanPham,
+  LichSuGiaoHang,
+  DonViVanChuyen,
+  ThietLapCuaHang,
 };

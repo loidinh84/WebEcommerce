@@ -178,7 +178,7 @@ const Header = () => {
               onMouseLeave={() => setShowDropdown(false)}
             >
               <div className="flex items-center gap-3 hover:bg-white/10 transition bg-black/10 px-4 py-1.5 rounded-lg cursor-pointer">
-                <span className="text-white text-base font-bold truncate max-w-[150px] text-right">
+                <span className="text-white text-sm font-bold truncate max-w-[150px] text-right">
                   {user.ho_ten || user.so_dien_thoai}
                 </span>
                 <img
@@ -186,11 +186,11 @@ const Header = () => {
                     user.anh_dai_dien?.startsWith("http")
                       ? user.anh_dai_dien
                       : user.anh_dai_dien
-                      ? `${BASE_URL}${user.anh_dai_dien}`
-                      : `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
+                        ? `${BASE_URL}${user.anh_dai_dien}`
+                        : `https://ui-avatars.com/api/?name=${user.ho_ten || user.so_dien_thoai || "User"}&background=random`
                   }
                   alt="Avatar"
-                  className="w-8 h-8 rounded-full border border-white object-cover"
+                  className="w-9 h-9 rounded-full object-cover"
                 />
               </div>
               {showDropdown && (
@@ -203,7 +203,9 @@ const Header = () => {
                   </button>
 
                   <button
-                    onClick={() => navigate("/orders")}
+                    onClick={() =>
+                      navigate("/profile", { state: { activeTab: "orders" } })
+                    }
                     className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 hover:text-[#4A44F2] transition flex items-center gap-3 cursor-pointer"
                   >
                     Đơn hàng của tôi

@@ -80,7 +80,8 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
   }, [userInfo.id]);
 
   const diaChiMacDinh =
-    diaChiList.find((dc) => dc.la_mac_dinh === 1) || diaChiList[0];
+    diaChiList.find((dc) => dc.la_mac_dinh === 1 || dc.la_mac_dinh === true) ||
+    diaChiList[0];
 
   const getRelativeTime = (dateString) => {
     if (!dateString) return "Chưa cập nhật";
@@ -384,9 +385,13 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
             </span>
           </div>
           <div className="flex justify-between border-b border-gray-50 pb-2">
-            <span className="text-gray-500">Địa chỉ mặc định:</span>
-            <span className="font-medium text-gray-400 italic">
-              {diaChiMacDinh?.dia_chi || "Chưa thiết lập"}
+            <span className="text-gray-500 min-w-max mr-4">
+              Địa chỉ mặc định:
+            </span>
+            <span className="font-bold text-gray-800 text-right line-clamp-2">
+              {diaChiMacDinh
+                ? `${diaChiMacDinh.dia_chi_cu_the}, ${diaChiMacDinh.phuong_xa}, ${diaChiMacDinh.quan_huyen}, ${diaChiMacDinh.tinh_thanh}`
+                : "Chưa thiết lập"}
             </span>
           </div>
         </div>

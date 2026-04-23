@@ -9,6 +9,19 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale/vi";
 import { useReactToPrint } from "react-to-print";
 import InvoiceTemplate from "./InvoiceTemplate";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 registerLocale("vi", vi);
 
@@ -21,6 +34,39 @@ const getAuthHeader = () => {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
   return { headers: { Authorization: `Bearer ${token}` } };
+};
+
+// Component bản đồ mini có thể click để chọn tọa độ
+const ClickHandler = ({ onPick }) => {
+  useMapEvents({ click: (e) => onPick(e.latlng.lat, e.latlng.lng) });
+  return null;
+};
+
+// Sub-component bay tới tọa độ mới khi geocode xong
+const FlyToLocation = ({ lat, lng }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (lat && lng) map.flyTo([lat, lng], 15, { duration: 1 });
+  }, [lat, lng, map]);
+  return null;
+};
+
+const TrackingMapPicker = ({ lat, lng, onPick }) => {
+  const defaultCenter = [10.0311, 105.7903]; // Cần Thơ
+  const center = lat && lng ? [lat, lng] : defaultCenter;
+  return (
+    <MapContainer
+      center={center}
+      zoom={13}
+      scrollWheelZoom
+      className="h-full w-full z-0"
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <ClickHandler onPick={onPick} />
+      <FlyToLocation lat={lat} lng={lng} />
+      {lat && lng && <Marker position={[lat, lng]} />}
+    </MapContainer>
+  );
 };
 
 const Order = () => {
@@ -55,6 +101,21 @@ const Order = () => {
     title: "",
     message: "",
   });
+
+  // --- TRACKING MODAL ---
+  const [trackingModal, setTrackingModal] = useState({
+    isOpen: false,
+    orderId: null, // ma_don_hang
+  });
+  const [trackingForm, setTrackingForm] = useState({
+    tieu_de: "",
+    mo_ta: "",
+    lat: null,
+    lng: null,
+  });
+  const [trackingAddress, setTrackingAddress] = useState("");
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isSubmittingTracking, setIsSubmittingTracking] = useState(false);
 
   const fetchOrders = async () => {
     setIsLoading(true);
@@ -145,6 +206,57 @@ const Order = () => {
     } finally {
       setConfirmModal({ ...confirmModal, isOpen: false });
       setExpandedRows([]);
+    }
+  };
+
+  // --- HÀM GEOCODING ---
+  const handleGeocode = async () => {
+    if (!trackingAddress.trim()) return;
+    setIsGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(trackingAddress)}&limit=1`,
+        { headers: { "Accept-Language": "vi" } },
+      );
+      const results = await response.json();
+      if (results.length > 0) {
+        const { lat, lon } = results[0];
+        setTrackingForm((f) => ({
+          ...f,
+          lat: parseFloat(lat),
+          lng: parseFloat(lon),
+        }));
+      } else {
+        showToast("Không tìm thấy địa chỉ này!", "error");
+      }
+    } catch {
+      showToast("Lỗi kết nối geocoding!", "error");
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  // --- HÀM GỬI TRACKING ---
+  const handleSubmitTracking = async () => {
+    if (!trackingForm.tieu_de) {
+      showToast("Vui lòng nhập tiêu đề!", "error");
+      return;
+    }
+    setIsSubmittingTracking(true);
+    try {
+      await axios.post(
+        `${BASE_URL}/api/donHang/${trackingModal.orderId}/tracking`,
+        trackingForm,
+        getAuthHeader(),
+      );
+      showToast("Đã thêm điểm giao hàng thành công!", "success");
+      setTrackingModal({ isOpen: false, orderId: null });
+      setTrackingForm({ tieu_de: "", mo_ta: "", lat: null, lng: null });
+      setTrackingAddress("");
+    } catch {
+      showToast("Lỗi khi lưu tracking!", "error");
+    } finally {
+      setIsSubmittingTracking(false);
     }
   };
 
@@ -662,21 +774,41 @@ const Order = () => {
                                     </button>
                                   )}
                                   {order.orderStatus === "shipping" && (
-                                    <button
-                                      onClick={() =>
-                                        setConfirmModal({
-                                          isOpen: true,
-                                          actionType: "complete",
-                                          orderId: order.id,
-                                          newStatus: "delivered",
-                                          title: "Xác nhận giao thành công",
-                                          message: `Đơn hàng ${order.id} đã được giao thành công?`,
-                                        })
-                                      }
-                                      className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
-                                    >
-                                      Đã giao xong
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={() =>
+                                          setConfirmModal({
+                                            isOpen: true,
+                                            actionType: "complete",
+                                            orderId: order.id,
+                                            newStatus: "delivered",
+                                            title: "Xác nhận giao thành công",
+                                            message: `Đơn hàng ${order.id} đã được giao thành công?`,
+                                          })
+                                        }
+                                        className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
+                                      >
+                                        Đã giao xong
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setTrackingForm({
+                                            tieu_de: "",
+                                            mo_ta: "",
+                                            lat: null,
+                                            lng: null,
+                                          });
+                                          setTrackingAddress("");
+                                          setTrackingModal({
+                                            isOpen: true,
+                                            orderId: order.id,
+                                          });
+                                        }}
+                                        className="w-full py-2.5 bg-blue-50 border border-blue-400 text-blue-600 hover:bg-blue-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
+                                      >
+                                        Thêm Điểm giao hàng
+                                      </button>
+                                    </>
                                   )}
                                   {order.orderStatus === "cancelled" && (
                                     <button
@@ -809,6 +941,113 @@ const Order = () => {
         onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={executeConfirmAction}
       />
+
+      {/* TRACKING MODAL */}
+      {trackingModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[300] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="px-5 py-2.5 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="font-bold text-gray-800">Thêm Điểm Giao Hàng</h3>
+              <button
+                onClick={() =>
+                  setTrackingModal({ isOpen: false, orderId: null })
+                }
+                className="text-gray-400 hover:text-gray-700 text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Geocoding */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Tìm kiếm địa chỉ
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={trackingAddress}
+                    onChange={(e) => setTrackingAddress(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
+                    placeholder="Nhập ví trí..."
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                  />
+                  <button
+                    onClick={handleGeocode}
+                    disabled={isGeocoding}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isGeocoding ? "Đang tìm..." : "Tìm"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mini Map */}
+              <div className="h-56 rounded-lg overflow-hidden border border-gray-200 relative">
+                <p className="absolute top-1.5 left-1/2 -translate-x-1/2 z-[500] bg-white/90 px-3 py-1 rounded-full text-xs text-gray-600 shadow whitespace-nowrap">
+                  {trackingForm.lat
+                    ? `${parseFloat(trackingForm.lat).toFixed(5)}, ${parseFloat(trackingForm.lng).toFixed(5)}`
+                    : "Click vào bản đồ để ghim vị trí"}
+                </p>
+                <TrackingMapPicker
+                  lat={trackingForm.lat}
+                  lng={trackingForm.lng}
+                  onPick={(lat, lng) =>
+                    setTrackingForm((f) => ({ ...f, lat, lng }))
+                  }
+                />
+              </div>
+
+              {/* Form */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Tiêu đề <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={trackingForm.tieu_de}
+                  onChange={(e) =>
+                    setTrackingForm((f) => ({ ...f, tieu_de: e.target.value }))
+                  }
+                  placeholder="Ví dụ: Đang giao hàng"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Mô tả
+                </label>
+                <textarea
+                  value={trackingForm.mo_ta}
+                  onChange={(e) =>
+                    setTrackingForm((f) => ({ ...f, mo_ta: e.target.value }))
+                  }
+                  placeholder="Ví dụ: Shipper đang trên đường đến nhà bạn"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 resize-none"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() =>
+                    setTrackingModal({ isOpen: false, orderId: null })
+                  }
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 cursor-pointer border border-gray-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSubmitTracking}
+                  disabled={isSubmittingTracking}
+                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmittingTracking ? "Đang lưu..." : "Lưu điểm gia hàng"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast.show && (
         <div

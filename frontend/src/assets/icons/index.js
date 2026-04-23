@@ -27,8 +27,8 @@ import Setting from "./Setting.svg?react";
 import Product from "./Product.svg?react";
 import Inventory from "./Inventory.svg?react";
 import Customers from "./Customers.svg?react";
-import ChatAI from "./ChatAI.svg?react";
-import KhieuNai from "./KhieuNai.svg?react";
+import ChatAI from "./ChatAi.svg?react";
+import KhieuNai from "./Khieunai.svg?react";
 import Support from "./Support.svg?react";
 import EyeOn from "./Eyeon.svg?react";
 import EyeOff from "./Eyeoff.svg?react";
@@ -45,9 +45,11 @@ import Picture from "./Picture.svg?react";
 import Tick from "./Tick.svg?react";
 import Crown from "./Crown.svg?react";
 import Lock from "./Lock.svg?react";
-import Unlock from "./Unlock.svg?react";
+import Unlock from "./UnLock.svg?react";
+import Location from "./Location.svg?react";
 
 export {
+  Location,
   Unlock,
   Lock,
   Crown,
