@@ -78,7 +78,12 @@ router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
 router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);
 
 // User đánh giá
-router.post("/:id/danh-gia", verifyToken, sanPhamController.createDanhGia);
+router.post(
+  "/:id/danh-gia",
+  verifyToken,
+  upload.array("hinh_anh", 10),
+  sanPhamController.createDanhGia,
+);
 
 // Admin
 router.put(
@@ -94,6 +99,7 @@ router.put(
   isAdmin,
   sanPhamController.toggleTrangThai,
 );
+router.get("/:id/check-purchased", verifyToken, sanPhamController.checkPurchased);
 router.delete("/:id", verifyToken, isAdmin, sanPhamController.deleteSanPham);
 
 module.exports = router;

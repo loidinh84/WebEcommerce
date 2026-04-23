@@ -15,7 +15,6 @@ import BASE_URL from "../config/api";
 import * as Icons from "../assets/icons/index";
 import L from "leaflet";
 
-// Cấu hình icon mặc định cho leaflet (fix lỗi webpack)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -172,12 +171,11 @@ const OrderDetail = () => {
   const trackingHistory = (() => {
     const dbLogs = order.lich_su_giao_hang || [];
 
-    // Nếu đơn hàng mới có đầy đủ log trong DB thì dùng luôn
     if (dbLogs.some((log) => log.tieu_de === "Đơn Hàng Đã Đặt")) {
       return dbLogs;
     }
 
-    // Với các đơn hàng cũ hoặc chưa có log khởi tạo, ta ghép thêm các mốc cơ bản
+    // Với các đơn hàng cũ hoặc chưa có log khởi tạo, thêm các mốc cơ bản
     const baseLogs = [
       {
         thoi_gian: order.created_at,
@@ -187,7 +185,6 @@ const OrderDetail = () => {
     ];
 
     if (order.trang_thai !== "pending" && order.trang_thai !== "cancelled") {
-      // Cho mốc xác nhận sau mốc đặt 1 giây
       const confirmedDate = new Date(
         new Date(order.created_at).getTime() + 1000,
       ).toISOString();
@@ -199,7 +196,6 @@ const OrderDetail = () => {
     }
 
     if (["shipping", "delivered", "completed"].includes(order.trang_thai)) {
-      // Cho mốc giao cho ĐVVC sau mốc xác nhận 2 giây (nếu không có log thực tế)
       const shippingDate = new Date(
         new Date(order.created_at).getTime() + 2000,
       ).toISOString();
@@ -536,7 +532,7 @@ const OrderDetail = () => {
               return (
                 <div
                   key={index}
-                  className="flex gap-4 items-start pb-4 border-b border-gray-50 last:border-0 last:pb-0"
+                  className="flex gap-4 items-start pb-3 border-b border-gray-50 last:border-0 last:pb-0"
                 >
                   <img
                     src={imageUrl}
@@ -571,52 +567,38 @@ const OrderDetail = () => {
         {/* Tổng tiền */}
         <div className="bg-white rounded-sm shadow-sm flex flex-col items-end">
           <div className="w-full md:w-[450px] border-l border-gray-100">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 border-dotted">
+            <div className="flex justify-between items-center px-3 py-1.5 border-b border-gray-100 border-dotted">
               <span className="text-sm text-gray-500">Tổng tiền hàng</span>
               <span className="text-sm text-gray-800">
                 {formatPrice(order.tong_tien_hang)}₫
               </span>
             </div>
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 border-dotted">
+            <div className="flex justify-between items-center px-3 py-1.5 border-b border-gray-100 border-dotted">
               <span className="text-sm text-gray-500">Phí vận chuyển</span>
               <span className="text-sm text-gray-800">
                 {formatPrice(order.phi_van_chuyen)}₫
               </span>
             </div>
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 border-dotted">
-              <span className="text-sm text-gray-500">
-                Giảm giá phí vận chuyển
+            <div className="flex justify-between items-center px-3 py-1.5 border-b border-gray-100 border-dotted">
+              <span className="text-sm text-gray-500">Giảm giá</span>
+              <span className="text-sm text-gray-800">
+                -{formatPrice(order.tien_giam_gia) || 0}₫
               </span>
-              <span className="text-sm text-gray-800">-0₫</span>
             </div>
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 border-dotted">
+            <div className="flex justify-between items-center px-3 py-1.5 border-b border-gray-100 border-dotted">
               <span className="text-sm text-gray-500">Thành tiền</span>
               <span className="text-2xl font-medium text-[#ee4d2d]">
                 {formatPrice(order.tong_thanh_toan)}₫
               </span>
             </div>
-            <div className="flex items-center gap-2 p-4 bg-[#fffaf9] border-t border-dashed border-[#ee4d2d]/30 text-sm text-gray-600">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-[#ee4d2d]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#fffaf9] border-t border-dashed border-blue-400 text-sm text-gray-600">
               Vui lòng thanh toán{" "}
               <strong className="text-[#ee4d2d] ml-1">
                 {formatPrice(order.tong_thanh_toan)}₫
               </strong>{" "}
               khi nhận hàng.
             </div>
-            <div className="flex justify-between items-center p-4">
+            <div className="flex justify-between items-center px-3 py-2">
               <span className="text-sm text-gray-500">
                 Phương thức Thanh toán
               </span>

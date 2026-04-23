@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/images/logo.png";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -6,6 +7,7 @@ import * as Icons from "../assets/icons/index";
 import BASE_URL from "../config/api";
 
 const HeroBanner = () => {
+  const navigate = useNavigate();
   const [slides, setSlides] = useState([]);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -154,11 +156,14 @@ const HeroBanner = () => {
                     Hồ sơ
                   </button>
                 </Link>
-                <Link to="/orders" className="flex-1">
-                  <button className="w-full py-1.5 rounded-lg text-sm font-semibold border border-[#4A44F2] text-[#4A44F2] hover:bg-[#4A44F2]/5 transition cursor-pointer">
-                    Đơn hàng
-                  </button>
-                </Link>
+                <button
+                  onClick={() =>
+                    navigate("/profile", { state: { activeTab: "orders" } })
+                  }
+                  className="flex-1 w-full py-1.5 rounded-lg text-sm font-semibold border border-[#4A44F2] text-[#4A44F2] hover:bg-[#4A44F2]/5 transition cursor-pointer"
+                >
+                  Đơn hàng
+                </button>
               </>
             ) : (
               <>

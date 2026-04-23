@@ -54,7 +54,6 @@ const ProductSection = ({
     <div className="w-full mt-6">
       
       {/* Khối màu trắng chứa toàn bộ nội dung */}
-      {/* ĐÃ SỬA: Dùng w-full mx-auto để nó chiếm trọn 100% không gian và tự căn giữa */}
       <div className="w-full mx-auto flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
         
         {/* 1. Tab */}

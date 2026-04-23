@@ -15,6 +15,8 @@ const LichSuGiaoHang = require("./LichSuGiaoHang");
 const DonViVanChuyen = require("./DonViVanChuyen");
 const ThietLapCuaHang = require("./ThietLapCuaHang");
 
+const DanhGiaSanPham = require("./DanhGiaSanPham");
+
 // Quan hệ Tài Khoản <-> Thẻ Thành Viên
 // Một tài khoản thuộc về một hạng thành viên
 TaiKhoan.belongsTo(TheThanhVien, {
@@ -111,6 +113,11 @@ BienTheSanPham.belongsTo(SanPham, {
   as: "san_pham",
 });
 
+// ========================================
+// 4. Quan hệ Đánh giá <-> Đơn hàng/Tài khoản
+// ========================================
+DonHang.hasMany(DanhGiaSanPham, { foreignKey: "don_hang_id", as: "danh_gia" });
+DanhGiaSanPham.belongsTo(DonHang, { foreignKey: "don_hang_id", as: "don_hang" });
 
 module.exports = {
   TaiKhoan,
@@ -128,4 +135,6 @@ module.exports = {
   LichSuGiaoHang,
   DonViVanChuyen,
   ThietLapCuaHang,
+  DanhGiaSanPham,
 };
+

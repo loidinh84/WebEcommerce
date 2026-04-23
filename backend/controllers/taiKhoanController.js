@@ -12,6 +12,7 @@ const HinhAnhSanPham = require("../models/HinhAnhSanPham");
 const LichSuGiaoHang = require("../models/LichSuGiaoHang");
 const DonViVanChuyen = require("../models/DonViVanChuyen");
 const ThietLapCuaHang = require("../models/ThietLapCuaHang");
+const DanhGiaSanPham = require("../models/DanhGiaSanPham");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -63,6 +64,10 @@ exports.getUserFullDashboard = async (req, res) => {
               ],
             },
           ],
+        },
+        {
+          model: DanhGiaSanPham,
+          as: "danh_gia",
         },
       ],
       order: [["created_at", "DESC"]],

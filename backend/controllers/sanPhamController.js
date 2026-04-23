@@ -7,6 +7,8 @@ const DanhGiaSanPham = require("../models/DanhGiaSanPham");
 const DanhMuc = require("../models/DanhMuc");
 const NhaCungCap = require("../models/NhaCungCap");
 const TaiKhoan = require("../models/TaiKhoan");
+const DonHang = require("../models/DonHang");
+const ChiTietDonHang = require("../models/ChiTietDonHang");
 
 const generateSlug = (text) => {
   if (!text) return "";
@@ -563,6 +565,22 @@ exports.getDanhGiaBySanPham = async (req, res) => {
           as: "nguoi_dung",
           attributes: ["ho_ten", "anh_dai_dien"],
         },
+        {
+          model: DonHang,
+          as: "don_hang",
+          include: [
+            {
+              model: ChiTietDonHang,
+              as: "chi_tiet",
+              include: [
+                {
+                  model: BienTheSanPham,
+                  as: "bien_the",
+                },
+              ],
+            },
+          ],
+        },
       ],
       order: [["created_at", "DESC"]],
     });
@@ -575,18 +593,28 @@ exports.getDanhGiaBySanPham = async (req, res) => {
 exports.createDanhGia = async (req, res) => {
   try {
     const { id } = req.params;
-    const { tai_khoan_id, so_sao, noi_dung } = req.body;
+    const { so_sao, noi_dung, don_hang_id } = req.body;
+    const tai_khoan_id = req.user.id; // Lấy ID từ token đã xác thực
 
-    if (!tai_khoan_id || !so_sao || !noi_dung) {
+    if (!so_sao || !noi_dung) {
       return res.status(400).json({ message: "Vui lòng điền đủ thông tin!" });
     }
+
+    let mangHinhAnh = [];
+    if (req.files && req.files.length > 0) {
+      mangHinhAnh = req.files.map((file) => file.filename);
+    }
+
+    const hinh_anh_string =
+      mangHinhAnh.length > 0 ? JSON.stringify(mangHinhAnh) : null;
 
     const danhGiaMoi = await DanhGiaSanPham.create({
       san_pham_id: id,
       tai_khoan_id: tai_khoan_id,
       so_sao: so_sao,
       noi_dung: noi_dung,
-      don_hang_id: null,
+      don_hang_id: don_hang_id || null,
+      hinh_anh: hinh_anh_string,
       trang_thai: "approved",
     });
 
@@ -594,5 +622,36 @@ exports.createDanhGia = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi thêm đánh giá!" });
+  }
+};
+exports.checkPurchased = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tai_khoan_id = req.user.id;
+
+    const order = await DonHang.findOne({
+      where: {
+        tai_khoan_id,
+        trang_thai: "delivered",
+      },
+      include: [
+        {
+          model: ChiTietDonHang,
+          as: "chi_tiet",
+          include: [
+            {
+              model: BienTheSanPham,
+              as: "bien_the",
+              where: { san_pham_id: id },
+            },
+          ],
+        },
+      ],
+    });
+
+    res.status(200).json({ isPurchased: !!order });
+  } catch (error) {
+    console.error("Lỗi checkPurchased:", error);
+    res.status(500).json({ isPurchased: false });
   }
 };

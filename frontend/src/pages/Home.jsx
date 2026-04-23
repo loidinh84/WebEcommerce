@@ -133,7 +133,7 @@ function Home() {
             "TECNO",
             "ASUS",
           ]}
-          danhMucId={7}
+          danhMucId={5}
         />
 
         {/* TẦNG 4: Phụ kiện */}

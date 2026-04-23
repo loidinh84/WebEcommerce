@@ -102,7 +102,6 @@ const Header = () => {
       </div>
 
       {/* --- 2. THANH HEADER CHÍNH --- */}
-      {/* ĐÃ SỬA: Thay 'container' thành 'w-full max-w-7xl' */}
       <div className="w-full max-w-7xl mx-auto flex items-center px-4 justify-start gap-4">
         <Link to="/">
           <div

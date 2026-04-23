@@ -94,7 +94,6 @@ exports.updateLogistic = async (req, res) => {
     await logistic.save();
     res.status(200).json({ message: "Cập nhật thành công", data: logistic });
   } catch (error) {
-    console.error("🚨 LỖI CẬP NHẬT ĐƠN VỊ VẬN CHUYỂN:", error);
     res.status(500).json({ message: "Lỗi khi cập nhật đơn vị vận chuyển" });
   }
 };

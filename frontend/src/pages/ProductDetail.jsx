@@ -29,7 +29,6 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
 
   // 3. Quản lý giao diện
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -42,6 +41,10 @@ const ProductDetail = () => {
   // 5. State cho Sản phẩm tương tự & Đánh giá
   const [similarProducts, setSimilarProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [imgError, setImgError] = useState({});
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [reviewImages, setReviewImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
 
   useEffect(() => {
     const checkLikeStatus = async () => {
@@ -150,6 +153,29 @@ const ProductDetail = () => {
     fetchProductData();
   }, [slug]);
 
+  useEffect(() => {
+    const checkUserPurchase = async () => {
+      if (!user?.id || !product?.id) return;
+      try {
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
+        const res = await fetch(
+          `${BASE_URL}/api/sanPham/${product.id}/check-purchased`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setIsPurchased(data.isPurchased);
+        }
+      } catch (e) {
+        console.error("Lỗi kiểm tra mua hàng", e);
+      }
+    };
+    checkUserPurchase();
+  }, [user, product]);
+
   const fetchReviews = async (productIdToFetch) => {
     const targetId = productIdToFetch || product?.id;
     if (!targetId) return;
@@ -195,6 +221,30 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + reviewImages.length > 5) {
+      toast.error("Chỉ được tải lên tối đa 5 hình ảnh");
+      return;
+    }
+
+    const newFiles = [...reviewImages, ...files];
+    setReviewImages(newFiles);
+
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews([...imagePreviews, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    const newFiles = [...reviewImages];
+    newFiles.splice(index, 1);
+    setReviewImages(newFiles);
+
+    const newPreviews = [...imagePreviews];
+    newPreviews.splice(index, 1);
+    setImagePreviews(newPreviews);
+  };
+
   const handleSubmitReview = async () => {
     if (!user) {
       toast.error("Vui lòng đăng nhập để gửi đánh giá!");
@@ -206,16 +256,29 @@ const ProductDetail = () => {
       return toast.error("Vui lòng nhập đánh giá ít nhất 10 ký tự!");
 
     try {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("tai_khoan_id", user.id);
+      formData.append("so_sao", userRating);
+      formData.append("noi_dung", reviewText);
+
+      // Append images ONLY if purchased
+      if (isPurchased && reviewImages.length > 0) {
+        reviewImages.forEach((file) => {
+          formData.append("hinh_anh", file);
+        });
+      }
+
       const response = await fetch(
         `${BASE_URL}/api/sanPham/${product.id}/danh-gia`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tai_khoan_id: user.id,
-            so_sao: userRating,
-            noi_dung: reviewText,
-          }),
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
       );
 
@@ -223,13 +286,16 @@ const ProductDetail = () => {
         toast.success("Cảm ơn bạn! Đánh giá đã được gửi.");
         setUserRating(0);
         setReviewText("");
-        fetchReviews();
+        setReviewImages([]);
+        setImagePreviews([]);
+        fetchReviews(product.id);
       } else {
         const errData = await response.json();
         toast.error(errData.message || "Lỗi khi gửi đánh giá!");
       }
     } catch (error) {
-      toast.error("Không thể kết nối đến máy chủ!", error);
+      console.error(error);
+      toast.error("Không thể kết nối đến máy chủ!");
     }
   };
 
@@ -250,6 +316,37 @@ const ProductDetail = () => {
     if (diffInSeconds < 86400)
       return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
     return mailDate.toLocaleDateString("vi-VN");
+  };
+
+  const getInitialsAvatar = (name) => {
+    if (!name)
+      return {
+        char: "U",
+        bg: "linear-gradient(135deg, #6B7280 0%, #4B5563 100%)",
+        color: "#FFFFFF",
+      };
+    const gradients = [
+      "linear-gradient(135deg, #60A5FA 0%, #2563EB 100%)", // Blue
+      "linear-gradient(135deg, #34D399 0%, #059669 100%)", // Green
+      "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", // Yellow
+      "linear-gradient(135deg, #F87171 0%, #DC2626 100%)", // Red
+      "linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)", // Purple
+    ];
+    const char = name.charAt(0).toUpperCase();
+    const colorIndex = name.charCodeAt(0) % gradients.length;
+    return { char, bg: gradients[colorIndex], color: "#FFFFFF" };
+  };
+
+  const getReviewVariant = (rv) => {
+    const dh = rv.don_hang || rv.DonHang;
+    if (!dh?.chi_tiet) return null;
+    const item = dh.chi_tiet.find(
+      (it) => Number(it.bien_the?.san_pham_id) === Number(rv.san_pham_id),
+    );
+    if (!item || !item.bien_the) return null;
+    const { mau_sac, dung_luong, ram } = item.bien_the;
+    const parts = [mau_sac, dung_luong, ram].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : null;
   };
 
   const handleAddToCart = () => {
@@ -764,6 +861,27 @@ const ProductDetail = () => {
                     placeholder="Mời bạn chia sẻ cảm nhận về sản phẩm..."
                     className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-blue-500 resize-none h-24 mb-3"
                   ></textarea>
+
+                  {isPurchased && (
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {imagePreviews.map((url, idx) => (
+                          <div key={idx} className="relative w-16 h-16">
+                            <img
+                              src={url}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200"
+                            />
+                            <button
+                              onClick={() => removeImage(idx)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-600 transition cursor-pointer"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-end">
                     <button
                       onClick={handleSubmitReview}
@@ -776,36 +894,88 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* HIỂN THỊ DANH SÁCH ĐÁNH GIÁ (Thay vì Anh Tú cứng) */}
+            {/* HIỂN THỊ DANH SÁCH ĐÁNH GIÁ */}
             <div className="space-y-6">
               {reviews.length > 0 ? (
                 reviews.map((rv) => (
                   <div key={rv.id} className="border-b border-gray-50 pb-4">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full overflow-hidden flex items-center justify-center font-bold">
-                        {rv.nguoi_dung?.anh_dai_dien ? (
+                      <div
+                        className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-lg shadow-sm border border-gray-100"
+                        style={{
+                          background: getInitialsAvatar(rv.nguoi_dung?.ho_ten).bg,
+                          color: getInitialsAvatar(rv.nguoi_dung?.ho_ten).color,
+                        }}
+                      >
+                        {rv.nguoi_dung?.anh_dai_dien &&
+                        rv.nguoi_dung.anh_dai_dien !== "null" &&
+                        rv.nguoi_dung.anh_dai_dien !== "undefined" &&
+                        !imgError[rv.id] ? (
                           <img
                             src={getImageUrl(rv.nguoi_dung.anh_dai_dien)}
                             className="w-full h-full object-cover"
+                            onError={() =>
+                              setImgError((prev) => ({ ...prev, [rv.id]: true }))
+                            }
                           />
                         ) : (
-                          rv.nguoi_dung?.ho_ten?.charAt(0).toUpperCase() || "U"
+                          getInitialsAvatar(rv.nguoi_dung?.ho_ten).char
                         )}
                       </div>
-                      <span className="font-bold text-gray-800">
-                        {rv.nguoi_dung?.ho_ten || "Khách hàng"}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        ·{formatTimeAgo(rv.created_at)}
-                      </span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-800">
+                            {rv.nguoi_dung?.ho_ten || "Khách hàng"}
+                          </span>
+                          {rv.don_hang_id && (
+                            <span className="flex items-center gap-1 text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100 font-medium">
+                              <Icons.Tick className="w-2.5 h-2.5" /> Đã mua hàng
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-gray-400">
+                          {formatTimeAgo(rv.created_at)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex text-yellow-400 text-sm mb-2">
+
+                    <div className="flex text-yellow-400 text-sm mb-1.5 ml-1">
                       {"★".repeat(rv.so_sao)}
                       {"☆".repeat(5 - rv.so_sao)}
                     </div>
-                    <p className="text-sm text-gray-700 whitespace-pre-line">
+
+                    {getReviewVariant(rv) && (
+                      <p className="text-[12px] text-gray-500 mb-2 ml-1">
+                        Phân loại hàng: {getReviewVariant(rv)}
+                      </p>
+                    )}
+
+                    <p className="text-sm text-gray-700 whitespace-pre-line ml-1">
                       {rv.noi_dung}
                     </p>
+
+                    {rv.hinh_anh && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {(() => {
+                          try {
+                            const imgs = JSON.parse(rv.hinh_anh);
+                            if (Array.isArray(imgs)) {
+                              return imgs.map((img, index) => (
+                                <img
+                                  key={index}
+                                  src={getImageUrl(img)}
+                                  alt={`Review ${index}`}
+                                  className="w-20 h-20 object-cover rounded-lg border border-gray-100 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                  onClick={() => window.open(getImageUrl(img), "_blank")}
+                                />
+                              ));
+                            }
+                          } catch (e) {
+                            return null;
+                          }
+                        })()}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
