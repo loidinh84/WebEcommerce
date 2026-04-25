@@ -26,6 +26,7 @@ import Checkout from "./pages/Checkout";
 import Banner from "./pages/admin/Banner";
 import CheckoutSetting from "./pages/admin/CheckoutSetting";
 import Memberships from "./pages/admin/TheThanhVienList";
+import HomeSettings from "./pages/admin/HomeSettings";
 import DienThoai from "./pages/DienThoai";
 
 // import { TheThanhVien } from "../../backend/models";
@@ -86,6 +87,7 @@ function App() {
           <Route path="banners" element={<Banner />} />
           <Route path="checkout-settings" element={<CheckoutSetting />} />
           <Route path="memberships" element={<Memberships />} />
+          <Route path="home-settings" element={<HomeSettings />} />
         </Route>
       </Route>
     </Routes>

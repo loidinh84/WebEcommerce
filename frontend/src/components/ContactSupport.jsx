@@ -3,11 +3,12 @@ import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
 import BASE_URL from "../config/api";
 import { StoreContext } from "../context/StoreContext";
+import ShopFeedbackModal from "./ShopFeedbackModal";
 
 const ContactSupport = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -94,7 +95,7 @@ const ContactSupport = () => {
         <div className="flex flex-col items-end gap-2 animate-in slide-in-from-bottom-5 duration-300">
           <button
             onClick={() => {
-              setShowFeedback(true);
+              setShowFeedbackModal(true);
               setShowMenu(false);
             }}
             className="bg-white px-4 py-2.5 rounded-lg shadow-lg border border-gray-100 hover:bg-gray-100 flex items-center gap-2 text-sm font-medium cursor-pointer transition-all hover:scale-105 active:scale-95 group"
@@ -229,6 +230,11 @@ const ContactSupport = () => {
           </div>
         </div>
       )}
+
+      <ShopFeedbackModal 
+        isOpen={showFeedbackModal} 
+        onClose={() => setShowFeedbackModal(false)} 
+      />
     </div>
   );
 };

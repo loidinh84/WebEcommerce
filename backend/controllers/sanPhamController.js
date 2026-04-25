@@ -655,3 +655,29 @@ exports.checkPurchased = async (req, res) => {
     res.status(500).json({ isPurchased: false });
   }
 };
+
+exports.getThuongHieuByDanhMuc = async (req, res) => {
+  try {
+    const { danhMucId } = req.params;
+
+    const list = await SanPham.findAll({
+      attributes: [
+        [SanPham.sequelize.fn("DISTINCT", SanPham.sequelize.col("thuong_hieu")), "thuong_hieu"]
+      ],
+      where: {
+        danh_muc_id: danhMucId,
+        trang_thai: "active",
+      },
+      raw: true,
+    });
+
+    const brands = list
+      .map((item) => item.thuong_hieu)
+      .filter((b) => b && b.trim() !== "");
+
+    res.status(200).json(brands);
+  } catch (error) {
+    console.error("Lỗi lấy danh sách thương hiệu:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy thương hiệu!" });
+  }
+};

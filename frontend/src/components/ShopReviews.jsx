@@ -1,75 +1,90 @@
-import React from "react";
-
-// Dữ liệu giả lập (Sau này có thể lấy từ bảng DanhGiaCuaHang trong DB)
-const reviews = [
-  {
-    id: 1,
-    name: "Nguyễn Minh Tuấn",
-    role: "Khách hàng VIP",
-    avatar: "T",
-    color: "bg-blue-500",
-    content:
-      "Shop tư vấn cực kỳ nhiệt tình. Mình mua con iPhone 16 Pro Max ở đây giá rẻ hơn mặt bằng chung mà máy đập hộp chuẩn VN/A. Sẽ ủng hộ dài dài!",
-    date: "12/04/2026",
-    rating: 5,
-  },
-  {
-    id: 2,
-    name: "Trần Thị Mai",
-    role: "Khách hàng mua Online",
-    avatar: "M",
-    color: "bg-pink-500",
-    content:
-      "Lần đầu mua laptop giá trị cao qua mạng cũng hơi lo, nhưng nhận máy đóng gói siêu cẩn thận. Cấu hình đúng như shop tư vấn cho dân đồ họa.",
-    date: "08/04/2026",
-    rating: 5,
-  },
-  {
-    id: 3,
-    name: "Lê Hoàng Bách",
-    role: "Kỹ sư IT",
-    avatar: "B",
-    color: "bg-green-500",
-    content:
-      "Giao hàng thần tốc, đặt sáng chiều có luôn. Mình có test thử kỹ các linh kiện PC bên trong thì đều là hàng chính hãng bảo hành đầy đủ. Rất uy tín!",
-    date: "01/04/2026",
-    rating: 5,
-  },
-];
+import React, { useEffect, useState, useContext } from "react";
+import axios from "axios";
+import BASE_URL from "../config/api";
+import { StoreContext } from "../context/StoreContext";
 
 const ShopReviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const { storeConfig } = useContext(StoreContext);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/danh-gia-shop/top`);
+        setReviews(res.data.reviews || []);
+        setTotalUsers(res.data.totalUsers || 0);
+      } catch (error) {
+        console.error("Lỗi lấy đánh giá shop:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  const getRandomColor = (name) => {
+    const colors = ["bg-blue-500", "bg-pink-500", "bg-green-500", "bg-purple-500", "bg-orange-500"];
+    const charCode = name ? name.charCodeAt(0) : 0;
+    return colors[charCode % colors.length];
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 my-8">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-8">
+            {[1, 2, 3].map(i => <div key={i} className="h-40 bg-gray-100 rounded-xl"></div>)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (reviews.length === 0) return null;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 my-8">
       {/* Tiêu đề */}
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
-          Khách hàng nói gì về LTL Shop
+          Khách hàng nói gì về {storeConfig?.ten_cua_hang || "Shop"}
         </h2>
         <p className="text-sm text-gray-500">
-          Hơn 10.000+ khách hàng đã tin tưởng và đồng hành cùng chúng tôi
+          Hơn {totalUsers.toLocaleString("vi-VN")}+ khách hàng đã tin tưởng và đồng hành cùng chúng tôi
         </p>
       </div>
 
-      {/* Lưới Đánh giá */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Lưới Đánh giá - Hỗ trợ cuộn ngang nếu nhiều */}
+      <div className="flex overflow-x-auto gap-6 pb-4 snap-x no-scrollbar">
         {reviews.map((review) => (
           <div
             key={review.id}
-            className="bg-[#F8F9FA] rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow duration-300 flex flex-col h-full"
+            className="bg-[#F8F9FA] rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow duration-300 flex flex-col h-full min-w-[300px] md:min-w-[350px] snap-center"
           >
             {/* Header: Avatar + Tên + Sao */}
             <div className="flex items-center gap-4 mb-4">
-              <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${review.color}`}
-              >
-                {review.avatar}
-              </div>
+              {review.nguoi_dung?.anh_dai_dien ? (
+                <img 
+                  src={`${BASE_URL}${review.nguoi_dung.anh_dai_dien}`} 
+                  alt={review.nguoi_dung.ho_ten}
+                  className="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm"
+                />
+              ) : (
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0 ${getRandomColor(review.nguoi_dung?.ho_ten)}`}
+                >
+                  {review.nguoi_dung?.ho_ten?.charAt(0) || "U"}
+                </div>
+              )}
               <div>
                 <h4 className="font-bold text-gray-800 text-sm">
-                  {review.name}
+                  {review.nguoi_dung?.ho_ten || "Khách hàng"}
                 </h4>
                 <div className="flex text-yellow-400 text-sm my-0.5">
-                  {[...Array(review.rating)].map((_, i) => (
+                  {[...Array(review.so_sao)].map((_, i) => (
                     <svg
                       key={i}
                       xmlns="http://www.w3.org/2000/svg"
@@ -81,18 +96,17 @@ const ShopReviews = () => {
                     </svg>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400">{review.role}</p>
               </div>
             </div>
 
             {/* Nội dung đánh giá */}
             <div className="text-gray-600 text-sm italic flex-grow">
-              "{review.content}"
+              "{review.noi_dung}"
             </div>
 
             {/* Ngày tháng */}
             <div className="mt-4 text-right text-xs text-gray-400 font-medium">
-              {review.date}
+              {new Date(review.created_at).toLocaleDateString("vi-VN")}
             </div>
           </div>
         ))}

@@ -1,4 +1,5 @@
 import React from "react";
+import BASE_URL from "../config/api";
 
 
 const AccessoryBar = ({ title, data }) => {
@@ -12,17 +13,28 @@ const AccessoryBar = ({ title, data }) => {
 
       <div className="flex flex-wrap gap-4">
         {data.map((item, index) => (
-          <button
+          <a
             key={index}
-            className="flex items-center justify-center gap-3 bg-white px-6 py-3 rounded-lg shadow-sm hover:shadow-md hover:text-blue-600 cursor-pointer transition border border-gray-100 w-fit"
+            href={item.categoryId ? `/category/${item.categoryId}` : "#"}
+            className="flex items-center justify-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm hover:shadow-md hover:text-blue-600 cursor-pointer transition border border-gray-100 min-w-[180px] group"
           >
-            <span className="h-17 w-17">
-              {item.icon}
+            <div className="h-10 w-10 flex items-center justify-center">
+              {item.icon && typeof item.icon === "string" ? (
+                <img 
+                  src={item.icon.startsWith('/') ? `${BASE_URL}${item.icon}` : `/assets/icons/${item.icon}`} 
+                  alt={item.label || item.name} 
+                  className="w-full h-full object-contain group-hover:scale-110 transition-transform"
+                />
+              ) : (
+                <div className="text-2xl group-hover:scale-110 transition-transform">
+                  {item.icon || "📦"}
+                </div>
+              )}
+            </div>
+            <span className="font-bold text-gray-700 whitespace-nowrap group-hover:text-blue-600 transition-colors">
+              {item.label || item.name}
             </span>
-            <span className="font-medium text-gray-700 whitespace-nowrap">
-              {item.name}
-            </span>
-          </button>
+          </a>
         ))}
       </div>
     </div>

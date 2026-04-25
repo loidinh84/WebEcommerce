@@ -73,6 +73,7 @@ router.post(
 
 // 2. CÁC ROUTE CÓ BIẾN
 router.get("/chi-tiet/:slug", sanPhamController.getSanPhamBySlug);
+router.get("/thuong-hieu/:danhMucId", sanPhamController.getThuongHieuByDanhMuc);
 router.get("/:id", sanPhamController.getSanPhamById);
 router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
 router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);

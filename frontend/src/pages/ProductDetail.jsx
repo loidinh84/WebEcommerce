@@ -221,20 +221,6 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + reviewImages.length > 5) {
-      toast.error("Chỉ được tải lên tối đa 5 hình ảnh");
-      return;
-    }
-
-    const newFiles = [...reviewImages, ...files];
-    setReviewImages(newFiles);
-
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews([...imagePreviews, ...newPreviews]);
-  };
-
   const removeImage = (index) => {
     const newFiles = [...reviewImages];
     newFiles.splice(index, 1);
@@ -970,7 +956,7 @@ const ProductDetail = () => {
                                 />
                               ));
                             }
-                          } catch (e) {
+                          } catch {
                             return null;
                           }
                         })()}

@@ -162,6 +162,12 @@ const AdminLayout = () => {
                   Thẻ thành viên
                 </Link>
                 <Link
+                  to="/admin/home-settings"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Bố cục Trang chủ
+                </Link>
+                <Link
                   to="/admin/settings/templates"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >

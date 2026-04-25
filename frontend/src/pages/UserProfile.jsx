@@ -11,6 +11,7 @@ import Overview from "../components/UserProfileTabs/Overview";
 import ProfileTab from "../components/UserProfileTabs/Profile";
 import OrdersTab from "../components/UserProfileTabs/OrderHistories";
 import WishlistTab from "../components/UserProfileTabs/Wishlist";
+import ShopFeedback from "../components/UserProfileTabs/ShopFeedback";
 
 const UserProfile = () => {
   const { user, logout, updateUser } = useContext(AuthContext);
@@ -20,7 +21,9 @@ const UserProfile = () => {
   const [profileData, setProfileData] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(location.state?.activeTab || "overview");
+  const [activeTab, setActiveTab] = useState(
+    location.state?.activeTab || "overview",
+  );
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -89,7 +92,7 @@ const UserProfile = () => {
     { id: "overview", label: "Tổng quan", icon: <Icons.Home /> },
     { id: "orders", label: "Lịch sử mua hàng", icon: <Icons.Order /> },
     { id: "profile", label: "Thông tin tài khoản", icon: <Icons.User /> },
-    { id: "address", label: "Sổ địa chỉ", icon: <Icons.Location /> },
+    { id: "feedback", label: "Góp ý - Phản hồi", icon: <Icons.Message /> },
     { id: "wishlist", label: "Sản phẩm yêu thích", icon: <Icons.Heart /> },
     {
       id: "CardMember",
@@ -120,8 +123,8 @@ const UserProfile = () => {
                   user?.anh_dai_dien?.startsWith("http")
                     ? user.anh_dai_dien
                     : user?.anh_dai_dien
-                    ? `${BASE_URL}${user.anh_dai_dien}`
-                    : `https://ui-avatars.com/api/?name=${user?.ho_ten || user?.so_dien_thoai || "U"}&background=random`
+                      ? `${BASE_URL}${user.anh_dai_dien}`
+                      : `https://ui-avatars.com/api/?name=${user?.ho_ten || user?.so_dien_thoai || "U"}&background=random`
                 }
                 alt="Avatar"
                 className="w-full h-full object-cover"
@@ -175,7 +178,7 @@ const UserProfile = () => {
               <hr className=" border-gray-200" />
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-3 rounded text-red-500 hover:bg-red-50 flex items-center gap-3 transition-all font-bold text-sm"
+                className="w-full text-left px-4 py-3 rounded text-red-500 hover:bg-red-50 flex items-center gap-3 transition-all font-bold text-sm cursor-pointer"
               >
                 <Icons.Logout /> Đăng xuất
               </button>
@@ -217,11 +220,9 @@ const UserProfile = () => {
               <OrdersTab profileData={profileData} navigate={navigate} />
             )}
 
-            {/* TAB 4: CÁC TRANG CÒN LẠI  */}
-            {["address"].includes(activeTab) && activeTab !== "overview" && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 flex items-center justify-center min-h-[300px] text-gray-500">
-                Tính năng này đang được phát triển!
-              </div>
+            {/* TAB 4: GÓP Ý PHẢN HỒI */}
+            {activeTab === "feedback" && (
+              <ShopFeedback />
             )}
 
             {/* TAB 5: SẢN PHẨM YÊU THÍCH */}
