@@ -63,7 +63,6 @@ function Home() {
                   tab2={section.ten_tab_2 || section.ten_phan?.split("&")[1]?.trim()}
                   danhMucId1={section.danh_muc_id_1}
                   danhMucId2={section.danh_muc_id_2}
-                  viewAllLink="#"
                 />
               );
             }

@@ -127,13 +127,16 @@ const CategoryModal = ({ isOpen, onClose, data, allCategories, onSave }) => {
 
   useEffect(() => {
     if (isOpen) {
-      if (data) {
-        setFormData(data);
-        setSlugManuallyEdited(true);
-      } else {
-        setFormData(EMPTY_FORM);
-        setSlugManuallyEdited(false);
-      }
+      const timer = setTimeout(() => {
+        if (data) {
+          setFormData(data);
+          setSlugManuallyEdited(true);
+        } else {
+          setFormData(EMPTY_FORM);
+          setSlugManuallyEdited(false);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [data, isOpen]);
 

@@ -100,3 +100,38 @@ exports.toggleTrangThai = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi đổi trạng thái!" });
   }
 };
+
+// 5. LẤY DANH MỤC THEO SLUG (Public)
+exports.getDanhMucBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const danhMuc = await DanhMuc.findOne({
+      where: { slug: slug, trang_thai: "active" },
+    });
+
+    if (!danhMuc) {
+      return res.status(404).json({ message: "Không tìm thấy danh mục!" });
+    }
+
+    res.status(200).json(danhMuc);
+  } catch (error) {
+    console.error("Lỗi lấy danh mục theo slug:", error);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};
+// 6. LẤY DANH MỤC THEO ID (Public)
+exports.getDanhMucById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const danhMuc = await DanhMuc.findByPk(id);
+
+    if (!danhMuc || danhMuc.trang_thai !== "active") {
+      return res.status(404).json({ message: "Không tìm thấy danh mục!" });
+    }
+
+    res.status(200).json(danhMuc);
+  } catch (error) {
+    console.error("Lỗi lấy danh mục theo id:", error);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};

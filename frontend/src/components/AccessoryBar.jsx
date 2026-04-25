@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import BASE_URL from "../config/api";
 
 
@@ -13,9 +14,9 @@ const AccessoryBar = ({ title, data }) => {
 
       <div className="flex flex-wrap gap-4">
         {data.map((item, index) => (
-          <a
+          <Link
             key={index}
-            href={item.categoryId ? `/category/${item.categoryId}` : "#"}
+            to={item.categoryId ? `/category/${item.categoryId}` : "#"}
             className="flex items-center justify-center gap-3 bg-white px-6 py-4 rounded-xl shadow-sm hover:shadow-md hover:text-blue-600 cursor-pointer transition border border-gray-100 min-w-[180px] group"
           >
             <div className="h-10 w-10 flex items-center justify-center">
@@ -34,7 +35,7 @@ const AccessoryBar = ({ title, data }) => {
             <span className="font-bold text-gray-700 whitespace-nowrap group-hover:text-blue-600 transition-colors">
               {item.label || item.name}
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

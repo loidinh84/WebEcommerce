@@ -11,10 +11,9 @@ const menuItems = [
   {
     icon: <Icons.Phone className="w-6 h-6" />,
     links: [
-      { label: "Điện thoại", path: "/dienthoai" },
-      { label: "Tablet", path: "/tablet" },
+      { label: "Điện thoại", path: "/category/dien-thoai" },
+      { label: "Tablet", path: "/category/tablet" },
     ],
-    // --- DATA MEGA MENU GIẢ LẬP THEO CELLPHONES ---
     megaMenu: {
       phoneBrands: ["iPhone", "Samsung", "Xiaomi", "OPPO", "Vivo", "Realme", "Nokia", "ASUS"],
       prices: ["Dưới 2 triệu", "Từ 2 - 4 triệu", "Từ 4 - 7 triệu", "Từ 7 - 13 triệu", "Từ 13 - 20 triệu", "Trên 20 triệu"],
@@ -24,33 +23,32 @@ const menuItems = [
   },
   {
     icon: <Icons.Laptop className="w-6 h-6" />,
-    links: [{ label: "Laptop", path: "/laptop" }],
-    // Bro có thể tự thêm megaMenu cho Laptop sau...
+    links: [{ label: "Laptop", path: "/category/laptop" }],
   },
   {
     icon: <Icons.PC className="w-6 h-6" />,
     links: [
-      { label: "PC", path: "/pc" },
-      { label: "Màn hình", path: "/man-hinh" },
+      { label: "PC", path: "/category/pc" },
+      { label: "Màn hình", path: "/category/man-hinh" },
     ],
   },
   {
     icon: <Icons.Keyboard className="w-6 h-6" />,
     links: [
-      { label: "Bàn phím", path: "/ban-phim" },
-      { label: "Chuột", path: "/chuot" }
+      { label: "Bàn phím", path: "/category/ban-phim" },
+      { label: "Chuột", path: "/category/chuot" }
     ],
   },
   {
     icon: <Icons.Headphone className="w-6 h-6" />,
     links: [
-      { label: "Củ sạc", path: "/cu-sac" },
-      { label: "Tai nghe", path: "/tai-nghe" }
+      { label: "Phụ kiện", path: "/category/phu-kien" },
+      { label: "Tai nghe", path: "/category/tai-nghe" }
     ],
   },
   {
     icon: <Icons.Box className="w-6 h-6" />,
-    links: [{ label: "Hàng cũ", path: "/hang-cu" }],
+    links: [{ label: "Hàng cũ", path: "/category/hang-cu" }],
   },
   {
     icon: <Icons.Compare className="w-6 h-6" />,
@@ -58,11 +56,7 @@ const menuItems = [
   },
   {
     icon: <Icons.Discount className="w-6 h-6" />,
-    links: [{ label: "Khuyến mãi", path: "/khuyen-mai" }],
-  },
-  {
-    icon: <Icons.News className="w-6 h-6" />,
-    links: [{ label: "Tin công nghệ", path: "/tin-tuc" }],
+    links: [{ label: "Khuyến mãi", path: "/category/khuyen-mai" }],
   },
 ];
 
@@ -128,7 +122,7 @@ const SidebarMenu = () => {
               <h3 className="font-bold text-gray-800 mb-3 text-sm">Hãng điện thoại</h3>
               <div className="grid grid-cols-2 gap-2">
                 {menuItems[hoveredIndex].megaMenu.phoneBrands?.map((brand, idx) => (
-                  <Link key={idx} to={`/dienthoai/${brand.toLowerCase()}`} className="border border-gray-200 rounded-md py-1 text-center text-xs font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">
+                  <Link key={idx} to={`/category/dien-thoai?brand=${brand}`} className="border border-gray-200 rounded-md py-1 text-center text-xs font-medium text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">
                     {brand}
                   </Link>
                 ))}

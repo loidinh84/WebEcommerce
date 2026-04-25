@@ -26,12 +26,16 @@ const generateSlug = (text) => {
     .replace(/-+$/, "");
 };
 
-// 1. Lấy danh sách toàn bộ sản phẩm
+// 1. Lấy danh sách sản phẩm (Công khai - Hỗ trợ phân trang)
 exports.getAllSanPham = async (req, res) => {
   try {
-    const { danhMucId, thuongHieu } = req.query;
+    const { danhMucId, thuongHieu, page = 1, limit = 20 } = req.query;
 
-    let whereCondition = req.query.admin ? {} : { trang_thai: "active" };
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 20;
+    const offset = (pageNumber - 1) * limitNumber;
+
+    let whereCondition = { trang_thai: "active" };
 
     if (danhMucId) {
       whereCondition.danh_muc_id = danhMucId;
@@ -41,18 +45,25 @@ exports.getAllSanPham = async (req, res) => {
       whereCondition.thuong_hieu = thuongHieu;
     }
 
-    const danhSach = await SanPham.findAll({
+    const { count, rows } = await SanPham.findAndCountAll({
       where: whereCondition,
       include: [
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
+      distinct: true,
       order: [["created_at", "DESC"]],
-      limit: 20,
+      limit: limitNumber,
+      offset: offset,
     });
 
-    res.status(200).json(danhSach);
+    res.status(200).json({
+      data: rows,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(count / limitNumber),
+      totalItems: count,
+    });
   } catch (error) {
     console.error("Lỗi server khi lấy danh sách sản phẩm:", error);
     res.status(500).json({ message: "Lỗi server!" });

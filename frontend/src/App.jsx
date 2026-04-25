@@ -27,7 +27,7 @@ import Banner from "./pages/admin/Banner";
 import CheckoutSetting from "./pages/admin/CheckoutSetting";
 import Memberships from "./pages/admin/TheThanhVienList";
 import HomeSettings from "./pages/admin/HomeSettings";
-import DienThoai from "./pages/DienThoai";
+import CategoryPage from "./pages/CategoryPage";
 
 const API_URL = BASE_URL;
 
@@ -69,7 +69,7 @@ function App() {
       <Route path="/order-detail/:id" element={<OrderDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
-      <Route path="/dienthoai" element={<DienThoai />} />
+      <Route path="/category/:slug" element={<CategoryPage />} />
 
       {/* Nhánh Admin */}
       <Route path="/admin" element={<PrivateRoute />}>
