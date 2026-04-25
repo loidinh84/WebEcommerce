@@ -29,8 +29,6 @@ import Memberships from "./pages/admin/TheThanhVienList";
 import HomeSettings from "./pages/admin/HomeSettings";
 import DienThoai from "./pages/DienThoai";
 
-// import { TheThanhVien } from "../../backend/models";
-
 const API_URL = BASE_URL;
 
 function App() {

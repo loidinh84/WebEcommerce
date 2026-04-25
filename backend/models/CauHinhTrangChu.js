@@ -17,8 +17,16 @@ const CauHinhTrangChu = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    ten_tab_1: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     danh_muc_id_2: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    ten_tab_2: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
     loai_hien_thi: {

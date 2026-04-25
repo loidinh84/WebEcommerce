@@ -58,8 +58,9 @@ function Home() {
               return (
                 <ProductSection
                   key={section.id}
-                  tab1={section.ten_phan.split("&")[0]?.trim()}
-                  tab2={section.ten_phan.split("&")[1]?.trim()}
+                  title={section.ten_phan}
+                  tab1={section.ten_tab_1 || section.ten_phan?.split("&")[0]?.trim()}
+                  tab2={section.ten_tab_2 || section.ten_phan?.split("&")[1]?.trim()}
                   danhMucId1={section.danh_muc_id_1}
                   danhMucId2={section.danh_muc_id_2}
                   viewAllLink="#"

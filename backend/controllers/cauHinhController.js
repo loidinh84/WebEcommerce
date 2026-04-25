@@ -36,7 +36,9 @@ exports.updateHomeConfiguration = async (req, res) => {
     if (sections && sections.length > 0) {
         const data = sections.map((s, index) => ({
             ten_phan: s.ten_phan,
+            ten_tab_1: s.ten_tab_1 || null,
             danh_muc_id_1: s.danh_muc_id_1,
+            ten_tab_2: s.ten_tab_2 || null,
             danh_muc_id_2: s.danh_muc_id_2,
             loai_hien_thi: s.loai_hien_thi || "ProductSection",
             du_lieu_json: s.du_lieu_json ? JSON.stringify(s.du_lieu_json) : null,

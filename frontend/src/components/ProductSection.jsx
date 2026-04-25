@@ -6,6 +6,7 @@ import BASE_URL from "../config/api";
 const EMPTY_ARRAY = [];
 
 const ProductSection = ({
+  title,
   tab1,
   tab2,
   filters = EMPTY_ARRAY,
