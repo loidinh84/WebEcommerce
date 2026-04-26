@@ -29,6 +29,7 @@ const Checkout = () => {
   const [orderNote, setOrderNote] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
   const [receiveEmail, setReceiveEmail] = useState(false);
   const [vatRequested, setVatRequested] = useState(false);
   const [vatInfo, setVatInfo] = useState({
@@ -52,7 +53,10 @@ const Checkout = () => {
         .then((res) => res.json())
         .then((data) => {
           setAddresses(data);
-          setSelectedAddress(data.find((a) => a.la_mac_dinh === 1 || a.la_mac_dinh === true) || data[0]);
+          setSelectedAddress(
+            data.find((a) => a.la_mac_dinh === 1 || a.la_mac_dinh === true) ||
+              data[0],
+          );
         });
 
       // Lấy Đơn vị vận chuyển
@@ -120,7 +124,14 @@ const Checkout = () => {
     : 0;
   const memberDiscountRate = (user?.ty_le_giam_gia || 0) / 100;
   const discountAmount = Math.round(subtotal * memberDiscountRate);
-  const total = subtotal + shippingFee - discountAmount - voucherDiscount;
+  const pointsToUse = usePoints
+    ? Math.min(
+        user?.diem_tich_luy || 0,
+        subtotal + shippingFee - discountAmount - voucherDiscount,
+      )
+    : 0;
+  const total =
+    subtotal + shippingFee - discountAmount - voucherDiscount - pointsToUse;
 
   const handleConfirmOrder = async () => {
     if (!user) return toast.error("Vui lòng đăng nhập!");
@@ -151,6 +162,7 @@ const Checkout = () => {
       ghi_chu: orderNote,
       phuong_thuc_tt: paymentMethod?.id,
       voucher_code: voucherDiscount > 0 ? voucherCode : null,
+      dung_diem: usePoints ? pointsToUse : 0,
       items: checkoutItems.map((item) => ({
         id: item.id,
         variantId: item.variantId,
@@ -462,6 +474,47 @@ const Checkout = () => {
                     Áp dụng
                   </button>
                 </div>
+                {(() => {
+                  const availablePoints = user?.diem_tich_luy || 0;
+                  const hasPoints = availablePoints > 0;
+
+                  return (
+                    <div
+                      className={`mt-3 p-2 rounded-xl border flex justify-between items-center transition-all ${hasPoints ? "bg-orange-50 border-orange-100" : "bg-gray-50 border-gray-200 opacity-80"}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white shadow-sm ${hasPoints ? "bg-orange-500" : "bg-gray-400"}`}
+                        >
+                          <Icons.Star className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p
+                            className={`text-xs font-bold ${hasPoints ? "text-gray-800" : "text-gray-500"}`}
+                          >
+                            Dùng {formatPrice(availablePoints).replace("₫", "")}{" "}
+                            điểm
+                          </p>
+                          <p className="text-[10px] text-gray-500">
+                            {hasPoints
+                              ? `Giảm thêm ${formatPrice(availablePoints)}`
+                              : "Bạn chưa có điểm tích lũy"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={!hasPoints}
+                        onClick={() => hasPoints && setUsePoints(!usePoints)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${!hasPoints ? "bg-gray-200 cursor-not-allowed" : usePoints ? "bg-orange-500 cursor-pointer" : "bg-gray-300 cursor-pointer"}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${usePoints && hasPoints ? "translate-x-6" : "translate-x-1"}`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Tính tiền */}
@@ -643,7 +696,8 @@ const Checkout = () => {
                     <div className="flex justify-between items-start mb-2">
                       <p className="font-bold text-gray-800 flex items-center gap-2">
                         {addr.ho_ten_nguoi_nhan || user?.ho_ten}
-                        {(addr.la_mac_dinh === 1 || addr.la_mac_dinh === true) && (
+                        {(addr.la_mac_dinh === 1 ||
+                          addr.la_mac_dinh === true) && (
                           <span className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
                             Mặc định
                           </span>

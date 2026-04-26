@@ -34,6 +34,7 @@ exports.createDonHang = async (req, res) => {
       voucher_code,
       vat_info,
       receive_email,
+      dung_diem,
     } = req.body;
 
     let voucherData = null;
@@ -227,6 +228,21 @@ exports.createDonHang = async (req, res) => {
           tien_vat: tong_tien_hang * 0.1,
           tong_tien_vat: tong_tien_hang * 1.1,
           ngay_xuat: new Date(),
+        },
+        { transaction: t },
+      );
+    }
+
+    if (dung_diem && dung_diem > 0) {
+      const userToUpdate = await TaiKhoan.findByPk(tai_khoan_id, {
+        transaction: t,
+      });
+      if (userToUpdate.diem_tich_luy < dung_diem) {
+        throw new Error("Số dư điểm tích lũy không đủ!");
+      }
+      await userToUpdate.update(
+        {
+          diem_tich_luy: userToUpdate.diem_tich_luy - dung_diem,
         },
         { transaction: t },
       );
@@ -523,11 +539,23 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Tự động tạo log lịch sử giao hàng
     const statusLogs = {
-      confirmed: { tieu_de: "Đã Xác Nhận Đơn Hàng", mo_ta: "Người bán đã xác nhận và đang chuẩn bị hàng" },
-      shipping: { tieu_de: "Đã Giao Cho ĐVVC", mo_ta: "Đơn hàng đã được bàn giao cho đơn vị vận chuyển" },
-      delivered: { tieu_de: "Giao Hàng Thành Công", mo_ta: "Khách hàng đã nhận được hàng" },
+      confirmed: {
+        tieu_de: "Đã Xác Nhận Đơn Hàng",
+        mo_ta: "Người bán đã xác nhận và đang chuẩn bị hàng",
+      },
+      shipping: {
+        tieu_de: "Đã Giao Cho ĐVVC",
+        mo_ta: "Đơn hàng đã được bàn giao cho đơn vị vận chuyển",
+      },
+      delivered: {
+        tieu_de: "Giao Hàng Thành Công",
+        mo_ta: "Khách hàng đã nhận được hàng",
+      },
       cancelled: { tieu_de: "Đơn Hàng Đã Hủy", mo_ta: "Đơn hàng đã bị hủy" },
-      refunded: { tieu_de: "Hoàn Tiền Đã Xử Lý", mo_ta: "Tiền đã được hoàn lại cho khách hàng" },
+      refunded: {
+        tieu_de: "Hoàn Tiền Đã Xử Lý",
+        mo_ta: "Tiền đã được hoàn lại cho khách hàng",
+      },
     };
     if (statusLogs[trang_thai]) {
       await LichSuGiaoHang.create({
@@ -535,6 +563,35 @@ exports.updateOrderStatus = async (req, res) => {
         ...statusLogs[trang_thai],
         thoi_gian: new Date(),
       });
+    }
+
+    if (trang_thai === "delivered") {
+      const orderInfo = await DonHang.findByPk(donHang.id, {
+        include: [
+          {
+            model: TaiKhoan,
+            as: "tai_khoan",
+            include: [{ model: TheThanhVien, as: "the_thanh_vien" }],
+          },
+        ],
+      });
+
+      if (orderInfo && orderInfo.tai_khoan) {
+        // Công thức: 1000đ = 1 điểm. Cộng thêm % thưởng từ hạng thẻ
+        const basePoints = Math.floor(orderInfo.tong_thanh_toan / 1000);
+        const bonusRate =
+          orderInfo.tai_khoan.the_thanh_vien?.diem_thuong_them || 0;
+        const totalBonusPoints = Math.round(basePoints * (1 + bonusRate / 100));
+
+        await orderInfo.tai_khoan.update({
+          diem_tich_luy:
+            (orderInfo.tai_khoan.diem_tich_luy || 0) + totalBonusPoints,
+        });
+
+        console.log(
+          `Đã cộng ${totalBonusPoints} điểm cho khách hàng ${orderInfo.tai_khoan.id}`,
+        );
+      }
     }
 
     res.status(200).json({
