@@ -14,7 +14,6 @@ import Register from "./pages/register";
 import Product from "./pages/admin/Product";
 import ProductDetail from "./pages/ProductDetail";
 import UserProfile from "./pages/UserProfile";
-
 import OrderDetail from "./pages/OrderDetail";
 import Categories from "./pages/admin/Categories";
 import Order from "./pages/admin/Order";
@@ -28,6 +27,7 @@ import CheckoutSetting from "./pages/admin/CheckoutSetting";
 import Memberships from "./pages/admin/TheThanhVienList";
 import HomeSettings from "./pages/admin/HomeSettings";
 import CategoryPage from "./pages/CategoryPage";
+import VoucherManagement from "./pages/admin/VoucherManagement";
 
 const API_URL = BASE_URL;
 
@@ -86,6 +86,7 @@ function App() {
           <Route path="checkout-settings" element={<CheckoutSetting />} />
           <Route path="memberships" element={<Memberships />} />
           <Route path="home-settings" element={<HomeSettings />} />
+          <Route path="vouchers" element={<VoucherManagement />} />
         </Route>
       </Route>
     </Routes>
