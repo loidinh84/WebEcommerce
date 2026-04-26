@@ -72,6 +72,7 @@ router.post(
 );
 
 // 2. CÁC ROUTE CÓ BIẾN
+router.get("/boloc/:danhMucId", sanPhamController.getBoLocByDanhMuc);
 router.get("/chi-tiet/:slug", sanPhamController.getSanPhamBySlug);
 router.get("/danh-muc/slug/:slug", danhMucController.getDanhMucBySlug);
 router.get("/danh-muc/id/:id", danhMucController.getDanhMucById);
@@ -102,7 +103,11 @@ router.put(
   isAdmin,
   sanPhamController.toggleTrangThai,
 );
-router.get("/:id/check-purchased", verifyToken, sanPhamController.checkPurchased);
+router.get(
+  "/:id/check-purchased",
+  verifyToken,
+  sanPhamController.checkPurchased,
+);
 router.delete("/:id", verifyToken, isAdmin, sanPhamController.deleteSanPham);
 
 module.exports = router;

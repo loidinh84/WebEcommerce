@@ -26,10 +26,18 @@ const generateSlug = (text) => {
     .replace(/-+$/, "");
 };
 
-// 1. Lấy danh sách sản phẩm (Công khai - Hỗ trợ phân trang)
+// 1. Lấy danh sách sản phẩm
 exports.getAllSanPham = async (req, res) => {
   try {
-    const { danhMucId, thuongHieu, page = 1, limit = 20 } = req.query;
+    const {
+      danhMucId,
+      thuongHieu,
+      ram,
+      dung_luong,
+      mau_sac,
+      page = 1,
+      limit = 20,
+    } = req.query;
 
     const pageNumber = parseInt(page, 10) || 1;
     const limitNumber = parseInt(limit, 10) || 20;
@@ -40,15 +48,27 @@ exports.getAllSanPham = async (req, res) => {
     if (danhMucId) {
       whereCondition.danh_muc_id = danhMucId;
     }
-
     if (thuongHieu) {
       whereCondition.thuong_hieu = thuongHieu;
     }
 
+    // Điều kiện lọc biến thể
+    let bienTheCondition = {};
+    if (ram) bienTheCondition.ram = ram;
+    if (dung_luong) bienTheCondition.dung_luong = dung_luong;
+    if (mau_sac) bienTheCondition.mau_sac = mau_sac;
+
+    const isFilteringVariant = Object.keys(bienTheCondition).length > 0;
+
     const { count, rows } = await SanPham.findAndCountAll({
       where: whereCondition,
       include: [
-        { model: BienTheSanPham, as: "bien_the" },
+        {
+          model: BienTheSanPham,
+          as: "bien_the",
+          where: isFilteringVariant ? bienTheCondition : undefined,
+          required: isFilteringVariant,
+        },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
@@ -673,7 +693,13 @@ exports.getThuongHieuByDanhMuc = async (req, res) => {
 
     const list = await SanPham.findAll({
       attributes: [
-        [SanPham.sequelize.fn("DISTINCT", SanPham.sequelize.col("thuong_hieu")), "thuong_hieu"]
+        [
+          SanPham.sequelize.fn(
+            "DISTINCT",
+            SanPham.sequelize.col("thuong_hieu"),
+          ),
+          "thuong_hieu",
+        ],
       ],
       where: {
         danh_muc_id: danhMucId,
@@ -690,5 +716,50 @@ exports.getThuongHieuByDanhMuc = async (req, res) => {
   } catch (error) {
     console.error("Lỗi lấy danh sách thương hiệu:", error);
     res.status(500).json({ message: "Lỗi server khi lấy thương hiệu!" });
+  }
+};
+
+exports.getBoLocByDanhMuc = async (req, res) => {
+  try {
+    const { danhMucId } = req.params;
+
+    const bienThes = await BienTheSanPham.findAll({
+      include: [
+        {
+          model: SanPham,
+          as: "san_pham",
+          where: { danh_muc_id: danhMucId, trang_thai: "active" },
+          attributes: [],
+        },
+      ],
+      attributes: ["ram", "dung_luong", "mau_sac"],
+      raw: true,
+    });
+
+    const rams = [
+      ...new Set(
+        bienThes.map((bt) => bt.ram).filter((v) => v && v.trim() !== ""),
+      ),
+    ];
+    const dung_luongs = [
+      ...new Set(
+        bienThes.map((bt) => bt.dung_luong).filter((v) => v && v.trim() !== ""),
+      ),
+    ];
+
+    const mau_sacs = [
+      ...new Set(
+        bienThes.map((bt) => bt.mau_sac).filter((v) => v && v.trim() !== ""),
+      ),
+    ];
+
+    res.status(200).json({
+      rams: rams.sort(),
+      dung_luongs: dung_luongs.sort(),
+      mau_sacs: mau_sacs.sort(),
+    });
+  } catch (error) {
+    console.error("Lỗi lấy cấu hình bộ lọc:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy bộ lọc!" });
   }
 };

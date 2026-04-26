@@ -44,6 +44,7 @@ const OrdersTab = ({ profileData, navigate }) => {
       const reviewedIds = profileData.allOrders
         .filter((order) => order.danh_gia && order.danh_gia.length > 0)
         .map((order) => order.id);
+        
       setReviewedOrderIds(reviewedIds);
     }
   }, [profileData]);

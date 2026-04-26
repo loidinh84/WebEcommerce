@@ -24,9 +24,15 @@ const CategoryPage = () => {
   const [activeBrand, setActiveBrand] = useState(null);
   const [activeSort, setActiveSort] = useState("Mới nhất");
   const [showAllBrands, setShowAllBrands] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    rams: [],
+    dung_luongs: [],
+  });
+  const [activeRam, setActiveRam] = useState("");
+  const [activeDungLuong, setActiveDungLuong] = useState("");
+  const [activeMauSac, setActiveMauSac] = useState("");
 
   const BRAND_LIMIT = 10;
-
   const location = useLocation();
 
   const fetchCategoryData = useCallback(async () => {
@@ -34,16 +40,13 @@ const CategoryPage = () => {
       setLoading(true);
       setError(null);
 
-      // Lấy brand từ URL query nếu có
       const params = new URLSearchParams(location.search);
       const initialBrand = params.get("brand");
       if (initialBrand) setActiveBrand(initialBrand);
-
-      // Xác định slug là ID hay Chuỗi SEO
       const isId = /^\d+$/.test(slug);
-      const endpoint = isId 
-        ? `${BASE_URL}/api/sanpham/danh-muc/id/${slug}`
-        : `${BASE_URL}/api/sanpham/danh-muc/slug/${slug}`;
+      const endpoint = isId
+        ? `${BASE_URL}/api/sanPham/danh-muc/id/${slug}`
+        : `${BASE_URL}/api/sanPham/danh-muc/slug/${slug}`;
 
       // Fetch danh mục
       const catRes = await axios.get(endpoint);
@@ -52,12 +55,23 @@ const CategoryPage = () => {
 
       // Fetch brands
       const brandsRes = await axios.get(
-        `${BASE_URL}/api/sanpham/thuong-hieu/${categoryData.id}`,
+        `${BASE_URL}/api/sanPham/thuong-hieu/${categoryData.id}`,
       );
       setBrands(brandsRes.data || []);
 
+      try {
+        const filtersRes = await axios.get(
+          `${BASE_URL}/api/sanPham/boloc/${categoryData.id}`,
+        );
+        setFilterOptions(filtersRes.data || { rams: [], dung_luongs: [] });
+      } catch (err) {
+        console.error("Không tải được option bộ lọc", err);
+      }
+
       setPage(1);
-      await fetchProducts(categoryData.id, initialBrand || null, activeSort, 1, true);
+      setActiveRam("");
+      setActiveDungLuong("");
+      setActiveMauSac("");
     } catch (err) {
       console.error(err);
       setError("Không tìm thấy danh mục này.");
@@ -70,14 +84,20 @@ const CategoryPage = () => {
     catId,
     brand = null,
     sort = "Mới nhất",
+    ram = "",
+    dungLuong = "",
+    mauSac = "",
     pageNum = 1,
     reset = false,
   ) => {
     try {
       if (pageNum > 1) setLoadingMore(true);
 
-      let url = `${BASE_URL}/api/sanpham?danhMucId=${catId}&page=${pageNum}&limit=10`;
+      let url = `${BASE_URL}/api/sanPham?danhMucId=${catId}&page=${pageNum}&limit=10`;
       if (brand) url += `&thuongHieu=${encodeURIComponent(brand)}`;
+      if (ram) url += `&ram=${encodeURIComponent(ram)}`;
+      if (dungLuong) url += `&dung_luong=${encodeURIComponent(dungLuong)}`;
+      if (mauSac) url += `&mau_sac=${encodeURIComponent(mauSac)}`;
 
       const res = await axios.get(url);
       const fetchedData = res.data.data || [];
@@ -120,9 +140,25 @@ const CategoryPage = () => {
   useEffect(() => {
     if (category) {
       setPage(1);
-      fetchProducts(category.id, activeBrand, activeSort, 1, true);
+      fetchProducts(
+        category.id,
+        activeBrand,
+        activeSort,
+        activeRam,
+        activeDungLuong,
+        activeMauSac,
+        1,
+        true,
+      );
     }
-  }, [activeBrand, activeSort]);
+  }, [
+    category,
+    activeBrand,
+    activeSort,
+    activeRam,
+    activeDungLuong,
+    activeMauSac,
+  ]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -135,20 +171,36 @@ const CategoryPage = () => {
         ) {
           const nextPage = page + 1;
           setPage(nextPage);
-          fetchProducts(category.id, activeBrand, activeSort, nextPage, false);
+          fetchProducts(
+            category.id,
+            activeBrand,
+            activeSort,
+            activeRam,
+            activeDungLuong,
+            activeMauSac,
+            nextPage,
+            false,
+          );
         }
       },
       { threshold: 0.1 },
     );
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current);
     };
-  }, [loadingMore, page, totalPages, category, activeBrand, activeSort]);
+  }, [
+    loadingMore,
+    page,
+    totalPages,
+    category,
+    activeBrand,
+    activeSort,
+    activeRam,
+    activeDungLuong,
+    activeMauSac,
+  ]);
 
   if (loading) {
     return (
@@ -215,36 +267,14 @@ const CategoryPage = () => {
         </nav>
 
         {/* Category Info & Filters */}
-        <div className="bg-white rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.03)] border border-gray-100 p-4 mb-4 overflow-hidden relative">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-medium text-gray-900 ">
-              {category.ten_danh_muc}
-            </h1>
-          </div>
+        <div className="bg-white rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.03)] border border-gray-100 p-5 mb-5 overflow-hidden relative">
+          <h1 className="text-xl font-bold text-gray-900 mb-4">
+            {category.ten_danh_muc}
+          </h1>
 
-          {/* Brands Selection */}
+          {/* Hàng 1: Brands Selection */}
           {brands.length > 0 && (
             <div className="mb-4">
-              <div className="flex justify-between items-end mb-2">
-                {brands.length > BRAND_LIMIT && (
-                  <button
-                    onClick={() => setShowAllBrands(!showAllBrands)}
-                    className="text-[#4A44F2] text-sm font-medium hover:underline flex items-center gap-1 bg-transparent border-none cursor-pointer group"
-                  >
-                    <span>
-                      {showAllBrands
-                        ? "Thu gọn"
-                        : `Xem tất cả ${brands.length}`}
-                    </span>
-                    <span
-                      className={`transition-transform duration-300 ${showAllBrands ? "rotate-180" : ""}`}
-                    >
-                      ▼
-                    </span>
-                  </button>
-                )}
-              </div>
-
               <div className="flex flex-wrap gap-2">
                 {visibleBrands.map((brand, index) => (
                   <button
@@ -254,28 +284,142 @@ const CategoryPage = () => {
                     }
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border cursor-pointer ${
                       activeBrand === brand
-                        ? "bg-[#4A44F2] text-white border-[#4A44F2] shadow-xl shadow-indigo-100"
-                        : "bg-blue-50 border-blue-200 text-gray-500 hover:border-[#4A44F2] hover:text-[#4A44F2] hover:bg-white"
+                        ? "bg-[#4A44F2] text-white border-[#4A44F2] shadow-md shadow-indigo-100"
+                        : "bg-blue-50 border-blue-100 text-gray-600 hover:border-[#4A44F2] hover:text-[#4A44F2] hover:bg-white"
                     }`}
                   >
                     {brand.toUpperCase()}
                   </button>
                 ))}
+
+                {brands.length > BRAND_LIMIT && (
+                  <button
+                    onClick={() => setShowAllBrands(!showAllBrands)}
+                    className="px-4 py-2 text-[#4A44F2] text-sm font-medium hover:bg-blue-50 rounded-xl transition-colors cursor-pointer border border-transparent"
+                  >
+                    {showAllBrands
+                      ? "Thu gọn ▲"
+                      : `Xem thêm ${brands.length - BRAND_LIMIT} hãng ▼`}
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          <div className="flex flex-col md:flex-row justify-start items-center border-t border-gray-50">
-            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto no-scrollbar max-w-full">
+          {/* Hàng 2: Bộ Lọc Nâng Cao (Combobox RAM, Dung Lượng) & Sắp Xếp */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center pt-4 border-t border-gray-100 gap-4">
+            {/* Cụm Combobox Lọc Nâng Cao */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-gray-500 mr-1 flex items-center gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+                Lọc theo:
+              </span>
+
+              {/* Combobox Lọc RAM */}
+              {filterOptions.rams && filterOptions.rams.length > 0 && (
+                <div className="relative">
+                  <select
+                    value={activeRam}
+                    onChange={(e) => setActiveRam(e.target.value)}
+                    className="appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:border-[#4A44F2] focus:ring-1 focus:ring-[#4A44F2] cursor-pointer transition-colors font-medium"
+                  >
+                    <option value="">Tất cả RAM</option>
+                    {filterOptions.rams.map((ram, idx) => (
+                      <option key={idx} value={ram}>
+                        {ram}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg
+                      className="fill-current h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+
+              {/* Combobox Lọc Dung Lượng */}
+              {filterOptions.dung_luongs &&
+                filterOptions.dung_luongs.length > 0 && (
+                  <div className="relative">
+                    <select
+                      value={activeDungLuong}
+                      onChange={(e) => setActiveDungLuong(e.target.value)}
+                      className="appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:border-[#4A44F2] focus:ring-1 focus:ring-[#4A44F2] cursor-pointer transition-colors font-medium"
+                    >
+                      <option value="">Dung lượng</option>
+                      {filterOptions.dung_luongs.map((dl, idx) => (
+                        <option key={idx} value={dl}>
+                          {dl}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                      <svg
+                        className="fill-current h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              {filterOptions.mau_sacs && filterOptions.mau_sacs.length > 0 && (
+                <div className="relative">
+                  <select
+                    value={activeMauSac}
+                    onChange={(e) => setActiveMauSac(e.target.value)}
+                    className="appearance-none pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:border-[#4A44F2] focus:ring-1 focus:ring-[#4A44F2] cursor-pointer transition-colors font-medium"
+                  >
+                    <option value="">Tất cả màu</option>
+                    {filterOptions.mau_sacs.map((mau, idx) => (
+                      <option key={idx} value={mau}>
+                        {mau}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <svg
+                      className="fill-current h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cụm Sắp xếp */}
+            <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto w-full lg:w-auto no-scrollbar">
               {["Mới nhất", "Bán chạy", "Giá Thấp - Cao", "Giá Cao - Thấp"].map(
                 (option) => (
                   <button
                     key={option}
                     onClick={() => setActiveSort(option)}
-                    className={`px-3  py-2 rounded-xl text-sm  font-medium transition-all whitespace-nowrap cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap cursor-pointer ${
                       activeSort === option
-                        ? "bg-white shadow-md text-[#4A44F2] border border-gray-50"
-                        : "text-gray-400 hover:text-gray-700"
+                        ? "bg-white shadow-sm text-[#4A44F2] border border-gray-100"
+                        : "text-gray-500 hover:text-gray-800"
                     }`}
                   >
                     {option}
