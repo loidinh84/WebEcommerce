@@ -1,12 +1,18 @@
 const DanhMuc = require("../models/DanhMuc");
 const SanPham = require("../models/SanPham");
 
-
 // 1. THÊM DANH MỤC MỚI
 exports.createDanhMuc = async (req, res) => {
   try {
-    const { ten_danh_muc, slug, danh_muc_cha_id, mo_ta, thu_tu, trang_thai } =
-      req.body;
+    const {
+      ten_danh_muc,
+      slug,
+      danh_muc_cha_id,
+      mo_ta,
+      thu_tu,
+      trang_thai,
+      hien_thi_sidebar,
+    } = req.body;
 
     const newDanhMuc = await DanhMuc.create({
       ten_danh_muc,
@@ -15,6 +21,8 @@ exports.createDanhMuc = async (req, res) => {
       mo_ta,
       thu_tu: thu_tu || 0,
       trang_thai: trang_thai || "active",
+      hien_thi_sidebar:
+        hien_thi_sidebar !== undefined ? hien_thi_sidebar : true,
     });
 
     res.status(201).json(newDanhMuc);
@@ -28,8 +36,15 @@ exports.createDanhMuc = async (req, res) => {
 exports.updateDanhMuc = async (req, res) => {
   try {
     const { id } = req.params;
-    const { ten_danh_muc, slug, danh_muc_cha_id, mo_ta, thu_tu, trang_thai } =
-      req.body;
+    const {
+      ten_danh_muc,
+      slug,
+      danh_muc_cha_id,
+      mo_ta,
+      thu_tu,
+      trang_thai,
+      hien_thi_sidebar,
+    } = req.body;
 
     const danhMuc = await DanhMuc.findByPk(id);
     if (!danhMuc) {
@@ -43,6 +58,8 @@ exports.updateDanhMuc = async (req, res) => {
       mo_ta,
       thu_tu,
       trang_thai,
+      hien_thi_sidebar:
+        hien_thi_sidebar !== undefined ? hien_thi_sidebar : true,
     });
 
     res.status(200).json({ message: "Cập nhật danh mục thành công!", danhMuc });
@@ -101,7 +118,7 @@ exports.toggleTrangThai = async (req, res) => {
   }
 };
 
-// 5. LẤY DANH MỤC THEO SLUG (Public)
+// 5. LẤY DANH MỤC THEO SLUG
 exports.getDanhMucBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -119,7 +136,8 @@ exports.getDanhMucBySlug = async (req, res) => {
     res.status(500).json({ message: "Lỗi server!" });
   }
 };
-// 6. LẤY DANH MỤC THEO ID (Public)
+
+// 6. LẤY DANH MỤC THEO ID
 exports.getDanhMucById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -132,6 +150,22 @@ exports.getDanhMucById = async (req, res) => {
     res.status(200).json(danhMuc);
   } catch (error) {
     console.error("Lỗi lấy danh mục theo id:", error);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};
+
+exports.getPublicSidebarCategories = async (req, res) => {
+  try {
+    const danhMucs = await DanhMuc.findAll({
+      where: {
+        trang_thai: "active",
+        hien_thi_sidebar: true,
+      },
+      order: [["thu_tu", "ASC"]],
+    });
+    res.status(200).json(danhMucs);
+  } catch (error) {
+    console.error("Lỗi lấy danh mục public:", error);
     res.status(500).json({ message: "Lỗi server!" });
   }
 };

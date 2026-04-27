@@ -39,6 +39,11 @@ const DanhMuc = sequelize.define(
       allowNull: false,
       defaultValue: "active",
     },
+    hien_thi_sidebar: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
   },
   {
     tableName: "DanhMuc",

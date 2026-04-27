@@ -705,6 +705,7 @@ exports.createDanhGia = async (req, res) => {
     res.status(500).json({ message: "Lỗi thêm đánh giá!" });
   }
 };
+
 exports.checkPurchased = async (req, res) => {
   try {
     const { id } = req.params;

@@ -88,7 +88,7 @@ const Categories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
 
-  // ── BỘ LỌC ──────────────────────────────────────────────
+  // BỘ LỌC
   const [statusTab, setStatusTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterSelected, setFilterSelected] = useState("all");
@@ -117,6 +117,7 @@ const Categories = () => {
         order: cat.thu_tu || 0,
         status: cat.trang_thai || "active",
         desc: cat.mo_ta || "",
+        hien_thi_sidebar: cat.hien_thi_sidebar === true || cat.hien_thi_sidebar === 1,
       }));
 
       setCategories(mappedData);
@@ -162,6 +163,7 @@ const Categories = () => {
             thu_tu: formData.order,
             trang_thai: formData.status,
             mo_ta: formData.desc,
+            hien_thi_sidebar: formData.hien_thi_sidebar,
           },
           getAuthHeader(),
         );
@@ -177,6 +179,7 @@ const Categories = () => {
             thu_tu: formData.order,
             trang_thai: formData.status,
             mo_ta: formData.desc,
+            hien_thi_sidebar: formData.hien_thi_sidebar,
           },
           getAuthHeader(),
         );
@@ -381,6 +384,9 @@ const Categories = () => {
                   <th className="py-3 px-6 font-bold border-b border-gray-200 text-center w-32">
                     Trạng thái
                   </th>
+                  <th className="py-3 px-6 font-bold border-b border-gray-200 text-center w-24">
+                    Sidebar
+                  </th>
                   <th className="py-3 px-6 font-bold border-b border-gray-200 text-right w-28">
                     Thao tác
                   </th>
@@ -451,6 +457,13 @@ const Categories = () => {
                           <span className=" text-red-500  px-3 py-1 rounded-md text-sm font-bold whitespace-nowrap">
                             Đã ẩn
                           </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        {cat.hien_thi_sidebar ? (
+                          <span className="text-blue-600 font-bold">Hiện</span>
+                        ) : (
+                          <span className="text-gray-400">Ẩn</span>
                         )}
                       </td>
                       <td className="py-4 px-6 text-right space-x-3">

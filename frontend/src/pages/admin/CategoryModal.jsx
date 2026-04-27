@@ -119,6 +119,7 @@ const EMPTY_FORM = {
   order: 1,
   status: "active",
   desc: "",
+  hien_thi_sidebar: true,
 };
 
 const CategoryModal = ({ isOpen, onClose, data, allCategories, onSave }) => {
@@ -314,6 +315,46 @@ const CategoryModal = ({ isOpen, onClose, data, allCategories, onSave }) => {
                     value={opt.value}
                     checked={formData.status === opt.value}
                     onChange={handleChange}
+                    className="hidden"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Hiển thị Sidebar */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5 ">
+              Hiển thị trên Sidebar
+            </label>
+            <div className="flex gap-4">
+              {[
+                { value: true, label: "Có", color: "blue" },
+                { value: false, label: "Không", color: "gray" },
+              ].map((opt) => (
+                <label
+                  key={opt.label}
+                  className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border cursor-pointer font-semibold text-sm transition-all 
+                    ${
+                      formData.hien_thi_sidebar === opt.value
+                        ? opt.color === "blue"
+                          ? "border-blue-300 bg-blue-50 text-blue-600"
+                          : "border-gray-300 bg-gray-50 text-gray-600"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }
+                  `}
+                >
+                  <input
+                    type="checkbox"
+                    name="hien_thi_sidebar"
+                    checked={formData.hien_thi_sidebar === opt.value}
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        hien_thi_sidebar: opt.value,
+                      }))
+                    }
                     className="hidden"
                   />
                   {opt.label}

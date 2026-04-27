@@ -27,6 +27,11 @@ router.get("/search", async (req, res) => {
   }
 });
 
+router.get(
+  "/danhMuc-sidebar",
+  danhMucController.getPublicSidebarCategories,
+);
+
 // 1. CÁC ROUTE CỐ ĐỊNH
 // Danh mục
 router.get("/danhMuc", verifyToken, isAdmin, sanPhamController.getAllDanhMuc);
