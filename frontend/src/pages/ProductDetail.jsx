@@ -112,7 +112,6 @@ const ProductDetail = () => {
       setIsLoading(true);
       try {
         if (!slug || slug === "undefined") return;
-        // 1. Fetch Chi tiết sản phẩm
         const resDetail = await fetch(
           `${BASE_URL}/api/sanPham/chi-tiet/${slug}`,
         );
@@ -207,7 +206,8 @@ const ProductDetail = () => {
 
   const getImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/400x400?text=No+Image";
-    return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
+    if (url.startsWith("http")) return url;
+    return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   const scrollToReview = () => {
@@ -312,11 +312,11 @@ const ProductDetail = () => {
         color: "#FFFFFF",
       };
     const gradients = [
-      "linear-gradient(135deg, #60A5FA 0%, #2563EB 100%)", // Blue
-      "linear-gradient(135deg, #34D399 0%, #059669 100%)", // Green
-      "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", // Yellow
-      "linear-gradient(135deg, #F87171 0%, #DC2626 100%)", // Red
-      "linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)", // Purple
+      "linear-gradient(135deg, #60A5FA 0%, #2563EB 100%)",
+      "linear-gradient(135deg, #34D399 0%, #059669 100%)",
+      "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)",
+      "linear-gradient(135deg, #F87171 0%, #DC2626 100%)",
+      "linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)",
     ];
     const char = name.charAt(0).toUpperCase();
     const colorIndex = name.charCodeAt(0) % gradients.length;
@@ -530,10 +530,10 @@ const ProductDetail = () => {
               </div>
 
               {/* Hình ảnh và Nút Chia sẻ */}
-              <div className="border border-gray-100 rounded-xl p-4 flex justify-center items-center h-[360px] bg-white relative mt-2 group">
+              <div className="border border-gray-100 rounded-xl  flex justify-center items-center h-[370px] p-2 bg-white relative group">
                 <button
                   onClick={() => setIsShareModalOpen(true)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 shadow-sm transition opacity-70 group-hover:opacity-100 cursor-pointer"
+                  className="absolute top-4 right-4 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-600 shadow-sm transition opacity-40 group-hover:opacity-100 cursor-pointer"
                   title="Chia sẻ sản phẩm này"
                 >
                   <Icons.Share />
@@ -542,7 +542,7 @@ const ProductDetail = () => {
                 <img
                   src={getImageUrl(mainImage)}
                   alt="Main"
-                  className="max-h-full object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 justify-center mt-2">

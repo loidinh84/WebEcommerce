@@ -28,6 +28,7 @@ import Memberships from "./pages/admin/TheThanhVienList";
 import HomeSettings from "./pages/admin/HomeSettings";
 import CategoryPage from "./pages/CategoryPage";
 import VoucherManagement from "./pages/admin/VoucherManagement";
+import SearchPage from "./pages/SearchPage";
 
 const API_URL = BASE_URL;
 
@@ -65,11 +66,11 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/product/:slug" element={<ProductDetail />} />
       <Route path="/profile" element={<UserProfile />} />
-
       <Route path="/order-detail/:id" element={<OrderDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/category/:slug" element={<CategoryPage />} />
+      <Route path="/search" element={<SearchPage />} />
 
       {/* Nhánh Admin */}
       <Route path="/admin" element={<PrivateRoute />}>

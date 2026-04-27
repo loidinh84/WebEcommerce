@@ -5,6 +5,7 @@ const path = require("path");
 const sequelize = require("./config/db");
 require("./models/index");
 
+const { syncDataToMeilisearch } = require("./services/searchService");
 const sanPhamRoutes = require("./routers/sanPhamRoutes");
 const TaiKhoanRoutes = require("./routers/taiKhoanRoutes");
 const aiRoutes = require("./routers/aiRoutes");
@@ -52,6 +53,9 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("Đã kết nối thành công với SQL Server");
+    syncDataToMeilisearch().catch((err) =>
+      console.warn("Meili sync thất bại (server vẫn chạy):", err.message),
+    );
     return sequelize.sync({ alter: false });
   })
   .then(() => {

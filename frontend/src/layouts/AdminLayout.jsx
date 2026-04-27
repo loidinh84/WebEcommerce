@@ -144,12 +144,6 @@ const AdminLayout = () => {
                   Thiết lập cửa hàng
                 </Link>
                 <Link
-                  to="/admin/banners"
-                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                >
-                  Quản lý Banner
-                </Link>
-                <Link
                   to="/admin/checkout-settings"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
@@ -162,16 +156,22 @@ const AdminLayout = () => {
                   Thẻ thành viên
                 </Link>
                 <Link
-                  to="/admin/vouchers"
-                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                >
-                  Quản lý khuyến mãi
-                </Link>
-                <Link
                   to="/admin/home-settings"
                   className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
                   Bố cục Trang chủ
+                </Link>
+                <Link
+                  to="/admin/banners"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Quản lý Banner
+                </Link>
+                <Link
+                  to="/admin/vouchers"
+                  className="flex items-center px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Quản lý khuyến mãi
                 </Link>
                 <Link
                   to="/admin/settings/templates"

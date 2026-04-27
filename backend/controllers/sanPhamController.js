@@ -9,6 +9,7 @@ const NhaCungCap = require("../models/NhaCungCap");
 const TaiKhoan = require("../models/TaiKhoan");
 const DonHang = require("../models/DonHang");
 const ChiTietDonHang = require("../models/ChiTietDonHang");
+const { searchSanPham } = require("../services/searchService");
 
 const generateSlug = (text) => {
   if (!text) return "";
@@ -35,6 +36,7 @@ exports.getAllSanPham = async (req, res) => {
       ram,
       dung_luong,
       mau_sac,
+      search,
       page = 1,
       limit = 20,
     } = req.query;
@@ -44,6 +46,54 @@ exports.getAllSanPham = async (req, res) => {
     const offset = (pageNumber - 1) * limitNumber;
 
     let whereCondition = { trang_thai: "active" };
+
+    if (search) {
+      const { Op } = require("sequelize");
+      const searchResults = await searchSanPham(search, { limit: limitNumber });
+      if (
+        !searchResults ||
+        !searchResults.hits ||
+        searchResults.hits.length === 0
+      ) {
+        return res.status(200).json({
+          data: [],
+          currentPage: pageNumber,
+          totalPages: 0,
+          totalItems: 0,
+        });
+      }
+
+      const matchedIds = searchResults.hits.map((hit) => hit.id);
+
+      let products = await SanPham.findAll({
+        where: {
+          id: { [Op.in]: matchedIds },
+          trang_thai: "active",
+        },
+        include: [
+          {
+            model: DanhMuc,
+            as: "danh_muc",
+            attributes: ["ten_danh_muc", "slug"],
+          },
+          { model: BienTheSanPham, as: "bien_the" },
+          { model: HinhAnhSanPham, as: "hinh_anh" },
+        ],
+      });
+      products = products.sort(
+        (a, b) => matchedIds.indexOf(a.id) - matchedIds.indexOf(b.id),
+      );
+
+      // Trả về Frontend
+      return res.status(200).json({
+        data: products,
+        currentPage: pageNumber,
+        totalPages: Math.ceil(
+          (searchResults.estimatedTotalHits || matchedIds.length) / limitNumber,
+        ),
+        totalItems: searchResults.estimatedTotalHits || matchedIds.length,
+      });
+    }
 
     if (danhMucId) {
       whereCondition.danh_muc_id = danhMucId;

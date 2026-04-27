@@ -92,7 +92,8 @@ const Cart = () => {
 
   const getImageUrl = (url) => {
     if (!url) return "https://via.placeholder.com/150";
-    return url.startsWith("http") ? url : `${BASE_URL}/uploads/${url}`;
+    if (url.startsWith("http")) return url;
+    return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   return (

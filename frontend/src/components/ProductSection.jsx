@@ -196,7 +196,7 @@ const ProductSection = ({
             products.slice(0, 10).map((prod, idx) => (
               <div
                 key={prod.id || idx}
-                className="transition-all duration-500 transform hover:-translate-y-1"
+                className="transition-all duration-500 transform"
               >
                 <ProductCard product={prod} />
               </div>

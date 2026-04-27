@@ -3,8 +3,29 @@ const router = express.Router();
 const sanPhamController = require("../controllers/sanPhamController");
 const danhMucController = require("../controllers/danhMucController");
 const nhaCungCapController = require("../controllers/nhaCungCapController");
+const { searchSanPham } = require("../services/searchService");
 const upload = require("../config/upload");
 const { verifyToken, isAdmin } = require("../middlewares/authMiddleware");
+
+router.get("/search", async (req, res) => {
+  try {
+    const { q = "", limit = 10, danhMucId } = req.query;
+
+    const filter = danhMucId ? `danh_muc_id = ${danhMucId}` : null;
+
+    const result = await searchSanPham(q, {
+      limit: Number(limit),
+      filter,
+    });
+
+    res.json({
+      hits: result.hits,
+      total: result.estimatedTotalHits || result.hits.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi tìm kiếm!" });
+  }
+});
 
 // 1. CÁC ROUTE CỐ ĐỊNH
 // Danh mục

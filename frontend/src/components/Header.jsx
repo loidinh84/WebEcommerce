@@ -13,6 +13,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
   const [storeConfig, setStoreConfig] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchStoreConfig = async () => {
@@ -56,6 +57,15 @@ const Header = () => {
     logout();
     setShowDropdown(false);
     navigate("/login");
+  };
+
+  const handleSearch = (e) => {
+    if (e.key === "Enter" || e.type === "click") {
+      if (searchTerm.trim()) {
+        navigate(`/search?keyword=${encodeURIComponent(searchTerm.trim())}`);
+        setSearchTerm("");
+      }
+    }
   };
 
   return (
@@ -131,13 +141,13 @@ const Header = () => {
 
         {/* Hai nút Dropdown */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="flex cursor-pointer items-center gap-2 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition">
+          {/* <button className="flex cursor-pointer items-center gap-2 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition">
             <Icons.DanhMuc className="w-5 h-5 brightness-0" />
             <span className="font-medium text-[15px] text-gray-900">
               Thông tin shop
             </span>
             <Icons.ArrowDown className="w-5 h-5 text-gray-600" />
-          </button>
+          </button> */}
 
           <button className="flex cursor-pointer items-center gap-1 bg-white/90 hover:bg-white/70 px-3.5 py-2 rounded-lg transition ">
             <Icons.DanhMuc className="w-5 h-5 brightness-0" />
@@ -150,11 +160,17 @@ const Header = () => {
 
         {/* Thanh tìm kiếm */}
         <div className="flex-1 relative">
-          <button className="absolute left-3 top-1/2 transform -translate-y-1/2">
+          <button
+            onClick={handleSearch}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2"
+          >
             <Icons.Search className="w-6 h-6 brightness-0 cursor-pointer" />
           </button>
           <input
             type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleSearch}
             placeholder="Hôm nay bạn muốn mua gì?"
             className="w-full py-2.5 pl-10 pr-4 rounded-lg text-gray-800 bg-white outline-none shadow-inner text-[14px]"
           />
