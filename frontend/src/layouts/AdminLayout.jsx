@@ -1,8 +1,8 @@
-import React, { useState, useContext } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
-import ProfileModal from "../components/ProfileModal";
+import React, { useContext } from "react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Icons from "../assets/icons/index";
 import { StoreContext } from "../context/StoreContext";
+import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
 
 const menuItems = [
@@ -25,7 +25,8 @@ const menuItems = [
 const AdminLayout = () => {
   const location = useLocation();
   const { storeConfig } = useContext(StoreContext);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const checkIsActive = (item) => {
     if (item.hasDropdown) {
@@ -33,6 +34,11 @@ const AdminLayout = () => {
     }
     if (item.path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(item.path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -204,14 +210,14 @@ const AdminLayout = () => {
               </div>
               <div className="py-2">
                 <button
-                  onClick={() => setIsProfileModalOpen(true)}
+                  onClick={() => navigate("/admin/profile")}
                   className="w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   Thông tin tài khoản
-                </button>
-                <button className="w-full text-left px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+                </button> 
+                <button onClick={handleLogout} className="w-full text-left px-5 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                   Đăng xuất
-                </button>
+                </button> 
               </div>
             </div>
           </div>
@@ -221,11 +227,6 @@ const AdminLayout = () => {
       <main className="flex-1 overflow-hidden flex bg-[#f0f2f5]">
         <Outlet />
       </main>
-
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
     </div>
   );
 };
