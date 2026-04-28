@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ConfirmModal from "./ConfirmModal";
 
 // ── DỮ LIỆU MẪU ─────────────────────────────────────────────────────────────
@@ -64,6 +65,7 @@ const renderDiff = (val, prefix = true) => {
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
 const InventoryCheck = () => {
+  const navigate = useNavigate();
   const [checks, setChecks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState([]);
@@ -247,7 +249,7 @@ const InventoryCheck = () => {
           {/* Header */}
           <div className="px-6 py-5 flex justify-between items-center border-b border-gray-100 bg-white shrink-0">
             <h2 className="text-xl font-bold text-gray-800">Lịch sử Kiểm kho</h2>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm">
+            <button onClick={() => navigate("/admin/inventory-check/create")} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm cursor-pointer">
               + Tạo phiếu kiểm kho
             </button>
           </div>
