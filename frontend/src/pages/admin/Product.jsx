@@ -5,7 +5,6 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import BASE_URL from "../../config/api";
 import * as Icons from "../../assets/icons/index";
-import "react-toastify/dist/ReactToastify.css";
 
 const getAuthHeader = () => {
   const token =
@@ -393,8 +392,6 @@ const Product = () => {
     if (formData.bien_the.length === 0)
       return toast.warning("Vui lòng thêm ít nhất 1 biến thể!");
 
-    if (formData.bien_the.some((bt) => !bt.gia_ban || Number(bt.gia_ban) <= 0))
-      return toast.warning("Vui lòng nhập giá bán cho tất cả biến thể!");
 
     if (formData.bien_the.some((bt) => Number(bt.ton_kho) < 0))
       return toast.warning("Tồn kho không được âm!");
@@ -403,9 +400,6 @@ const Product = () => {
       const bt = formData.bien_the[i];
       if (!bt.sku || !bt.sku.trim()) {
         return toast.warning(`Vui lòng nhập SKU cho biến thể dòng ${i + 1}!`);
-      }
-      if (Number(bt.gia_ban) <= 0) {
-        return toast.warning(`Giá bán ở dòng ${i + 1} phải lớn hơn 0!`);
       }
       if (Number(bt.gia_goc) < 0) {
         return toast.warning(`Giá gốc ở dòng ${i + 1} không được âm!`);
