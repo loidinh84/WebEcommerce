@@ -27,6 +27,27 @@ const generateSlug = (text) => {
     .replace(/-+$/, "");
 };
 
+// Hàm đảm bảo Slug duy nhất
+const createUniqueSlug = async (name, currentId = null) => {
+  let slug = generateSlug(name);
+  let uniqueSlug = slug;
+  let counter = 1;
+
+  while (true) {
+    const condition = { slug: uniqueSlug };
+    if (currentId) {
+      condition.id = { [Op.ne]: currentId };
+    }
+
+    const existing = await SanPham.findOne({ where: condition });
+    if (!existing) break;
+
+    uniqueSlug = `${slug}-${counter}`;
+    counter++;
+  }
+  return uniqueSlug;
+};
+
 // 1. Lấy danh sách sản phẩm
 exports.getAllSanPham = async (req, res) => {
   try {
@@ -96,8 +117,16 @@ exports.getAllSanPham = async (req, res) => {
     }
 
     if (danhMucId) {
-      whereCondition.danh_muc_id = danhMucId;
+      const danhMucCon = await DanhMuc.findAll({
+        where: { danh_muc_cha_id: danhMucId },
+        attributes: ["id"],
+      });
+      const danhMucIds = [Number(danhMucId), ...danhMucCon.map((c) => c.id)];
+      whereCondition.danh_muc_id = {
+        [Op.in]: danhMucIds,
+      };
     }
+
     if (thuongHieu) {
       whereCondition.thuong_hieu = thuongHieu;
     }
@@ -107,6 +136,20 @@ exports.getAllSanPham = async (req, res) => {
     if (ram) bienTheCondition.ram = ram;
     if (dung_luong) bienTheCondition.dung_luong = dung_luong;
     if (mau_sac) bienTheCondition.mau_sac = mau_sac;
+
+    const { sort } = req.query;
+    let orderCondition = [["created_at", "DESC"]];
+    if (sort === "Giá Thấp - Cao") {
+      orderCondition = [
+        [{ model: BienTheSanPham, as: "bien_the" }, "gia_ban", "ASC"],
+      ];
+    } else if (sort === "Giá Cao - Thấp") {
+      orderCondition = [
+        [{ model: BienTheSanPham, as: "bien_the" }, "gia_ban", "DESC"],
+      ];
+    } else if (sort === "Bán chạy") {
+      orderCondition = [["luot_xem", "DESC"]];
+    }
 
     const isFilteringVariant = Object.keys(bienTheCondition).length > 0;
 
@@ -123,7 +166,7 @@ exports.getAllSanPham = async (req, res) => {
         { model: HinhAnhSanPham, as: "hinh_anh" },
       ],
       distinct: true,
-      order: [["created_at", "DESC"]],
+      order: orderCondition,
       limit: limitNumber,
       offset: offset,
     });
@@ -310,7 +353,7 @@ exports.createSanPham = async (req, res) => {
         .json({ message: "Tên sản phẩm không được để trống!" });
     }
 
-    const slug = generateSlug(ten_san_pham);
+    const slug = await createUniqueSlug(ten_san_pham);
 
     // 3. Lưu thông tin chung vào CSDL
     const sanPhamMoi = await SanPham.create(
@@ -505,19 +548,25 @@ exports.updateSanPham = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
 
-    await sanPham.update(
-      {
-        ten_san_pham,
-        thuong_hieu,
-        danh_muc_id: danh_muc_id ? Number(danh_muc_id) : null,
-        nha_cung_cap_id: nha_cung_cap_id ? Number(nha_cung_cap_id) : null,
-        mo_ta_ngan,
-        mo_ta_day_du,
-        trang_thai,
-        noi_bat: noi_bat === "true" || noi_bat === true,
-      },
-      { transaction: t },
-    );
+    const updateData = {
+      ten_san_pham,
+      thuong_hieu,
+      danh_muc_id: danh_muc_id ? Number(danh_muc_id) : sanPham.danh_muc_id,
+      nha_cung_cap_id: nha_cung_cap_id
+        ? Number(nha_cung_cap_id)
+        : sanPham.nha_cung_cap_id,
+      mo_ta_ngan,
+      mo_ta_day_du,
+      trang_thai,
+      noi_bat: noi_bat === "true" || noi_bat === true,
+    };
+
+    // Chỉ cập nhật slug nếu tên sản phẩm thay đổi hoặc cần đảm bảo duy nhất
+    if (ten_san_pham && ten_san_pham !== sanPham.ten_san_pham) {
+      updateData.slug = await createUniqueSlug(ten_san_pham, id);
+    }
+
+    await sanPham.update(updateData, { transaction: t });
 
     if (bien_the && bien_the.length > 0) {
       for (const bt of bien_the) {
@@ -553,11 +602,14 @@ exports.updateSanPham = async (req, res) => {
     });
 
     if (thuoc_tinh && thuoc_tinh.length > 0) {
-      const newThuocTinh = thuoc_tinh.map((tt) => ({
-        ...tt,
-        san_pham_id: id,
-        thu_tu: Number(tt.thu_tu) || 1,
-      }));
+      const newThuocTinh = thuoc_tinh.map((tt) => {
+        const { id: attrId, ...rest } = tt;
+        return {
+          ...rest,
+          san_pham_id: id,
+          thu_tu: Number(tt.thu_tu) || 1,
+        };
+      });
       await ThuocTinhSanPham.bulkCreate(newThuocTinh, { transaction: t });
     }
 
@@ -742,6 +794,16 @@ exports.getThuongHieuByDanhMuc = async (req, res) => {
   try {
     const { danhMucId } = req.params;
 
+    // 1. Tìm tất cả danh mục con
+    const danhMucCon = await DanhMuc.findAll({
+      where: { danh_muc_cha_id: danhMucId },
+      attributes: ["id"],
+    });
+
+    // 2. Gom ID cha và ID con
+    const danhMucIds = [Number(danhMucId), ...danhMucCon.map((c) => c.id)];
+
+    // 3. Lấy thương hiệu của TẤT CẢ sản phẩm trong mảng ID này
     const list = await SanPham.findAll({
       attributes: [
         [
@@ -753,7 +815,9 @@ exports.getThuongHieuByDanhMuc = async (req, res) => {
         ],
       ],
       where: {
-        danh_muc_id: danhMucId,
+        danh_muc_id: {
+          [Op.in]: danhMucIds,
+        },
         trang_thai: "active",
       },
       raw: true,
@@ -774,12 +838,19 @@ exports.getBoLocByDanhMuc = async (req, res) => {
   try {
     const { danhMucId } = req.params;
 
+    const danhMucCon = await DanhMuc.findAll({
+      where: { danh_muc_cha_id: danhMucId },
+      attributes: ["id"],
+    });
+
+    const danhMucIds = [Number(danhMucId), ...danhMucCon.map((c) => c.id)];
+
     const bienThes = await BienTheSanPham.findAll({
       include: [
         {
           model: SanPham,
           as: "san_pham",
-          where: { danh_muc_id: danhMucId, trang_thai: "active" },
+          where: { danh_muc_id: { [Op.in]: danhMucIds }, trang_thai: "active" },
           attributes: [],
         },
       ],

@@ -28,9 +28,8 @@ exports.getHomeConfiguration = async (req, res) => {
 
 exports.updateHomeConfiguration = async (req, res) => {
   try {
-    const { sections } = req.body; // Mảng các section mới
+    const { sections } = req.body;
 
-    // Trong thực tế, có thể xóa hết đi rồi bulkCreate lại để đơn giản
     await CauHinhTrangChu.destroy({ where: {} });
     
     if (sections && sections.length > 0) {

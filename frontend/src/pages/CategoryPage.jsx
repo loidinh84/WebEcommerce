@@ -18,7 +18,6 @@ const CategoryPage = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const loaderRef = useRef(null);
 
   // Filters
   const [activeBrand, setActiveBrand] = useState(null);
@@ -43,6 +42,7 @@ const CategoryPage = () => {
       const params = new URLSearchParams(location.search);
       const initialBrand = params.get("brand");
       if (initialBrand) setActiveBrand(initialBrand);
+
       const isId = /^\d+$/.test(slug);
       const endpoint = isId
         ? `${BASE_URL}/api/sanPham/danh-muc/id/${slug}`
@@ -98,31 +98,16 @@ const CategoryPage = () => {
       if (ram) url += `&ram=${encodeURIComponent(ram)}`;
       if (dungLuong) url += `&dung_luong=${encodeURIComponent(dungLuong)}`;
       if (mauSac) url += `&mau_sac=${encodeURIComponent(mauSac)}`;
+      if (sort) url += `&sort=${encodeURIComponent(sort)}`;
 
       const res = await axios.get(url);
       const fetchedData = res.data.data || [];
       const totalP = res.data.totalPages || 1;
 
-      let processedProducts = [...fetchedData];
-
-      if (sort === "Giá Thấp - Cao") {
-        processedProducts.sort((a, b) => {
-          const priceA = a.bien_the?.[0]?.gia_ban || a.gia_ban || 0;
-          const priceB = b.bien_the?.[0]?.gia_ban || b.gia_ban || 0;
-          return priceA - priceB;
-        });
-      } else if (sort === "Giá Cao - Thấp") {
-        processedProducts.sort((a, b) => {
-          const priceA = a.bien_the?.[0]?.gia_ban || a.gia_ban || 0;
-          const priceB = b.bien_the?.[0]?.gia_ban || b.gia_ban || 0;
-          return priceB - priceA;
-        });
-      }
-
       if (reset) {
-        setProducts(processedProducts);
+        setProducts(fetchedData);
       } else {
-        setProducts((prev) => [...prev, ...processedProducts]);
+        setProducts((prev) => [...prev, ...fetchedData]);
       }
 
       setTotalPages(totalP);
@@ -161,46 +146,39 @@ const CategoryPage = () => {
   ]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          !loadingMore &&
-          page < totalPages &&
-          category
-        ) {
-          const nextPage = page + 1;
-          setPage(nextPage);
-          fetchProducts(
-            category.id,
-            activeBrand,
-            activeSort,
-            activeRam,
-            activeDungLuong,
-            activeMauSac,
-            nextPage,
-            false,
-          );
-        }
-      },
-      { threshold: 0.1 },
-    );
+    if (category && page > 1) {
+      fetchProducts(
+        category.id,
+        activeBrand,
+        activeSort,
+        activeRam,
+        activeDungLuong,
+        activeMauSac,
+        page,
+        false,
+      );
+    }
+  }, [page]);
 
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [
-    loadingMore,
-    page,
-    totalPages,
-    category,
-    activeBrand,
-    activeSort,
-    activeRam,
-    activeDungLuong,
-    activeMauSac,
-  ]);
+  const observer = useRef();
+  const lastProductElementRef = useCallback(
+    (node) => {
+      if (loading || loadingMore) return;
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && page < totalPages) {
+            setPage((prevPage) => prevPage + 1);
+          }
+        },
+        { threshold: 0.1 },
+      );
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, loadingMore, page, totalPages],
+  );
 
   if (loading) {
     return (
@@ -433,7 +411,7 @@ const CategoryPage = () => {
         {/* Products Display */}
         {products.length > 0 ? (
           <div className="pb-1">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-3">
               {products.map((product, idx) => (
                 <div
                   key={`${product.id}-${idx}`}
@@ -446,7 +424,7 @@ const CategoryPage = () => {
 
             {/* Sentinel for Infinite Scroll */}
             <div
-              ref={loaderRef}
+              ref={lastProductElementRef}
               className="flex flex-col items-center justify-center mt-5"
             >
               {loadingMore ? (
