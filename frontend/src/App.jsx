@@ -29,6 +29,7 @@ import HomeSettings from "./pages/admin/HomeSettings";
 import CategoryPage from "./pages/CategoryPage";
 import VoucherManagement from "./pages/admin/VoucherManagement";
 import SearchPage from "./pages/SearchPage";
+import Profile from "./pages/admin/Profile";
 
 const API_URL = BASE_URL;
 
@@ -88,6 +89,7 @@ function App() {
           <Route path="memberships" element={<Memberships />} />
           <Route path="home-settings" element={<HomeSettings />} />
           <Route path="vouchers" element={<VoucherManagement />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
     </Routes>
