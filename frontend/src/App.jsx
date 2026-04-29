@@ -32,6 +32,7 @@ import CategoryPage from "./pages/CategoryPage";
 import VoucherManagement from "./pages/admin/VoucherManagement";
 import SearchPage from "./pages/SearchPage";
 import Profile from "./pages/admin/Profile";
+import AuthPromptModal from "./components/AuthPromptModal";
 
 const API_URL = BASE_URL;
 
@@ -62,41 +63,44 @@ function App() {
   }
 
   return (
-    <Routes>
-      {/* Nhánh khách hàng */}
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/product/:slug" element={<ProductDetail />} />
-      <Route path="/profile" element={<UserProfile />} />
-      <Route path="/order-detail/:id" element={<OrderDetail />} />
-      <Route path="/cart" element={<Cart />} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/category/:slug" element={<CategoryPage />} />
-      <Route path="/search" element={<SearchPage />} />
+    <>
+      <AuthPromptModal />
+      <Routes>
+        {/* Nhánh khách hàng */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/product/:slug" element={<ProductDetail />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/order-detail/:id" element={<OrderDetail />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/category/:slug" element={<CategoryPage />} />
+        <Route path="/search" element={<SearchPage />} />
 
-      {/* Nhánh Admin */}
-      <Route path="/admin" element={<PrivateRoute />}>
-        <Route element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="products" element={<Product />} />
-          <Route path="categories" element={<Categories />} />
-          <Route path="orders" element={<Order />} />
-          <Route path="customers" element={<Customer />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="inventory/import" element={<InventoryImport />} />
-          <Route path="inventory-check" element={<InventoryCheck />} />
-          <Route path="inventory-check/create" element={<InventoryCheckCreate />} />
-          <Route path="settings" element={<StoreSettings />} />
-          <Route path="banners" element={<Banner />} />
-          <Route path="checkout-settings" element={<CheckoutSetting />} />
-          <Route path="memberships" element={<Memberships />} />
-          <Route path="home-settings" element={<HomeSettings />} />
-          <Route path="vouchers" element={<VoucherManagement />} />
-          <Route path="profile" element={<Profile />} />
+        {/* Nhánh Admin */}
+        <Route path="/admin" element={<PrivateRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="products" element={<Product />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="orders" element={<Order />} />
+            <Route path="customers" element={<Customer />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="inventory/import" element={<InventoryImport />} />
+            <Route path="inventory-check" element={<InventoryCheck />} />
+            <Route path="inventory-check/create" element={<InventoryCheckCreate />} />
+            <Route path="settings" element={<StoreSettings />} />
+            <Route path="banners" element={<Banner />} />
+            <Route path="checkout-settings" element={<CheckoutSetting />} />
+            <Route path="memberships" element={<Memberships />} />
+            <Route path="home-settings" element={<HomeSettings />} />
+            <Route path="vouchers" element={<VoucherManagement />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   );
 }
 
