@@ -20,6 +20,8 @@ import Order from "./pages/admin/Order";
 import Customer from "./pages/admin/Customer";
 import Inventory from "./pages/admin/Inventory";
 import InventoryCheck from "./pages/admin/InventoryCheck";
+import InventoryImport from "./pages/admin/InventoryImport";
+import InventoryCheckCreate from "./pages/admin/InventoryCheckCreate";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Banner from "./pages/admin/Banner";
@@ -82,7 +84,9 @@ function App() {
           <Route path="orders" element={<Order />} />
           <Route path="customers" element={<Customer />} />
           <Route path="inventory" element={<Inventory />} />
+          <Route path="inventory/import" element={<InventoryImport />} />
           <Route path="inventory-check" element={<InventoryCheck />} />
+          <Route path="inventory-check/create" element={<InventoryCheckCreate />} />
           <Route path="settings" element={<StoreSettings />} />
           <Route path="banners" element={<Banner />} />
           <Route path="checkout-settings" element={<CheckoutSetting />} />

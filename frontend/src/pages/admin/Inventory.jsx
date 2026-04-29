@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ConfirmModal from "./ConfirmModal";
 
 const formatPrice = (price) =>
@@ -77,6 +78,7 @@ const mockInventory = [
 ];
 
 const Inventory = () => {
+  const navigate = useNavigate();
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState([]);
@@ -111,7 +113,7 @@ const Inventory = () => {
         setInventory(mockInventory);
         setIsLoading(false);
       }, 400);
-    } catch (error) {
+    } catch {
       setInventory(mockInventory);
       setIsLoading(false);
     }
@@ -399,10 +401,10 @@ const Inventory = () => {
               Quản lý Kho hàng
             </h2>
             <div className="flex gap-3">
-              <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm">
+              <button onClick={() => navigate("/admin/inventory-check")} className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm cursor-pointer">
                 Kiểm kho
               </button>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm">
+              <button onClick={() => navigate("/admin/inventory/import")} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm shadow-sm cursor-pointer">
                 Nhập hàng
               </button>
             </div>
@@ -488,98 +490,134 @@ const Inventory = () => {
                           </td>
                         </tr>
 
-                        {/* Dòng chi tiết */}
+                        {/* Dòng chi tiết — theo style Billards */}
                         {isExpanded && (
-                          <tr className="bg-[#f8fafc] border-b-2 border-blue-200 shadow-inner">
-                            <td colSpan="5" className="p-6">
-                              <div className="flex flex-col xl:flex-row gap-6">
-                                {/* Thẻ kho */}
-                                <div className="flex-1 bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 uppercase text-xs tracking-wider flex justify-between">
-                                    <span>Lịch sử xuất/nhập (Thẻ kho)</span>
-                                    <span className="text-blue-600 cursor-pointer hover:underline normal-case font-normal">
-                                      Xem tất cả
-                                    </span>
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {item.history?.length > 0 ? (
-                                      item.history.map((hist, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="flex justify-between items-center text-sm border-b border-gray-50 pb-3 last:border-0 last:pb-0"
-                                        >
-                                          <div>
-                                            <p className="font-semibold text-gray-800">
-                                              {hist.note}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                              {hist.date}
-                                            </p>
-                                          </div>
-                                          <div
-                                            className={`font-bold text-base ${hist.type === "import" ? "text-green-600" : "text-orange-500"}`}
-                                          >
-                                            {hist.type === "import" ? "+" : "-"}
-                                            {hist.qty}
-                                          </div>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <p className="text-gray-500 text-sm italic">
-                                        Chưa có phát sinh giao dịch kho.
-                                      </p>
-                                    )}
-                                  </div>
+                          <tr className="border-b border-blue-100">
+                            <td colSpan="5" className="p-0">
+                              <div className="bg-white border-t-2 border-blue-400">
+                                {/* Tab bar */}
+                                <div className="flex border-b border-gray-200 px-6">
+                                  <button className="py-3 px-4 text-sm font-bold text-blue-600 border-b-2 border-blue-500 -mb-px cursor-pointer">
+                                    Thông tin
+                                  </button>
                                 </div>
 
-                                {/* Điều chỉnh kho */}
-                                <div className="w-full xl:w-64 shrink-0 flex flex-col gap-3">
-                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-1 uppercase text-xs tracking-wider text-center xl:text-left">
-                                    Điều chỉnh kho
-                                  </h4>
-
-                                  <div className="bg-gray-50 p-3 rounded border border-gray-200 text-sm mb-2">
-                                    <p className="text-gray-500 mb-1 text-xs">
-                                      Cập nhật cuối:
-                                    </p>
-                                    <p className="font-bold text-gray-800">
-                                      {item.lastUpdated}
-                                    </p>
+                                {/* Detail content */}
+                                <div className="p-6">
+                                  {/* Header row */}
+                                  <div className="grid grid-cols-3 gap-6 mb-5 text-sm">
+                                    <div className="space-y-2">
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-28 shrink-0">Mã phiếu nhập:</span>
+                                        <span className="font-semibold text-gray-800">{item.id}</span>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-28 shrink-0">Thời gian:</span>
+                                        <span className="text-gray-700">{item.lastUpdated}</span>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-28 shrink-0">Nhà cung cấp:</span>
+                                        <span className="text-blue-600 font-medium cursor-pointer hover:underline">Chưa xác định</span>
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-24 shrink-0">Trạng thái:</span>
+                                        <span className="text-gray-800 font-semibold">{item.status === "in_stock" ? "Còn hàng" : item.status === "low_stock" ? "Sắp hết" : "Hết hàng"}</span>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-24 shrink-0">Người nhập:</span>
+                                        <span className="text-gray-700">Admin</span>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <span className="text-gray-500 w-24 shrink-0">Người tạo:</span>
+                                        <span className="text-gray-700">Admin</span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <textarea readOnly defaultValue="" placeholder="Ghi chú..."
+                                        className="w-full h-20 border border-gray-200 rounded p-2 text-sm text-gray-500 bg-gray-50 resize-none outline-none"
+                                      />
+                                    </div>
                                   </div>
 
-                                  <button
-                                    onClick={() =>
-                                      setConfirmModal({
-                                        isOpen: true,
-                                        actionType: "request_import",
-                                        skuId: item.id,
-                                        title: "Yêu cầu nhập hàng",
-                                        message: `Tạo phiếu yêu cầu phòng Thu mua nhập thêm hàng cho mã SKU: ${item.id}?`,
-                                      })
-                                    }
-                                    className="w-full py-2.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
-                                  >
-                                    Yêu cầu nhập hàng
-                                  </button>
+                                  {/* Item table */}
+                                  <table className="w-full text-sm border border-gray-200 rounded overflow-hidden">
+                                    <thead className="bg-gray-50 text-gray-600">
+                                      <tr>
+                                        <th className="py-2.5 px-4 text-left font-semibold border-b border-gray-200">Mã hàng hóa</th>
+                                        <th className="py-2.5 px-4 text-left font-semibold border-b border-gray-200">Tên hàng</th>
+                                        <th className="py-2.5 px-4 text-center font-semibold border-b border-gray-200 w-20">Số lượng</th>
+                                        <th className="py-2.5 px-4 text-right font-semibold border-b border-gray-200 w-32">Đơn giá nhập</th>
+                                        <th className="py-2.5 px-4 text-right font-semibold border-b border-gray-200 w-24">Giảm giá</th>
+                                        <th className="py-2.5 px-4 text-right font-semibold border-b border-gray-200 w-32">Thành tiền</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {item.history?.length > 0 ? item.history.filter(h => h.type === "import").map((h, i) => (
+                                        <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                                          <td className="py-2.5 px-4 text-gray-600">{item.id}{String(i + 1).padStart(3, "0")}</td>
+                                          <td className="py-2.5 px-4 text-gray-800">{item.name}</td>
+                                          <td className="py-2.5 px-4 text-center">{h.qty}</td>
+                                          <td className="py-2.5 px-4 text-right">{formatPrice(50000)}</td>
+                                          <td className="py-2.5 px-4 text-right">0</td>
+                                          <td className="py-2.5 px-4 text-right font-semibold">{formatPrice(h.qty * 50000)}</td>
+                                        </tr>
+                                      )) : (
+                                        <tr>
+                                          <td colSpan="6" className="py-6 text-center text-gray-400 italic text-sm">Chưa có dữ liệu nhập kho.</td>
+                                        </tr>
+                                      )}
+                                    </tbody>
+                                  </table>
 
-                                  <button
-                                    onClick={() =>
-                                      setConfirmModal({
-                                        isOpen: true,
-                                        actionType: "audit",
-                                        skuId: item.id,
-                                        title: "Kiểm kho mã hàng",
-                                        message: `Tạo phiếu kiểm kê kho đột xuất cho mã SKU: ${item.id}?`,
-                                      })
-                                    }
-                                    className="w-full py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
-                                  >
-                                    Kiểm kê mã này
-                                  </button>
+                                  {/* Totals */}
+                                  <div className="flex justify-end mt-4">
+                                    <div className="text-sm space-y-1.5 min-w-[260px]">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">Tổng số lượng:</span>
+                                        <span className="font-semibold">{item.history?.filter(h => h.type === "import").reduce((s, h) => s + h.qty, 0) || 0}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">Tổng tiền hàng:</span>
+                                        <span className="font-semibold">{formatPrice((item.history?.filter(h => h.type === "import").reduce((s, h) => s + h.qty, 0) || 0) * 50000)} đ</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">Giảm giá phiếu nhập:</span>
+                                        <span className="font-semibold">{formatPrice(20000)} đ</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">Tiền đã trả NCC:</span>
+                                        <span className="font-bold text-gray-800">{formatPrice(20000)} đ</span>
+                                      </div>
+                                      <div className="flex justify-between border-t border-gray-200 pt-1.5">
+                                        <span className="text-gray-500">Còn cần trả NCC:</span>
+                                        <span className="font-bold text-gray-800">{formatPrice(80000)} đ</span>
+                                      </div>
+                                    </div>
+                                  </div>
 
-                                  <button className="w-full py-2.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors mt-auto cursor-pointer">
-                                    Cập nhật định mức
-                                  </button>
+                                  {/* Action buttons */}
+                                  <div className="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100">
+                                    <button className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 rounded text-sm font-semibold hover:bg-gray-50 cursor-pointer transition">
+                                      <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" />
+                                      </svg>
+                                      In
+                                    </button>
+                                    <button className="flex items-center gap-1.5 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded text-sm font-semibold cursor-pointer transition">
+                                      <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                      </svg>
+                                      Xuất file
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmModal({ isOpen: true, actionType: "audit", skuId: item.id, title: "Hủy phiếu", message: `Bạn có chắc muốn hủy phiếu cho mã SKU: ${item.id}?` })}
+                                      className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-sm font-semibold cursor-pointer transition"
+                                    >
+                                      Hủy phiếu
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </td>
