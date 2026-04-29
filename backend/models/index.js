@@ -15,6 +15,8 @@ const LichSuGiaoHang = require("./LichSuGiaoHang");
 const DonViVanChuyen = require("./DonViVanChuyen");
 const ThietLapCuaHang = require("./ThietLapCuaHang");
 const CauHinhTrangChu = require("./CauHinhTrangChu");
+const PhieuNhapHang = require("./PhieuNhapHang");
+const ChiTietPhieuNhap = require("./ChiTietPhieuNhap");
 
 const DanhGiaSanPham = require("./DanhGiaSanPham");
 const DanhGiaCuaHang = require("./DanhGiaCuaHang");
@@ -124,6 +126,20 @@ DanhGiaSanPham.belongsTo(DonHang, { foreignKey: "don_hang_id", as: "don_hang" })
 DanhGiaCuaHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "nguoi_dung" });
 TaiKhoan.hasMany(DanhGiaCuaHang, { foreignKey: "tai_khoan_id", as: "danh_gia_shop" });
 
+// ========================================
+// PhieuNhapHang associations
+// ========================================
+PhieuNhapHang.belongsTo(NhaCungCap, { foreignKey: "nha_cc_id", as: "nha_cung_cap" });
+NhaCungCap.hasMany(PhieuNhapHang, { foreignKey: "nha_cc_id", as: "phieu_nhap" });
+
+PhieuNhapHang.belongsTo(TaiKhoan, { foreignKey: "nguoi_tao", as: "nguoi_tao_tk" });
+
+PhieuNhapHang.hasMany(ChiTietPhieuNhap, { foreignKey: "phieu_nhap_id", as: "chi_tiet" });
+ChiTietPhieuNhap.belongsTo(PhieuNhapHang, { foreignKey: "phieu_nhap_id" });
+
+ChiTietPhieuNhap.belongsTo(BienTheSanPham, { foreignKey: "bien_the_id", as: "bien_the" });
+BienTheSanPham.hasMany(ChiTietPhieuNhap, { foreignKey: "bien_the_id", as: "chi_tiet_nhap" });
+
 module.exports = {
   TaiKhoan,
   TheThanhVien,
@@ -143,5 +159,7 @@ module.exports = {
   CauHinhTrangChu,
   DanhGiaSanPham,
   DanhGiaCuaHang,
+  PhieuNhapHang,
+  ChiTietPhieuNhap,
 };
 
