@@ -169,3 +169,32 @@ exports.getPublicSidebarCategories = async (req, res) => {
     res.status(500).json({ message: "Lỗi server!" });
   }
 };
+
+// Lấy cây danh mục
+exports.getCategoryTree = async (req, res) => {
+  try {
+    const allCategories = await DanhMuc.findAll({
+      where: {
+        trang_thai: "active",
+        hien_thi_sidebar: true,
+      },
+      order: [["thu_tu", "ASC"]],
+      raw: true,
+    });
+
+    const buildTree = (parentId = null) => {
+      return allCategories
+        .filter((item) => item.danh_muc_cha_id === parentId)
+        .map((item) => ({
+          ...item,
+          children: buildTree(item.id),
+        }));
+    };
+
+    const tree = buildTree(null);
+    res.status(200).json(tree);
+  } catch (error) {
+    console.error("Lỗi lấy cây danh mục:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy dữ liệu menu!" });
+  }
+};

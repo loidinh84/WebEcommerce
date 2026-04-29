@@ -97,12 +97,13 @@ router.post(
   sanPhamController.createSanPham,
 );
 
-// 2. CÁC ROUTE CÓ BIẾN
 router.get("/boloc/:danhMucId", sanPhamController.getBoLocByDanhMuc);
 router.get("/chi-tiet/:slug", sanPhamController.getSanPhamBySlug);
+router.get("/danh-muc/tree", danhMucController.getCategoryTree);
 router.get("/danh-muc/slug/:slug", danhMucController.getDanhMucBySlug);
 router.get("/danh-muc/id/:id", danhMucController.getDanhMucById);
 router.get("/thuong-hieu/:danhMucId", sanPhamController.getThuongHieuByDanhMuc);
+router.post("/:id/view", sanPhamController.incrementLuotXem);
 router.get("/:id", sanPhamController.getSanPhamById);
 router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
 router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);

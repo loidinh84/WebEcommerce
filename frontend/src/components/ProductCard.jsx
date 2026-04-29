@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import BASE_URL from "../config/api";
 import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import * as Icons from "../assets/icons/index";
 
 const ProductCard = ({ product, onLikeChange }) => {
@@ -97,6 +97,17 @@ const ProductCard = ({ product, onLikeChange }) => {
       ? Math.round(((giaCu - giaMoi) / giaCu) * 100)
       : 0;
 
+  // Kiểm tra sản phẩm mới (trong 5 ngày)
+  const isNewProduct = product.created_at
+    ? (Date.now() - new Date(product.created_at).getTime()) /
+        (1000 * 60 * 60 * 24) <=
+      5
+    : false;
+
+  const avgRating = product.danh_gia_trung_binh
+    ? Number(product.danh_gia_trung_binh)
+    : null;
+
   return (
     <Link
       to={`/product/${product.slug || product.id}`}
@@ -108,10 +119,12 @@ const ProductCard = ({ product, onLikeChange }) => {
           <div className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
             Giảm {phanTramGiam}%
           </div>
-        ) : (
+        ) : isNewProduct ? (
           <div className="bg-[#FF6A13] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
             Mới
           </div>
+        ) : (
+          <div />
         )}
         <button
           onClick={handleToggleFavorite}
@@ -151,12 +164,14 @@ const ProductCard = ({ product, onLikeChange }) => {
           {product.ten_san_pham}
         </h3>
 
-        {/* Tag Tình trạng */}
-        <div className="mb-2">
-          <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded-sm font-medium">
-            Hàng mới về
-          </span>
-        </div>
+        {/* Tag Hàng mới về */}
+        {isNewProduct && (
+          <div className="mb-2">
+            <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded-sm font-medium">
+              Hàng mới về
+            </span>
+          </div>
+        )}
 
         {/* Cụm Giá */}
         <div className="mb-1 flex items-baseline gap-2">
@@ -170,18 +185,20 @@ const ProductCard = ({ product, onLikeChange }) => {
           )}
         </div>
 
-        {/* Khuyến mãi Sinh viên */}
-        <div className="mb-3">
-          <span className="bg-purple-50 text-purple-600 text-[10px] px-1.5 py-0.5 rounded-sm">
-            Student giảm thêm 500.000đ
-          </span>
-        </div>
-
         {/* Footer */}
         <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-2">
-          <div className="flex text-[10px] gap-1.5 text-yellow-400 font-medium">
-            <Icons.Star className="w-3 h-3" />
-            5.0
+          <div className="flex text-[10px] gap-0.5 text-yellow-400 font-medium items-center">
+            {avgRating !== null ? (
+              <>
+                <Icons.Star className="w-3 h-3 fill-yellow-400" />
+                <span>{avgRating.toFixed(1)}</span>
+              </>
+            ) : (
+              <>
+                <Icons.Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                <span className="text-yellow-400">5.0 </span>
+              </>
+            )}
           </div>
           <div className="text-[10px] text-gray-500 font-medium">
             Lượt xem: {product.luot_xem || 0}

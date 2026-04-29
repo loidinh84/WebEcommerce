@@ -116,22 +116,22 @@ const Header = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY < 50) {
+      if (currentScrollY < 30) {
+        // Gần đỉnh trang → luôn hiện thanh top bar
         setIsScrolled(false);
-      }
-      // Nếu lăn chuột xuống -> Ẩn thanh
-      else if (currentScrollY > lastScrollY.current + 5) {
+      } else if (currentScrollY > lastScrollY.current + 8) {
+        // Lăn xuống rõ ràng (> 8px) → ẩn thanh top bar
         setIsScrolled(true);
-      }
-      // Nếu lăn chuột lên -> Hiện thanh ngay lập tức
-      else if (currentScrollY < lastScrollY.current - 5) {
+      } else if (currentScrollY < lastScrollY.current - 8) {
+        // Lăn lên rõ ràng (> 8px) → hiện thanh top bar
         setIsScrolled(false);
       }
+      // Các thay đổi nhỏ (< 8px) sẽ bị bỏ qua → tránh giật
 
       lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

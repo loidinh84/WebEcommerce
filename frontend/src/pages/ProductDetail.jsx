@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BASE_URL from "../config/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import * as Icons from "../assets/icons/index";
 import SpecsModal from "../components/SpecsModal";
 import CompareModal from "../components/CompareModal";
@@ -43,8 +43,6 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [imgError, setImgError] = useState({});
   const [isPurchased, setIsPurchased] = useState(false);
-  const [reviewImages, setReviewImages] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
 
   useEffect(() => {
     const checkLikeStatus = async () => {
@@ -118,6 +116,20 @@ const ProductDetail = () => {
         if (!resDetail.ok) throw new Error("Không tìm thấy sản phẩm");
         const dataDetail = await resDetail.json();
         setProduct(dataDetail);
+
+        // Tăng lượt xem: chỉ đếm 1 lần trong 24 giờ cho mỗi sản phẩm
+        const COOLDOWN_HOURS = 24;
+        const storageKey = `viewed_product_${dataDetail.id}`;
+        const lastViewed = localStorage.getItem(storageKey);
+        const now = Date.now();
+        const cooldownMs = COOLDOWN_HOURS * 60 * 60 * 1000;
+
+        if (!lastViewed || now - Number(lastViewed) > cooldownMs) {
+          localStorage.setItem(storageKey, String(now));
+          fetch(`${BASE_URL}/api/sanPham/${dataDetail.id}/view`, {
+            method: "POST",
+          }).catch(() => {});
+        }
 
         if (dataDetail.bien_the?.length > 0)
           setSelectedVariant(dataDetail.bien_the[0]);
@@ -221,16 +233,6 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const removeImage = (index) => {
-    const newFiles = [...reviewImages];
-    newFiles.splice(index, 1);
-    setReviewImages(newFiles);
-
-    const newPreviews = [...imagePreviews];
-    newPreviews.splice(index, 1);
-    setImagePreviews(newPreviews);
-  };
-
   const handleSubmitReview = async () => {
     if (!user) {
       toast.error("Vui lòng đăng nhập để gửi đánh giá!");
@@ -244,27 +246,18 @@ const ProductDetail = () => {
     try {
       const token =
         localStorage.getItem("token") || sessionStorage.getItem("token");
-
-      const formData = new FormData();
-      formData.append("tai_khoan_id", user.id);
-      formData.append("so_sao", userRating);
-      formData.append("noi_dung", reviewText);
-
-      // Append images ONLY if purchased
-      if (isPurchased && reviewImages.length > 0) {
-        reviewImages.forEach((file) => {
-          formData.append("hinh_anh", file);
-        });
-      }
-
       const response = await fetch(
         `${BASE_URL}/api/sanPham/${product.id}/danh-gia`,
         {
           method: "POST",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: formData,
+          body: JSON.stringify({
+            so_sao: userRating,
+            noi_dung: reviewText,
+          }),
         },
       );
 
@@ -272,8 +265,6 @@ const ProductDetail = () => {
         toast.success("Cảm ơn bạn! Đánh giá đã được gửi.");
         setUserRating(0);
         setReviewText("");
-        setReviewImages([]);
-        setImagePreviews([]);
         fetchReviews(product.id);
       } else {
         const errData = await response.json();
@@ -412,7 +403,7 @@ const ProductDetail = () => {
   return (
     <div className="bg-[#F3F4F6] min-h-screen font-sans relative pb-10">
       <Helmet>
-        <title>{product.meta_title || product.ten_san_pham} - LTLShop</title>
+        <title>{product.meta_title || product.ten_san_pham}</title>
         <meta
           name="description"
           content={product.meta_description || product.mo_ta_ngan}
@@ -431,7 +422,6 @@ const ProductDetail = () => {
 
       <Header />
 
-      <Toaster position="bottom-right" reverseOrder={false} />
       <main className="container mx-auto px-4 max-w-[1280px] py-4">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-500 mb-4 flex gap-2">
@@ -479,7 +469,9 @@ const ProductDetail = () => {
                 </span>
                 <span className="text-gray-300 mx-1">|</span>
                 <span className="text-gray-500">
-                  Lượt xem: {product.luot_xem || 0}
+                  {product.luot_mua > 0
+                    ? `Đã bán: ${product.luot_mua}`
+                    : `${product.luot_xem || 0} lượt xem`}
                 </span>
               </div>
 
@@ -606,7 +598,6 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* KHUYẾN MÃI ĐI KÈM */}
               <div className="border border-red-200 rounded-xl overflow-hidden mb-6">
                 <div className="bg-red-50 text-red-600 font-bold px-4 py-2.5 flex items-center gap-2 border-b border-red-100">
                   <Icons.Box className="w-6 h-6" />
@@ -614,29 +605,30 @@ const ProductDetail = () => {
                 </div>
                 <div className="p-4 bg-white text-sm text-gray-700 flex flex-col gap-2.5">
                   {(() => {
-                    let promos = [];
-                    if (product.danh_muc_id === 5) {
-                      // Khuyến mãi cho Điện thoại
+                    const slug = product.danh_muc?.slug || "";
+                    let promos = [
+                      "Giảm giá 5% cho thành viên LTLShop",
+                      "Miễn phí giao hàng toàn quốc cho đơn từ 300K",
+                    ];
+                    if (
+                      slug.includes("dien-thoai") ||
+                      slug.includes("smartphone")
+                    ) {
                       promos = [
                         "Tặng gói bảo hành độc quyền LTL Care+ 12 tháng",
                         "Trợ giá thêm 2.000.000đ khi thu cũ đổi mới",
                         "Tặng ốp lưng và dán cường lực cao cấp",
                       ];
-                    } else if (product.danh_muc_id === 4) {
-                      // Khuyến mãi cho Laptop
+                    } else if (
+                      slug.includes("laptop") ||
+                      slug.includes("may-tinh")
+                    ) {
                       promos = [
                         "Tặng Balo Laptop LTL cao cấp",
                         "Tặng chuột không dây chính hãng",
                         "Giảm 20% khi mua kèm tai nghe hoặc phần mềm Office",
                       ];
-                    } else {
-                      // Khuyến mãi chung cho Phụ kiện / PC
-                      promos = [
-                        "Giảm giá 5% cho thành viên LTLShop",
-                        "Miễn phí giao hàng toàn quốc cho đơn từ 300K",
-                      ];
                     }
-                    // Render mảng thành các dòng HTML
                     return promos.map((promo, index) => (
                       <div key={index} className="flex items-start gap-2">
                         <span className="bg-green-500 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center text-[9px] mt-0.5 shrink-0">
@@ -762,30 +754,69 @@ const ProductDetail = () => {
                 const giaTTR =
                   sp.bien_the?.[0]?.gia_ban || sp.bien_the?.[0]?.gia_goc || 0;
                 const giaTTRGoc = sp.bien_the?.[0]?.gia_goc || 0;
+                const phanTram =
+                  giaTTRGoc > giaTTR
+                    ? Math.round(((giaTTRGoc - giaTTR) / giaTTRGoc) * 100)
+                    : 0;
+
+                // Tính trung bình sao
+                const danhGiaList = sp.danh_gia || [];
+                const avgStar =
+                  danhGiaList.length > 0
+                    ? (
+                        danhGiaList.reduce((acc, dg) => acc + dg.so_sao, 0) /
+                        danhGiaList.length
+                      ).toFixed(1)
+                    : null;
 
                 return (
                   <div
                     key={sp.id}
                     onClick={() => navigate(`/product/${sp.slug}`)}
-                    className="border border-gray-100 rounded-lg p-4 hover:shadow-lg transition cursor-pointer flex flex-col group"
+                    className="border border-gray-100 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer flex flex-col group bg-white"
                   >
-                    <img
-                      src={getImageUrl(imgTuongTu)}
-                      alt={sp.ten_san_pham}
-                      className="w-full h-40 object-contain mb-4 group-hover:-translate-y-1 transition-transform mix-blend-multiply"
-                    />
-                    <h4 className="text-sm font-bold text-gray-800 mb-2 hover:text-blue-600 line-clamp-2">
+                    {/* Ảnh + Badge giảm */}
+                    <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden mb-3">
+                      {phanTram > 0 && (
+                        <span className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm z-10">
+                          -{phanTram}%
+                        </span>
+                      )}
+                      <img
+                        src={getImageUrl(imgTuongTu)}
+                        alt={sp.ten_san_pham}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
+                      />
+                    </div>
+
+                    {/* Tên sản phẩm */}
+                    <h4 className="text-xs font-bold text-gray-800 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight min-h-[32px]">
                       {sp.ten_san_pham}
                     </h4>
-                    <div className="flex items-end gap-2 mt-auto">
-                      <span className="text-red-600 font-bold">
-                        {formatPrice(giaTTR)}
+
+                    {/* Giá */}
+                    <div className="mb-2 flex items-baseline gap-2">
+                      <span className="text-red-600 text-sm font-bold">
+                        {giaTTR > 0 ? formatPrice(giaTTR) : "Liên hệ"}
                       </span>
                       {giaTTRGoc > giaTTR && (
-                        <span className="text-xs text-gray-400 line-through mb-0.5">
+                        <span className="text-gray-400 text-[10px] font-medium line-through">
                           {formatPrice(giaTTRGoc)}
                         </span>
                       )}
+                    </div>
+
+                    {/* Footer: sao + lượt xem */}
+                    <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-2">
+                      <div className="flex text-[10px] gap-0.5 text-yellow-400 font-medium items-center">
+                        <Icons.Star className="w-3 h-3 fill-yellow-400" />
+                        <span>{avgStar || "5.0"}</span>
+                      </div>
+                      <div className="text-[10px] text-gray-500 font-medium">
+                        {sp.luot_mua > 0
+                          ? `Đã bán: ${sp.luot_mua}`
+                          : `Lượt xem: ${sp.luot_xem || 0}`}
+                      </div>
                     </div>
                   </div>
                 );
@@ -793,6 +824,7 @@ const ProductDetail = () => {
             </div>
           </div>
         )}
+
 
         {/* ================= KHỐI 4: ĐÁNH GIÁ & HỎI ĐÁP ================= */}
         {storeConfig?.cho_phep_danh_gia && (
@@ -848,26 +880,6 @@ const ProductDetail = () => {
                     className="w-full border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-blue-500 resize-none h-24 mb-3"
                   ></textarea>
 
-                  {isPurchased && (
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {imagePreviews.map((url, idx) => (
-                          <div key={idx} className="relative w-16 h-16">
-                            <img
-                              src={url}
-                              className="w-full h-full object-cover rounded-lg border border-gray-200"
-                            />
-                            <button
-                              onClick={() => removeImage(idx)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-600 transition cursor-pointer"
-                            >
-                              &times;
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   <div className="flex justify-end">
                     <button
                       onClick={handleSubmitReview}
@@ -889,7 +901,8 @@ const ProductDetail = () => {
                       <div
                         className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-bold text-lg shadow-sm border border-gray-100"
                         style={{
-                          background: getInitialsAvatar(rv.nguoi_dung?.ho_ten).bg,
+                          background: getInitialsAvatar(rv.nguoi_dung?.ho_ten)
+                            .bg,
                           color: getInitialsAvatar(rv.nguoi_dung?.ho_ten).color,
                         }}
                       >
@@ -901,7 +914,10 @@ const ProductDetail = () => {
                             src={getImageUrl(rv.nguoi_dung.anh_dai_dien)}
                             className="w-full h-full object-cover"
                             onError={() =>
-                              setImgError((prev) => ({ ...prev, [rv.id]: true }))
+                              setImgError((prev) => ({
+                                ...prev,
+                                [rv.id]: true,
+                              }))
                             }
                           />
                         ) : (
@@ -952,7 +968,9 @@ const ProductDetail = () => {
                                   src={getImageUrl(img)}
                                   alt={`Review ${index}`}
                                   className="w-20 h-20 object-cover rounded-lg border border-gray-100 shadow-sm hover:scale-105 transition-transform cursor-pointer"
-                                  onClick={() => window.open(getImageUrl(img), "_blank")}
+                                  onClick={() =>
+                                    window.open(getImageUrl(img), "_blank")
+                                  }
                                 />
                               ));
                             }

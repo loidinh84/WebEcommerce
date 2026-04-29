@@ -6,6 +6,7 @@ const HoaDonDienTu = require("../models/HoaDonDienTu");
 const DonViVanChuyen = require("../models/DonViVanChuyen");
 const PhuongThucThanhToan = require("../models/PhuongThucThanhToan");
 const BienTheSanPham = require("../models/BienTheSanPham");
+const SanPham = require("../models/SanPham");
 const KhuyenMai = require("../models/KhuyenMai");
 const LichSuDungVoucher = require("../models/LichSuDungVoucher");
 const TaiKhoan = require("../models/TaiKhoan");
@@ -591,6 +592,37 @@ exports.updateOrderStatus = async (req, res) => {
         console.log(
           `Đã cộng ${totalBonusPoints} điểm cho khách hàng ${orderInfo.tai_khoan.id}`,
         );
+      }
+
+      // Tăng lượt mua cho từng sản phẩm trong đơn hàng
+      try {
+        const chiTietDonHang = await ChiTietDonHang.findAll({
+          where: { don_hang_id: donHang.id },
+          include: [{
+            model: BienTheSanPham,
+            as: "bien_the",
+            attributes: ["san_pham_id"],
+          }],
+        });
+
+        // Gom số lượng theo san_pham_id
+        const luotMuaMap = {};
+        for (const ct of chiTietDonHang) {
+          const sanPhamId = ct.bien_the?.san_pham_id;
+          if (sanPhamId) {
+            luotMuaMap[sanPhamId] = (luotMuaMap[sanPhamId] || 0) + ct.so_luong;
+          }
+        }
+
+        // Cập nhật luot_mua cho từng sản phẩm
+        for (const [sanPhamId, soLuong] of Object.entries(luotMuaMap)) {
+          await SanPham.increment("luot_mua", {
+            by: soLuong,
+            where: { id: sanPhamId },
+          });
+        }
+      } catch (err) {
+        console.error("Lỗi cập nhật lượt mua:", err);
       }
     }
 

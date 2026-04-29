@@ -104,8 +104,6 @@ exports.getAllSanPham = async (req, res) => {
       products = products.sort(
         (a, b) => matchedIds.indexOf(a.id) - matchedIds.indexOf(b.id),
       );
-
-      // Trả về Frontend
       return res.status(200).json({
         data: products,
         currentPage: pageNumber,
@@ -155,6 +153,26 @@ exports.getAllSanPham = async (req, res) => {
 
     const { count, rows } = await SanPham.findAndCountAll({
       where: whereCondition,
+      attributes: {
+        include: [
+          [
+            SanPham.sequelize.literal(`(
+              SELECT COUNT(*)
+              FROM DanhGiaSanPham AS dg
+              WHERE dg.san_pham_id = SanPham.id AND dg.trang_thai = 'approved'
+            )`),
+            "tong_danh_gia",
+          ],
+          [
+            SanPham.sequelize.literal(`(
+              SELECT ISNULL(ROUND(AVG(CAST(so_sao AS FLOAT)), 1), 0)
+              FROM DanhGiaSanPham AS dg
+              WHERE dg.san_pham_id = SanPham.id AND dg.trang_thai = 'approved'
+            )`),
+            "diem_danh_gia",
+          ],
+        ],
+      },
       include: [
         {
           model: BienTheSanPham,
@@ -268,6 +286,7 @@ exports.getSanPhamById = async (req, res) => {
 
     const sanPham = await SanPham.findByPk(id, {
       include: [
+        { model: DanhMuc, as: "danh_muc", attributes: ["id", "ten_danh_muc", "slug"] },
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
@@ -277,7 +296,6 @@ exports.getSanPhamById = async (req, res) => {
     if (!sanPham) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
-
     res.status(200).json(sanPham);
   } catch (error) {
     console.error("Lỗi khi lấy chi tiết sản phẩm:", error);
@@ -291,6 +309,7 @@ exports.getSanPhamBySlug = async (req, res) => {
     const sanPham = await SanPham.findOne({
       where: { slug: slug },
       include: [
+        { model: DanhMuc, as: "danh_muc", attributes: ["id", "ten_danh_muc", "slug"] },
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
@@ -303,6 +322,17 @@ exports.getSanPhamBySlug = async (req, res) => {
     res.status(200).json(sanPham);
   } catch (error) {
     res.status(500).json({ message: "Lỗi server khi lấy chi tiết sản phẩm!" });
+  }
+};
+
+// Tăng lượt xem
+exports.incrementLuotXem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await SanPham.increment("luot_xem", { by: 1, where: { id } });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server!" });
   }
 };
 
@@ -671,12 +701,14 @@ exports.getSanPhamTuongTu = async (req, res) => {
       where: {
         danh_muc_id: sanPhamHienTai.danh_muc_id,
         id: { [Op.ne]: id },
+        trang_thai: "active",
       },
       include: [
         { model: BienTheSanPham, as: "bien_the" },
         { model: HinhAnhSanPham, as: "hinh_anh" },
+        { model: DanhGiaSanPham, as: "danh_gia", attributes: ["so_sao"] },
       ],
-      limit: 4,
+      limit: 8,
       order: [["created_at", "DESC"]],
     });
 
