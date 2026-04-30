@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BASE_URL from "../config/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import SimilarProducts from "../components/SimilarProducts";
 import { toast } from "react-toastify";
 import * as Icons from "../assets/icons/index";
 import SpecsModal from "../components/SpecsModal";
@@ -42,7 +43,6 @@ const ProductDetail = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [imgError, setImgError] = useState({});
-  const [isPurchased, setIsPurchased] = useState(false);
 
   useEffect(() => {
     const checkLikeStatus = async () => {
@@ -163,29 +163,6 @@ const ProductDetail = () => {
     };
     fetchProductData();
   }, [slug]);
-
-  useEffect(() => {
-    const checkUserPurchase = async () => {
-      if (!user?.id || !product?.id) return;
-      try {
-        const token =
-          localStorage.getItem("token") || sessionStorage.getItem("token");
-        const res = await fetch(
-          `${BASE_URL}/api/sanPham/${product.id}/check-purchased`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setIsPurchased(data.isPurchased);
-        }
-      } catch (e) {
-        console.error("Lỗi kiểm tra mua hàng", e);
-      }
-    };
-    checkUserPurchase();
-  }, [user, product]);
 
   const fetchReviews = async (productIdToFetch) => {
     const targetId = productIdToFetch || product?.id;
@@ -696,9 +673,9 @@ const ProductDetail = () => {
         </div>
 
         {/* ================= KHỐI 2: MÔ TẢ & THÔNG SỐ NGẮN ================= */}
-        <div className="flex flex-col md:flex-row gap-6 mb-8">
-          <div className="w-full md:w-8/12 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-xl font-bold mb-4 text-red-600 uppercase">
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
+          <div className="w-full md:w-8/12 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="text-xl font-bold mb-2 text-red-600">
               Đặc điểm nổi bật
             </h3>
             <div
@@ -741,104 +718,21 @@ const ProductDetail = () => {
         </div>
 
         {/* ================= KHỐI 3: SẢN PHẨM TƯƠNG TỰ ================= */}
-        {similarProducts.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-6 uppercase">
-              Sản phẩm tương tự
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {similarProducts.map((sp) => {
-                const imgTuongTu =
-                  sp.hinh_anh?.find((i) => i.la_anh_chinh)?.url_anh ||
-                  sp.hinh_anh?.[0]?.url_anh;
-                const giaTTR =
-                  sp.bien_the?.[0]?.gia_ban || sp.bien_the?.[0]?.gia_goc || 0;
-                const giaTTRGoc = sp.bien_the?.[0]?.gia_goc || 0;
-                const phanTram =
-                  giaTTRGoc > giaTTR
-                    ? Math.round(((giaTTRGoc - giaTTR) / giaTTRGoc) * 100)
-                    : 0;
-
-                // Tính trung bình sao
-                const danhGiaList = sp.danh_gia || [];
-                const avgStar =
-                  danhGiaList.length > 0
-                    ? (
-                        danhGiaList.reduce((acc, dg) => acc + dg.so_sao, 0) /
-                        danhGiaList.length
-                      ).toFixed(1)
-                    : null;
-
-                return (
-                  <div
-                    key={sp.id}
-                    onClick={() => navigate(`/product/${sp.slug}`)}
-                    className="border border-gray-100 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer flex flex-col group bg-white"
-                  >
-                    {/* Ảnh + Badge giảm */}
-                    <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden mb-3">
-                      {phanTram > 0 && (
-                        <span className="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm z-10">
-                          -{phanTram}%
-                        </span>
-                      )}
-                      <img
-                        src={getImageUrl(imgTuongTu)}
-                        alt={sp.ten_san_pham}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
-                      />
-                    </div>
-
-                    {/* Tên sản phẩm */}
-                    <h4 className="text-xs font-bold text-gray-800 mb-2 group-hover:text-blue-600 line-clamp-2 leading-tight min-h-[32px]">
-                      {sp.ten_san_pham}
-                    </h4>
-
-                    {/* Giá */}
-                    <div className="mb-2 flex items-baseline gap-2">
-                      <span className="text-red-600 text-sm font-bold">
-                        {giaTTR > 0 ? formatPrice(giaTTR) : "Liên hệ"}
-                      </span>
-                      {giaTTRGoc > giaTTR && (
-                        <span className="text-gray-400 text-[10px] font-medium line-through">
-                          {formatPrice(giaTTRGoc)}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Footer: sao + lượt xem */}
-                    <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-2">
-                      <div className="flex text-[10px] gap-0.5 text-yellow-400 font-medium items-center">
-                        <Icons.Star className="w-3 h-3 fill-yellow-400" />
-                        <span>{avgStar || "5.0"}</span>
-                      </div>
-                      <div className="text-[10px] text-gray-500 font-medium">
-                        {sp.luot_mua > 0
-                          ? `Đã bán: ${sp.luot_mua}`
-                          : `Lượt xem: ${sp.luot_xem || 0}`}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
+        <SimilarProducts products={similarProducts} user={user} />
 
         {/* ================= KHỐI 4: ĐÁNH GIÁ & HỎI ĐÁP ================= */}
         {storeConfig?.cho_phep_danh_gia && (
           <div
             id="review-section"
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8"
+            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4"
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
               Đánh giá sản phẩm
             </h2>
-            <div className="flex flex-col lg:flex-row gap-4 border-b border-gray-100 pb-8 mb-6">
+            <div className="flex flex-col lg:flex-row gap-4 border-b border-gray-100 pb-8 mb-2">
               <div className="w-full lg:w-1/3 flex flex-col items-center justify-center border-r border-gray-100">
                 {/* Tính trung bình sao */}
-                <span className="text-3xl font-bold text-yellow-500">
+                <span className="text-xl font-bold text-yellow-500">
                   {reviews.length > 0
                     ? (
                         reviews.reduce((acc, curr) => acc + curr.so_sao, 0) /
@@ -846,7 +740,7 @@ const ProductDetail = () => {
                       ).toFixed(1)
                     : "5.0"}
                 </span>
-                <div className="flex text-yellow-400 text-xl my-2">★★★★★</div>
+                <div className="flex text-yellow-400 text-xs my-2">★★★★★</div>
                 <span className="text-sm text-gray-500">
                   {reviews.length} đánh giá
                 </span>
