@@ -33,6 +33,7 @@ import VoucherManagement from "./pages/admin/VoucherManagement";
 import SearchPage from "./pages/SearchPage";
 import Profile from "./pages/admin/Profile";
 import AuthPromptModal from "./components/AuthPromptModal";
+import ComparePage from "./pages/ComparePage";
 
 const API_URL = BASE_URL;
 
@@ -77,6 +78,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/so-sanh" element={<ComparePage />} />
 
         {/* Nhánh Admin */}
         <Route path="/admin" element={<PrivateRoute />}>

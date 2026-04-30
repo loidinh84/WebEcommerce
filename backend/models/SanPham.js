@@ -86,6 +86,7 @@ const SanPham = sequelize.define(
 const BienTheSanPham = require("./BienTheSanPham");
 const ThuocTinhSanPham = require("./ThuocTinhSanPham");
 const HinhAnhSanPham = require("./HinhAnhSanPham");
+const DanhGiaSanPham = require("./DanhGiaSanPham");
 
 SanPham.hasMany(BienTheSanPham, { foreignKey: "san_pham_id", as: "bien_the" });
 BienTheSanPham.belongsTo(SanPham, { foreignKey: "san_pham_id" });
@@ -98,5 +99,8 @@ ThuocTinhSanPham.belongsTo(SanPham, { foreignKey: "san_pham_id" });
 
 SanPham.hasMany(HinhAnhSanPham, { foreignKey: "san_pham_id", as: "hinh_anh" });
 HinhAnhSanPham.belongsTo(SanPham, { foreignKey: "san_pham_id" });
+
+SanPham.hasMany(DanhGiaSanPham, { foreignKey: "san_pham_id", as: "danh_gia" });
+DanhGiaSanPham.belongsTo(SanPham, { foreignKey: "san_pham_id" });
 
 module.exports = SanPham;

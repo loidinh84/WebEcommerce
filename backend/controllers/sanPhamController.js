@@ -309,7 +309,7 @@ exports.getSanPhamBySlug = async (req, res) => {
     const sanPham = await SanPham.findOne({
       where: { slug: slug },
       include: [
-        { model: DanhMuc, as: "danh_muc", attributes: ["id", "ten_danh_muc", "slug"] },
+        { model: DanhMuc, as: "danh_muc", attributes: ["id", "ten_danh_muc", "slug", "danh_muc_cha_id"] },
         { model: BienTheSanPham, as: "bien_the" },
         { model: ThuocTinhSanPham, as: "thuoc_tinh" },
         { model: HinhAnhSanPham, as: "hinh_anh" },

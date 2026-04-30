@@ -1089,7 +1089,7 @@ const ProductDetail = () => {
       <CompareModal
         isOpen={isCompareModalOpen}
         onClose={() => setIsCompareModalOpen(false)}
-        productName={product.ten_san_pham}
+        currentProduct={product}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 const SanPham = require("../models/SanPham");
+const { Op } = require("sequelize");
 
 const MEILI_HOST = process.env.MEILI_HOST;
 const MEILI_KEY = process.env.MEILI_API_KEY;
@@ -61,10 +62,40 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
     };
     if (filter) body.filter = filter;
     const result = await meiliRequest("POST", "/indexes/san_pham/search", body);
+    
+    // Nếu Meilisearch lỗi mạng và trả về undefined hoặc không có hits
+    if (!result || !result.hits) {
+      throw new Error("Meilisearch không phản hồi hợp lệ");
+    }
+    
     return result;
   } catch (error) {
-    console.error("Lỗi search:", error.message);
-    return { hits: [] };
+    console.error("Lỗi search bằng Meilisearch, chuyển sang SQL fallback:", error.message);
+    
+    // Fallback sang SQL Search
+    try {
+      const whereCondition = { trang_thai: "active" };
+      if (query && query.trim() !== "") {
+        whereCondition.ten_san_pham = { [Op.like]: `%${query}%` };
+      }
+      
+      const sqlResults = await SanPham.findAll({
+        where: whereCondition,
+        attributes: [
+          "id",
+          "ten_san_pham",
+          "mo_ta_ngan",
+          "thuong_hieu",
+          "slug",
+        ],
+        limit: limit,
+      });
+      
+      return { hits: sqlResults, estimatedTotalHits: sqlResults.length };
+    } catch (sqlError) {
+      console.error("Lỗi SQL fallback:", sqlError.message);
+      return { hits: [] };
+    }
   }
 };
 

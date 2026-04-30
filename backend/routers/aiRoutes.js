@@ -11,4 +11,10 @@ router.delete("/history", aiController.clearHistory);
 // Route cho Build PC
 router.post("/build-pc", aiController.buildPcWithAI);
 
+// So sánh sản phẩm với AI
+router.post("/compare", aiController.compareProductsAI);
+
+// Kiểm tra loại sản phẩm với AI
+router.post("/check-type", aiController.checkProductType);
+
 module.exports = router;

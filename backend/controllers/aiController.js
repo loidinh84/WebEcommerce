@@ -169,3 +169,114 @@ exports.clearHistory = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+exports.compareProductsAI = async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const { product1, product2 } = req.body;
+
+    if (!product1 || !product2) {
+      return res.status(400).json({ message: "Vui lòng cung cấp thông tin 2 sản phẩm cần so sánh." });
+    }
+
+    const systemInstruction = `
+      Bạn là chuyên gia tư vấn công nghệ của LTLShop. 
+      Nhiệm vụ của bạn là so sánh 2 sản phẩm dựa trên thông số kỹ thuật được cung cấp.
+      
+      YÊU CẦU:
+      1. Phân tích khách quan, chính xác dựa trên dữ liệu.
+      2. Nêu bật điểm mạnh, điểm yếu của từng sản phẩm.
+      3. Đưa ra lời khuyên chọn mua phù hợp với từng nhu cầu (ví dụ: "chọn A nếu thích chụp ảnh, chọn B nếu cần chơi game").
+      4. Ngôn từ thân thiện, dễ hiểu, KHÔNG quá dài dòng.
+
+      BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON NHƯ SAU (Không có markdown block \`\`\`json):
+      {
+        "summary": "Một câu tóm tắt chung về sự khác biệt chính giữa 2 sản phẩm",
+        "product1": {
+          "pros": ["ưu điểm 1", "ưu điểm 2"],
+          "cons": ["nhược điểm 1"]
+        },
+        "product2": {
+          "pros": ["ưu điểm 1", "ưu điểm 2"],
+          "cons": ["nhược điểm 1"]
+        },
+        "verdict": "Kết luận chi tiết: Ai nên mua sản phẩm nào?"
+      }
+    `;
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: systemInstruction,
+    });
+
+    const prompt = `
+      Sản phẩm 1:
+      - Tên: ${product1.name}
+      - Giá: ${product1.price}
+      - Thông số: ${JSON.stringify(product1.specs)}
+
+      Sản phẩm 2:
+      - Tên: ${product2.name}
+      - Giá: ${product2.price}
+      - Thông số: ${JSON.stringify(product2.specs)}
+    `;
+
+    const result = await model.generateContent(prompt);
+    const rawReply = result.response.text();
+
+    let botResponseData;
+    try {
+      const cleanJson = rawReply
+        .replace(/^[\\s\\S]*?\\{/, "{") // Remove any prefix text before first {
+        .replace(/\\}[^}]*$/, "}"); // Remove any suffix text after last }
+      botResponseData = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error("Lỗi parse JSON từ Gemini:", e, rawReply);
+      return res.status(500).json({ message: "Lỗi xử lý ngôn ngữ AI" });
+    }
+
+    res.status(200).json(botResponseData);
+  } catch (error) {
+    console.error("Lỗi Compare AI:", error);
+    res.status(500).json({ message: "Lỗi kết nối AI" });
+  }
+};
+
+exports.checkProductType = async (req, res) => {
+  try {
+    const { product1Name, product2Name } = req.body;
+    if (!product1Name || !product2Name) {
+      return res.status(400).json({ error: "Vui lòng cung cấp tên 2 sản phẩm" });
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `
+      Nhiệm vụ của bạn là kiểm tra xem 2 sản phẩm sau đây có cùng chủng loại (ví dụ: cùng là điện thoại, cùng là laptop, cùng là chuột, cùng là máy tính bảng, v.v) hay không.
+      Đừng phân biệt "cũ" và "mới" (ví dụ "Điện thoại cũ iPhone 13" và "Điện thoại iPhone 15" vẫn là cùng chủng loại).
+      Sản phẩm 1: "${product1Name}"
+      Sản phẩm 2: "${product2Name}"
+      
+      BẮT BUỘC trả về ĐÚNG định dạng JSON như sau, không kèm bất kỳ text nào khác (không có markdown block \`\`\`json):
+      {
+        "isSameType": true hoặc false,
+        "reason": "Giải thích ngắn gọn"
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const rawReply = result.response.text();
+    let cleanJson = rawReply.replace(/```json/gi, "").replace(/```/g, "").trim();
+    // Xử lý loại bỏ text thừa xung quanh
+    cleanJson = cleanJson.replace(/^[\s\S]*?\{/, "{").replace(/\}[^}]*$/, "}");
+    const botResponseData = JSON.parse(cleanJson);
+
+    res.json(botResponseData);
+  } catch (error) {
+    console.error("Lỗi check type AI:", error);
+    // Fallback to true if AI fails, so we don't block the user unnecessarily
+    res.json({ isSameType: true, reason: "Bỏ qua kiểm tra do lỗi AI" });
+  }
+};
