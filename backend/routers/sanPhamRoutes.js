@@ -5,7 +5,7 @@ const danhMucController = require("../controllers/danhMucController");
 const nhaCungCapController = require("../controllers/nhaCungCapController");
 const { searchSanPham } = require("../services/searchService");
 const upload = require("../config/upload");
-const { verifyToken, isAdmin } = require("../middlewares/authMiddleware");
+const { verifyToken, isAdmin, verifyTokenOptional } = require("../middlewares/authMiddleware");
 
 router.get("/search", async (req, res) => {
   try {
@@ -106,7 +106,10 @@ router.get("/thuong-hieu/:danhMucId", sanPhamController.getThuongHieuByDanhMuc);
 router.post("/:id/view", sanPhamController.incrementLuotXem);
 router.get("/:id", sanPhamController.getSanPhamById);
 router.get("/:id/tuong-tu", sanPhamController.getSanPhamTuongTu);
-router.get("/:id/danh-gia", sanPhamController.getDanhGiaBySanPham);
+router.get("/:id/danh-gia", verifyTokenOptional, sanPhamController.getDanhGiaBySanPham);
+router.post("/danh-gia/:danhGiaId/like", verifyToken, sanPhamController.toggleLikeDanhGia);
+router.put("/danh-gia/:id/status", verifyToken, isAdmin, sanPhamController.updateDanhGiaStatus);
+router.delete("/danh-gia/:id", verifyToken, isAdmin, sanPhamController.deleteDanhGia);
 
 // User đánh giá
 router.post(

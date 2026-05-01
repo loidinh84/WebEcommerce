@@ -35,6 +35,27 @@ exports.verifyToken = async (req, res, next) => {
   }
 };
 
+// 1.5. Middleware lấy thông tin user nếu có token (không bắt buộc)
+exports.verifyTokenOptional = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const secretKey = process.env.JWT_SECRET;
+    const decoded = jwt.verify(token, secretKey);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    // Nếu token lỗi thì cứ cho qua như khách vãng lai
+    next();
+  }
+};
+
 // 2. Kiểm tra xem user có phải là Admin không
 exports.isAdmin = (req, res, next) => {
   if (!req.user) {

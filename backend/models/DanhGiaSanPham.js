@@ -8,10 +8,11 @@ const DanhGiaSanPham = sequelize.define(
     san_pham_id: { type: DataTypes.BIGINT, allowNull: false },
     tai_khoan_id: { type: DataTypes.BIGINT, allowNull: false },
     don_hang_id: { type: DataTypes.BIGINT, allowNull: true },
-    so_sao: { type: DataTypes.INTEGER, allowNull: false },
+    so_sao: { type: DataTypes.INTEGER, allowNull: true },
     noi_dung: { type: DataTypes.TEXT, allowNull: false },
     hinh_anh: { type: DataTypes.STRING(255), allowNull: true },
     trang_thai: { type: DataTypes.STRING(20), defaultValue: "pending" },
+    parent_id: { type: DataTypes.BIGINT, allowNull: true },
   },
   {
     tableName: "DanhGiaSanPham",

@@ -47,8 +47,12 @@ import Crown from "./Crown.svg?react";
 import Lock from "./Lock.svg?react";
 import Unlock from "./UnLock.svg?react";
 import Location from "./Location.svg?react";
+import Like from "./Like.svg?react";
+import DisLike from "./DisLike.svg?react";
 
 export {
+  Like,
+  DisLike,
   Location,
   Unlock,
   Lock,

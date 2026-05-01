@@ -22,6 +22,7 @@ const ChiTietKiemKho = require("./ChiTietKiemKho");
 
 const DanhGiaSanPham = require("./DanhGiaSanPham");
 const DanhGiaCuaHang = require("./DanhGiaCuaHang");
+const ThichDanhGia = require("./ThichDanhGia");
 
 // Quan hệ Tài Khoản <-> Thẻ Thành Viên
 // Một tài khoản thuộc về một hạng thành viên
@@ -129,6 +130,18 @@ DanhGiaCuaHang.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "nguoi_dung
 TaiKhoan.hasMany(DanhGiaCuaHang, { foreignKey: "tai_khoan_id", as: "danh_gia_shop" });
 
 // ========================================
+// 5. Quan hệ Đánh giá <-> Trả lời & Like
+// ========================================
+DanhGiaSanPham.hasMany(DanhGiaSanPham, { as: "replies", foreignKey: "parent_id" });
+DanhGiaSanPham.belongsTo(DanhGiaSanPham, { as: "parent", foreignKey: "parent_id" });
+
+DanhGiaSanPham.hasMany(ThichDanhGia, { foreignKey: "danh_gia_id", as: "likes" });
+ThichDanhGia.belongsTo(DanhGiaSanPham, { foreignKey: "danh_gia_id" });
+
+ThichDanhGia.belongsTo(TaiKhoan, { foreignKey: "tai_khoan_id", as: "user" });
+TaiKhoan.hasMany(ThichDanhGia, { foreignKey: "tai_khoan_id", as: "likes" });
+
+// ========================================
 // PhieuNhapHang associations
 // ========================================
 PhieuNhapHang.belongsTo(NhaCungCap, { foreignKey: "nha_cc_id", as: "nha_cung_cap" });
@@ -172,5 +185,6 @@ module.exports = {
   ChiTietPhieuNhap,
   PhieuKiemKho,
   ChiTietKiemKho,
+  ThichDanhGia,
 };
 

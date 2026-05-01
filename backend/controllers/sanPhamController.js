@@ -9,6 +9,8 @@ const NhaCungCap = require("../models/NhaCungCap");
 const TaiKhoan = require("../models/TaiKhoan");
 const DonHang = require("../models/DonHang");
 const ChiTietDonHang = require("../models/ChiTietDonHang");
+const ThichDanhGia = require("../models/ThichDanhGia");
+const sequelize = require("../config/db");
 const { searchSanPham } = require("../services/searchService");
 
 const generateSlug = (text) => {
@@ -722,13 +724,46 @@ exports.getSanPhamTuongTu = async (req, res) => {
 exports.getDanhGiaBySanPham = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id || null;
+    const isAdmin = req.user?.vai_tro === "admin";
+    const whereCondition = isAdmin
+      ? { san_pham_id: id }
+      : { san_pham_id: id, trang_thai: "approved" };
+
     const danhGia = await DanhGiaSanPham.findAll({
-      where: { san_pham_id: id, trang_thai: "approved" },
+      where: whereCondition,
+      attributes: {
+        include: [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) FROM ThichDanhGia 
+              WHERE ThichDanhGia.danh_gia_id = DanhGiaSanPham.id AND ThichDanhGia.loai = 'like'
+            )`),
+            "total_likes",
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) FROM ThichDanhGia 
+              WHERE ThichDanhGia.danh_gia_id = DanhGiaSanPham.id AND ThichDanhGia.loai = 'dislike'
+            )`),
+            "total_dislikes",
+          ],
+          [
+            userId
+              ? sequelize.literal(`(
+                  SELECT loai FROM ThichDanhGia 
+                  WHERE ThichDanhGia.danh_gia_id = DanhGiaSanPham.id AND ThichDanhGia.tai_khoan_id = ${userId}
+                )`)
+              : sequelize.literal("NULL"),
+            "user_interaction",
+          ],
+        ],
+      },
       include: [
         {
           model: TaiKhoan,
           as: "nguoi_dung",
-          attributes: ["ho_ten", "anh_dai_dien"],
+          attributes: ["ho_ten", "anh_dai_dien", "vai_tro"],
         },
         {
           model: DonHang,
@@ -751,17 +786,59 @@ exports.getDanhGiaBySanPham = async (req, res) => {
     });
     res.status(200).json(danhGia);
   } catch (error) {
+    console.error("Lỗi lấy đánh giá:", error);
     res.status(500).json({ message: "Lỗi lấy đánh giá!" });
+  }
+};
+
+exports.toggleLikeDanhGia = async (req, res) => {
+  try {
+    const { danhGiaId } = req.params;
+    const { loai } = req.body; // 'like' hoặc 'dislike'
+    const tai_khoan_id = req.user.id;
+
+    if (!['like', 'dislike'].includes(loai)) {
+      return res.status(400).json({ message: "Loại tương tác không hợp lệ!" });
+    }
+
+    const interaction = await ThichDanhGia.findOne({
+      where: { danh_gia_id: danhGiaId, tai_khoan_id },
+    });
+
+    if (interaction) {
+      if (interaction.loai === loai) {
+        // Nếu nhấn lại cùng loại -> Xóa (hủy tương tác)
+        await interaction.destroy();
+        return res.json({ message: "Đã hủy tương tác", action: "removed" });
+      } else {
+        // Nếu đổi từ like sang dislike hoặc ngược lại -> Cập nhật
+        interaction.loai = loai;
+        await interaction.save();
+        return res.json({ message: "Đã cập nhật tương tác", action: "updated" });
+      }
+    } else {
+      // Nếu chưa có tương tác -> Tạo mới
+      await ThichDanhGia.create({
+        danh_gia_id: danhGiaId,
+        tai_khoan_id,
+        loai,
+      });
+      return res.json({ message: "Đã thêm tương tác", action: "created" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi xử lý like/dislike!" });
   }
 };
 
 exports.createDanhGia = async (req, res) => {
   try {
     const { id } = req.params;
-    const { so_sao, noi_dung, don_hang_id } = req.body;
+    const { so_sao, noi_dung, don_hang_id, parent_id } = req.body;
     const tai_khoan_id = req.user.id; // Lấy ID từ token đã xác thực
 
-    if (!so_sao || !noi_dung) {
+    // Nếu không có parent_id (đánh giá gốc) thì bắt buộc có so_sao
+    if (!noi_dung || (!parent_id && !so_sao)) {
       return res.status(400).json({ message: "Vui lòng điền đủ thông tin!" });
     }
 
@@ -776,11 +853,12 @@ exports.createDanhGia = async (req, res) => {
     const danhGiaMoi = await DanhGiaSanPham.create({
       san_pham_id: id,
       tai_khoan_id: tai_khoan_id,
-      so_sao: so_sao,
+      so_sao: parent_id ? null : so_sao,
       noi_dung: noi_dung,
-      don_hang_id: don_hang_id || null,
+      don_hang_id: parent_id ? null : (don_hang_id || null),
       hinh_anh: hinh_anh_string,
       trang_thai: "approved",
+      parent_id: parent_id || null,
     });
 
     res.status(201).json({ message: "Đánh giá thành công!", data: danhGiaMoi });
@@ -915,5 +993,37 @@ exports.getBoLocByDanhMuc = async (req, res) => {
   } catch (error) {
     console.error("Lỗi lấy cấu hình bộ lọc:", error);
     res.status(500).json({ message: "Lỗi server khi lấy bộ lọc!" });
+  }
+};
+
+exports.deleteDanhGia = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const danhGia = await DanhGiaSanPham.findByPk(id);
+    if (!danhGia) return res.status(404).json({ message: "Không tìm thấy!" });
+
+    await danhGia.destroy();
+    res.json({ message: "Đã xóa đánh giá thành công!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi xóa đánh giá!" });
+  }
+};
+
+exports.updateDanhGiaStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { trang_thai } = req.body; // 'approved', 'rejected', 'pending'
+
+    const danhGia = await DanhGiaSanPham.findByPk(id);
+    if (!danhGia) return res.status(404).json({ message: "Không tìm thấy!" });
+
+    danhGia.trang_thai = trang_thai;
+    await danhGia.save();
+
+    res.json({ message: "Đã cập nhật trạng thái!", data: danhGia });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server khi cập nhật trạng thái!" });
   }
 };
