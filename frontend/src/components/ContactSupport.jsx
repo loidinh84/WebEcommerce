@@ -89,7 +89,7 @@ const ContactSupport = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-3 font-sans text-gray-800">
+    <div className="fixed bottom-20 md:bottom-6 right-6 z-[9999] flex flex-col items-end gap-3 font-sans text-gray-800">
       {/* ... (Phần Menu và Nút Khiếu Nại giữ nguyên không đổi) ... */}
       {showMenu && (
         <div className="flex flex-col items-end gap-2 animate-in slide-in-from-bottom-5 duration-300">
@@ -134,15 +134,16 @@ const ContactSupport = () => {
           setShowMenu(!showMenu);
           if (showChat) setShowChat(false);
         }}
-        className={`bg-red-500 hover:bg-red-600 text-white px-6 py-3.5 rounded-xl shadow-xl flex items-center gap-2 font-bold transition-all cursor-pointer active:scale-95 ${showMenu ? "ring-4 ring-red-200" : ""}`}
+        className={`bg-red-500 hover:bg-red-600 text-white p-3.5 md:px-6 md:py-3.5 rounded-full md:rounded-xl shadow-xl flex items-center gap-2 font-bold transition-all cursor-pointer active:scale-95 ${showMenu ? "ring-4 ring-red-200" : ""}`}
       >
-        Liên hệ <Icons.Support className="w-6 h-6 text-white" />
+        <span className="hidden md:inline">Liên hệ</span>
+        <Icons.Support className="w-6 h-6 text-white" />
       </button>
 
       {/* ... (Phần form Feedback giữ nguyên) ... */}
 
       {showChat && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
+        <div className="fixed bottom-36 md:bottom-24 right-6 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
           {/* HEADER CHAT CÓ THÊM NÚT XÓA */}
           <div className="bg-red-500 p-4 text-white flex justify-between items-center">
             <div className="flex items-center gap-2">

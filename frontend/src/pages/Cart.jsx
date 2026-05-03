@@ -22,11 +22,13 @@ const Cart = () => {
   useEffect(() => {
     if (cartItems.length > 0) {
       localStorage.setItem("cart", JSON.stringify(cartItems));
+      window.dispatchEvent(new Event("cartUpdated"));
     }
   }, []);
 
   const saveCartToLocal = (newCart) => {
     localStorage.setItem("cart", JSON.stringify(newCart));
+    window.dispatchEvent(new Event("cartUpdated"));
     setCartItems(newCart);
   };
 

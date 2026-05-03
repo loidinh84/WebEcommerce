@@ -8,11 +8,10 @@ const Footer = () => {
   const { storeConfig } = useContext(StoreContext);
 
   return (
-    <footer className="bg-[#568FDE] text-white font-sans mt-10">
+    <footer className="hidden md:block bg-[#568FDE] text-white font-sans mt-10">
       {/* --- PHẦN NỘI DUNG CHÍNH --- */}
-      {/* ĐÃ SỬA: Thay 'container' bằng 'w-full max-w-7xl' để thẳng hàng 100% với Header và Main Content */}
       <div className="w-full max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Cột 1: Liên hệ hỗ trợ */}
           <div>
             <h3 className="text-lg font-semibold mb-4">
@@ -172,7 +171,6 @@ const Footer = () => {
 
       {/* --- Copyright --- */}
       <div className="bg-[#497BC5] py-4 text-center text-sm">
-        {/* ĐÃ SỬA TƯƠNG TỰ Ở ĐÂY */}
         <div className="w-full max-w-7xl mx-auto px-4">
           <p>
             Nhóm 5 thuộc học phần Đồ án cơ sở với 3 thành viên tham gia: Đinh

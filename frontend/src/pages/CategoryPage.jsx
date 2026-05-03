@@ -226,10 +226,10 @@ const CategoryPage = () => {
   const visibleBrands = showAllBrands ? brands : brands.slice(0, BRAND_LIMIT);
 
   return (
-    <div className="bg-[#f8f9fa] min-h-screen font-sans">
+    <div className="bg-[#f8f9fa] min-h-screen font-sans flex flex-col">
       <Header />
 
-      <main className="container mx-auto px-4 py-3 max-w-[1280px]">
+      <main className="container mx-auto px-4 py-3 max-w-[1280px] flex-grow">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2 px-1">
           <Link

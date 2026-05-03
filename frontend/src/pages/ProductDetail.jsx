@@ -157,23 +157,25 @@ const ReviewItem = ({
         )}
       </div>
 
-      {/* Thanh hành động luôn rõ nét */}
-      <div className="flex items-center gap-4 mt-3">
+      {/* Thanh hành động - Tối ưu cho mobile tapping */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4">
         <button
           onClick={() => onLike("like")}
-          className={`flex items-center gap-1 text-xs cursor-pointer transition ${rv.user_interaction === "like" ? "text-blue-600 font-bold" : "text-gray-500 hover:text-blue-600"}`}
+          className={`flex items-center gap-1.5 text-xs md:text-sm cursor-pointer transition ${rv.user_interaction === "like" ? "text-blue-600 font-bold" : "text-gray-500 hover:text-blue-600"}`}
         >
-          <Icons.Like className="w-4 h-4" /> {rv.total_likes || 0}
+          <Icons.Like className="w-4 h-4 md:w-5 md:h-5" />
+          <span>{rv.total_likes || 0}</span>
         </button>
         <button
           onClick={() => onLike("dislike")}
-          className={`flex items-center gap-1 text-xs cursor-pointer transition ${rv.user_interaction === "dislike" ? "text-red-500 font-bold" : "text-gray-500 hover:text-red-500"}`}
+          className={`flex items-center gap-1.5 text-xs md:text-sm cursor-pointer transition ${rv.user_interaction === "dislike" ? "text-red-500 font-bold" : "text-gray-500 hover:text-red-500"}`}
         >
-          <Icons.DisLike className="w-4 h-4" /> {rv.total_dislikes || 0}
+          <Icons.DisLike className="w-4 h-4 md:w-5 md:h-5" />
+          <span>{rv.total_dislikes || 0}</span>
         </button>
         <button
           onClick={onReply}
-          className="text-xs text-gray-600 font-medium hover:underline hover:text-blue-600 cursor-pointer"
+          className="text-xs md:text-sm text-gray-600 font-medium hover:underline hover:text-blue-600 cursor-pointer"
         >
           Trả lời
         </button>
@@ -661,6 +663,7 @@ const ProductDetail = () => {
       currentCart.push(cartItem);
     }
     localStorage.setItem("cart", JSON.stringify(currentCart));
+    window.dispatchEvent(new Event("cartUpdated"));
 
     toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
     navigate("/cart");
@@ -709,7 +712,7 @@ const ProductDetail = () => {
       : 0;
 
   return (
-    <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
+    <div className="bg-[#F3F4F6] min-h-screen font-sans relative overflow-x-hidden">
       <Helmet>
         <title>{product.meta_title || product.ten_san_pham}</title>
         <meta
@@ -730,11 +733,12 @@ const ProductDetail = () => {
 
       <Header />
 
-      <main className="container mx-auto px-4 max-w-[1280px] py-4">
-        <div className="text-sm text-gray-500 mb-4 flex gap-2">
+      <main className="container mx-auto px-4 py-4 md:py-6 max-w-7xl pb-24 md:pb-0">
+        {/* Breadcrumb - Cải thiện hiển thị trên mobile */}
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] md:text-xs text-gray-500 mb-4 overflow-hidden">
           <span
             onClick={() => navigate("/")}
-            className="hover:text-[#4A44F2] cursor-pointer"
+            className="hover:text-[#4A44F2] cursor-pointer whitespace-nowrap"
           >
             Trang chủ
           </span>{" "}
@@ -778,48 +782,44 @@ const ProductDetail = () => {
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-gray-600 mb-3 border-b border-gray-100 pb-4">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-4 gap-y-3 md:gap-5 text-[11px] md:text-sm font-medium text-gray-600 mb-3 border-b border-gray-100 pb-4">
                 <button
                   onClick={handleToggleFavorite}
                   disabled={isLiking}
-                  className={`flex items-center justify-center gap-2 rounded-xl cursor-pointer font-medium transition-all ${
-                    isLiked
-                      ? " text-red-500 hover:text-red-400"
-                      : " text-blue-600 hover:text-blue-400 "
-                  } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`flex items-center gap-1.5 cursor-pointer transition-all ${
+                    isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
+                  } ${isLiking ? "opacity-50" : ""}`}
                 >
                   {isLiked ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-6 h-6 animate-scale-up"
-                    >
-                      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                    </svg>
+                    <Icons.Favorite className="w-5 h-5 fill-red-500" />
                   ) : (
-                    <Icons.Favorite className="w-6 h-6" />
+                    <Icons.Favorite className="w-5 h-5" />
                   )}
-                  Yêu thích
+                  <span>{isLiked ? "Đã thích" : "Yêu thích"}</span>
                 </button>
+
                 <button
                   onClick={scrollToReview}
-                  className="flex items-center gap-1.5 hover:text-blue-400 transition cursor-pointer text-blue-600"
+                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
                 >
-                  <Icons.Comment className="w-5 h-5" /> Đánh giá
+                  <Icons.Comment className="w-5 h-5" />
+                  <span>Đánh giá</span>
                 </button>
+
                 <button
                   onClick={() => setIsSpecsModalOpen(true)}
-                  className="flex items-center gap-1.5 hover:text-blue-400 transition cursor-pointer text-blue-600"
+                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
                 >
-                  <Icons.Memory />
-                  Thông số
+                  <Icons.Memory className="w-5 h-5" />
+                  <span>Thông số</span>
                 </button>
+
                 <button
                   onClick={() => setIsCompareModalOpen(true)}
-                  className="flex items-center gap-1 hover:text-blue-400 transition cursor-pointer text-blue-600"
+                  className="flex items-center gap-1.5 hover:text-blue-600 transition cursor-pointer"
                 >
-                  <Icons.Compare /> So sánh
+                  <Icons.Compare className="w-5 h-5" />
+                  <span>So sánh</span>
                 </button>
               </div>
 
@@ -996,7 +996,7 @@ const ProductDetail = () => {
               Đặc điểm nổi bật
             </h3>
             <div
-              className="prose text-gray-700 text-sm leading-relaxed"
+              className="prose max-w-none text-gray-700 text-sm leading-relaxed break-words"
               dangerouslySetInnerHTML={{
                 __html:
                   product.mo_ta_day_du ||
@@ -1044,8 +1044,8 @@ const ProductDetail = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Đánh giá sản phẩm
             </h2>
-            <div className="flex flex-col lg:flex-row gap-4 border-b border-gray-100 pb-8 mb-2">
-              <div className="w-full lg:w-1/3 flex flex-col items-center justify-center border-r border-gray-100">
+            <div className="flex flex-col lg:flex-row gap-6 border-b border-gray-100 pb-8 mb-6">
+              <div className="w-full lg:w-1/3 flex flex-col items-center justify-center border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0">
                 {avgRating > 0 ? (
                   <>
                     <span className="text-3xl font-bold text-gray-800">
@@ -1299,7 +1299,7 @@ const ProductDetail = () => {
       {showTopBtn && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-[100] w-12 h-12 bg-gray-800 text-white rounded-full text-2xl shadow-xl hover:bg-red-600 transition-colors cursor-pointer"
+          className="fixed bottom-36 md:bottom-8 right-8 z-[100] w-12 h-12 bg-gray-800 text-white rounded-full text-2xl shadow-xl hover:bg-red-600 transition-colors cursor-pointer"
         >
           ↑
         </button>

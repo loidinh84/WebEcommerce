@@ -31,7 +31,7 @@ function Home() {
   }, []);
 
   return (
-    <div className="bg-[#F3F4F6] min-h-screen font-sans relative">
+    <div className="bg-[#F3F4F6] min-h-screen font-sans relative flex flex-col">
       <Header />
       <Toaster position="bottom-center" />
 

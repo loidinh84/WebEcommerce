@@ -50,7 +50,10 @@ import Location from "./Location.svg?react";
 import Like from "./Like.svg?react";
 import DisLike from "./DisLike.svg?react";
 
+import Close from "./Close.svg?react";
+
 export {
+  Close,
   Like,
   DisLike,
   Location,

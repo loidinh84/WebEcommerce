@@ -93,7 +93,7 @@ exports.buildPcWithAI = async (req, res) => {
 
     // 2. PROMPT CHUYÊN BIỆT: ÉP CHIA NGÂN SÁCH VÀ NHIỀU LỰA CHỌN
     const systemInstruction = `
-      Bạn là AI Kỹ Thuật của LTLShop, TRÁCH NHIỆM DUY NHẤT LÀ TƯ VẤN RÁP MÁY TÍNH ĐỂ BÀN (DESKTOP PC).
+      Bạn là AI Kỹ Thuật của Shop, TRÁCH NHIỆM DUY NHẤT LÀ TƯ VẤN RÁP MÁY TÍNH ĐỂ BÀN (DESKTOP PC).
       KHO HÀNG HIỆN CÓ: ${JSON.stringify(khoHang)}.
       
       QUY TẮC BÁN HÀNG TỐI THƯỢNG:
@@ -177,12 +177,16 @@ exports.compareProductsAI = async (req, res) => {
     const { product1, product2 } = req.body;
 
     if (!product1 || !product2) {
-      return res.status(400).json({ message: "Vui lòng cung cấp thông tin 2 sản phẩm cần so sánh." });
+      return res
+        .status(400)
+        .json({
+          message: "Vui lòng cung cấp thông tin 2 sản phẩm cần so sánh.",
+        });
     }
 
     const systemInstruction = `
-      Bạn là chuyên gia tư vấn công nghệ của LTLShop. 
-      Nhiệm vụ của bạn là so sánh 2 sản phẩm dựa trên thông số kỹ thuật được cung cấp.
+      Bạn là chuyên gia tư vấn công nghệ của Shop. 
+      Nhiệm vụ của bạn là so sánh 2 sản phẩm dựa trên thông số kỹ thuật được cung cấp nếu sản phẩm không có hãy lên mạng và tìm lấy những thông tin liên quan.
       
       YÊU CẦU:
       1. Phân tích khách quan, chính xác dựa trên dữ liệu.
@@ -247,7 +251,9 @@ exports.checkProductType = async (req, res) => {
   try {
     const { product1Name, product2Name } = req.body;
     if (!product1Name || !product2Name) {
-      return res.status(400).json({ error: "Vui lòng cung cấp tên 2 sản phẩm" });
+      return res
+        .status(400)
+        .json({ error: "Vui lòng cung cấp tên 2 sản phẩm" });
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -268,7 +274,10 @@ exports.checkProductType = async (req, res) => {
 
     const result = await model.generateContent(prompt);
     const rawReply = result.response.text();
-    let cleanJson = rawReply.replace(/```json/gi, "").replace(/```/g, "").trim();
+    let cleanJson = rawReply
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
     // Xử lý loại bỏ text thừa xung quanh
     cleanJson = cleanJson.replace(/^[\s\S]*?\{/, "{").replace(/\}[^}]*$/, "}");
     const botResponseData = JSON.parse(cleanJson);

@@ -163,6 +163,7 @@ const SimilarProducts = ({ products, user }) => {
                           so_luong: 1,
                         });
                       localStorage.setItem("cart", JSON.stringify(cart));
+                      window.dispatchEvent(new Event("cartUpdated"));
                       toast.success("Đã thêm vào giỏ hàng!");
                     }}
                     className="w-full py-1.5 border border-gray-200 rounded-lg text-[11px] font-medium text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-500 transition cursor-pointer"

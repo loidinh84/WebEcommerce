@@ -2,6 +2,9 @@
 
 @theme {
   --font-inter: "Inter", "Inter Fallback", Arial, sans-serif;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 780px;
+  --breakpoint-lg: 1024px;
 }
 
 @keyframes scaleUp {
@@ -17,6 +20,55 @@
 }
 .animate-scale-up {
   animation: scaleUp 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+
+.animate-marquee-slow {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee 60s linear infinite;
 }
 
 body {

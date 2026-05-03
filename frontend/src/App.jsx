@@ -35,7 +35,7 @@ import Profile from "./pages/admin/Profile";
 import AuthPromptModal from "./components/AuthPromptModal";
 import ComparePage from "./pages/ComparePage";
 
-const API_URL = BASE_URL;
+import ContactSupport from "./components/ContactSupport";
 
 function App() {
   const { storeConfig } = useContext(StoreContext);
@@ -66,6 +66,7 @@ function App() {
   return (
     <>
       <AuthPromptModal />
+      {!isAdminPath && <ContactSupport />}
       <Routes>
         {/* Nhánh khách hàng */}
         <Route path="/" element={<Home />} />
