@@ -609,7 +609,7 @@ const Header = () => {
                       />
                     </div>
                     {showDropdown && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 font-medium">
+                      <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-2xl border border-gray-100 py-2 text-gray-800 z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 font-medium">
                         <button
                           onClick={() => navigate("/profile")}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 cursor-pointer"
