@@ -49,7 +49,7 @@ const Login = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Không thể kết nối đến máy chủ!");
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ const Login = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch  {
       toast.error("Đăng nhập Google thất bại!");
     } finally {
       setLoading(false);

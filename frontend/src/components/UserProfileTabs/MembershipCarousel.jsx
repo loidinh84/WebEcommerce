@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import * as Icons from "../../assets/icons/index";
 
-const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n ?? 0);
+const fmt = (n) => new Intl.NumberFormat("vi-VN").format(Math.round(n ?? 0));
 const GAP = 16;
 const START_OFFSET = 24;
 const DRAG_THRESHOLD = 5;

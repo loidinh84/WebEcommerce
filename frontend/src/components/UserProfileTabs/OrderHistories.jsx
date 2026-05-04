@@ -2,6 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import BASE_URL from "../../config/api";
 import toast from "react-hot-toast";
 import * as Icons from "../../assets/icons/index";
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { vi } from "date-fns/locale";
+
+registerLocale("vi", vi);
 
 const orderTabs = [
   { id: "all", label: "Tất cả" },
@@ -31,33 +36,52 @@ const formatDateTime = (dateString) => {
   return `${time} ${day}`;
 };
 
+const displayDate = (date) => {
+  if (!date) return "dd/mm/yyyy";
+  const d = date.getDate().toString().padStart(2, "0");
+  const m = (date.getMonth() + 1).toString().padStart(2, "0");
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
 const OrdersTab = ({ profileData, navigate }) => {
   const [activeTab, setActiveTab] = useState("all");
   const [visibleCount, setVisibleCount] = useState(5);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedOrderForReview, setSelectedOrderForReview] = useState(null);
   const [ratingInput, setRatingInput] = useState({});
-  const [reviewedOrderIds, setReviewedOrderIds] = useState([]);
+  const [localReviewedIds, setLocalReviewedIds] = useState([]);
 
-  useEffect(() => {
-    if (profileData?.allOrders) {
-      const reviewedIds = profileData.allOrders
-        .filter((order) => order.danh_gia && order.danh_gia.length > 0)
-        .map((order) => order.id);
-        
-      setReviewedOrderIds(reviewedIds);
-    }
-  }, [profileData]);
+  const reviewedOrderIds = React.useMemo(() => {
+    const fromProfile = (profileData?.allOrders || [])
+      .filter((order) => order.danh_gia && order.danh_gia.length > 0)
+      .map((order) => order.id);
+    return [...new Set([...fromProfile, ...localReviewedIds])];
+  }, [profileData, localReviewedIds]);
 
-  const filteredOrders =
-    activeTab === "all"
-      ? profileData?.allOrders || []
-      : (profileData?.allOrders || []).filter(
-          (order) => order.trang_thai === activeTab,
-        );
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(new Date());
+
+  const filteredOrders = (profileData?.allOrders || []).filter((order) => {
+    const matchesTab = activeTab === "all" || order.trang_thai === activeTab;
+
+    // So sánh ngày tháng (loại bỏ phần giờ phút giây)
+    const orderDate = new Date(order.created_at);
+    orderDate.setHours(0, 0, 0, 0);
+
+    const startCompare = startDate ? new Date(startDate) : null;
+    if (startCompare) startCompare.setHours(0, 0, 0, 0);
+
+    const endCompare = endDate ? new Date(endDate) : null;
+    if (endCompare) endCompare.setHours(0, 0, 0, 0);
+
+    const matchesStartDate = !startCompare || orderDate >= startCompare;
+    const matchesEndDate = !endCompare || orderDate <= endCompare;
+
+    return matchesTab && matchesStartDate && matchesEndDate;
+  });
 
   const displayedOrders = filteredOrders.slice(0, visibleCount);
-
   const observerTarget = useRef(null);
 
   useEffect(() => {
@@ -124,7 +148,8 @@ const OrdersTab = ({ profileData, navigate }) => {
 
   const handleSubmitReview = async () => {
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         toast.error("Vui lòng đăng nhập để đánh giá!");
         return;
@@ -161,7 +186,9 @@ const OrdersTab = ({ profileData, navigate }) => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Lỗi khi gửi đánh giá cho sản phẩm!");
+          throw new Error(
+            errorData.message || "Lỗi khi gửi đánh giá cho sản phẩm!",
+          );
         }
 
         return response.json();
@@ -171,7 +198,7 @@ const OrdersTab = ({ profileData, navigate }) => {
 
       toast.success("Cảm ơn bạn đã đánh giá sản phẩm!");
       setReviewModalOpen(false);
-      setReviewedOrderIds((prev) => [...prev, selectedOrderForReview.id]);
+      setLocalReviewedIds((prev) => [...prev, selectedOrderForReview.id]);
       setRatingInput({});
     } catch (error) {
       console.error(error);
@@ -190,9 +217,7 @@ const OrdersTab = ({ profileData, navigate }) => {
         images: [],
         previewUrls: [],
       };
-      // Giới hạn tối đa 5 ảnh cho mỗi sản phẩm
       const newImages = [...(currentData.images || []), ...files].slice(0, 5);
-      // Tạo URL tạm thời để hiển thị ảnh ngay lập tức (Preview)
       const newPreviewUrls = newImages.map((file) => URL.createObjectURL(file));
 
       return {
@@ -230,35 +255,114 @@ const OrdersTab = ({ profileData, navigate }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-0 bg-[#F3F4F6] min-h-screen pb-10 w-full min-w-0 lg:min-h-0 lg:pb-0 lg:bg-white lg:rounded-2xl lg:shadow-[0_2px_15px_rgba(0,0,0,0.03)] lg:border lg:border-gray-100 lg:p-6 lg:gap-5">
       {/* Bộ lọc trạng thái */}
-      <div className="bg-white rounded-sm shadow-sm border border-gray-100 flex overflow-x-auto no-scrollbar">
+      <div className="bg-white flex overflow-x-auto no-scrollbar border-b border-gray-200 sticky top-0 z-10 lg:static lg:rounded-t-lg">
         {orderTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
-            className={`whitespace-nowrap flex-1 py-4 px-4 text-sm font-medium transition cursor-pointer relative ${
+            className={`whitespace-nowrap flex-1 min-w-[110px] py-3 px-2 text-sm font-medium transition cursor-pointer relative text-center ${
               activeTab === tab.id
-                ? "text-blue-500"
-                : "text-gray-700 hover:text-blue-500"
+                ? "text-blue-600 font-bold"
+                : "text-gray-600 hover:text-blue-500"
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500"></span>
+              <span className="absolute bottom-0 left-0 w-full h-[3px] bg-blue-600 rounded-t-md"></span>
             )}
           </button>
         ))}
       </div>
 
+      {/* Bộ lọc ngày tháng - Shopee Style (Chỉ Icon mới mở lịch) */}
+      <div className="bg-white py-2 lg:p-2 md:hidden">
+        <div className="border border-gray-300 rounded-lg p-2.5 flex justify-between items-center bg-white shadow-sm relative">
+          {/* Hiển thị ngày Bắt đầu (Tĩnh) */}
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-sm font-medium text-gray-700">
+              {startDate ? displayDate(startDate) : "Từ ngày"}
+            </span>
+          </div>
+
+          <span className="text-gray-400 px-2 font-medium">
+            <Icons.ArrowRightLong />
+          </span>
+
+          {/* Hiển thị ngày Kết thúc (Tĩnh) */}
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-sm font-medium text-gray-700">
+              {endDate ? displayDate(endDate) : "Đến ngày"}
+            </span>
+          </div>
+
+          {/* Icon Lịch - Duy nhất chỗ này mở được lịch để chỉnh sửa startDate */}
+          <div className="pl-3 border-l border-gray-200 ml-1">
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => {
+                setStartDate(date);
+                setVisibleCount(5);
+              }}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              locale="vi"
+              popperPlacement="bottom-end"
+              customInput={React.createElement(
+                React.forwardRef(({ onClick }, ref) => (
+                  <div
+                    onClick={onClick}
+                    ref={ref}
+                    className="cursor-pointer group"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-500 group-hover:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )),
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Nút đặt lại */}
+        {(startDate ||
+          (endDate && displayDate(endDate) !== displayDate(new Date()))) && (
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => {
+                setStartDate(null);
+                setEndDate(new Date());
+                setVisibleCount(5);
+              }}
+              className="text-[13px] text-blue-500 hover:underline cursor-pointer font-medium"
+            >
+              Đặt lại bộ lọc
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Danh sách đơn hàng */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {displayedOrders.length > 0 ? (
           <>
             {displayedOrders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white rounded-sm shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-white overflow-hidden mb-2.5 lg:mb-0 lg:border lg:border-gray-200 lg:rounded-xl lg:hover:border-blue-300 transition-colors duration-300"
               >
                 {/* Header Card */}
                 <div className="px-3 py-2 border-b border-gray-100 flex justify-between items-center bg-white">
@@ -310,26 +414,28 @@ const OrdersTab = ({ profileData, navigate }) => {
                   ))}
                 </div>
 
-                {/* Footer Card */}
-                <div className="p-3 bg-[#fffaf9] border-t border-gray-100 flex flex-col">
-                  {/* Dòng tổng tiền */}
-                  <div className="flex justify-end items-center gap-2">
-                    <span className="text-sm text-gray-600">Thành tiền:</span>
-                    <span className="text-lg font-medium text-red-500">
+                {/* Footer Card - Tối ưu Responsive */}
+                <div className="p-3 lg:p-4 bg-[#fffaf9]/50 border-t border-gray-100 flex flex-col gap-3">
+                  {/* Dòng 1: Tổng tiền */}
+                  <div className="flex justify-end items-baseline gap-2">
+                    <span className="text-sm lg:text-sm text-gray-600">
+                      Thành tiền:
+                    </span>
+                    <span className="text-lg lg:text-xl font-bold text-[#ee4d2d]">
                       {formatPrice(order.tong_thanh_toan)}₫
                     </span>
                   </div>
 
-                  {/* Dòng action & thời gian */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center border-t border-gray-100 pt-4">
-                    <span className="text-xs text-gray-600">
+                  {/* Dòng 2: Thời gian và Hành động */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-t border-gray-100">
+                    <span className="text-[11px] lg:text-xs text-gray-400 italic">
                       {order.trang_thai === "cancelled"
                         ? "Đã hủy vào: "
                         : "Ngày đặt: "}
                       {formatDateTime(order.created_at)}
                     </span>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
                       {order.trang_thai === "delivered" &&
                         !reviewedOrderIds.includes(order.id) && (
                           <button
@@ -337,7 +443,7 @@ const OrdersTab = ({ profileData, navigate }) => {
                               setSelectedOrderForReview(order);
                               setReviewModalOpen(true);
                             }}
-                            className="bg-[#ee4d2d] text-white rounded-sm px-3 py-1.5 text-sm hover:bg-[#d73211] transition cursor-pointer min-w-[120px]"
+                            className="flex-1 sm:flex-none bg-[#ee4d2d] text-white rounded-sm px-4 py-2 text-sm hover:bg-[#d73211] transition cursor-pointer min-w-[100px] font-medium"
                           >
                             Đánh Giá
                           </button>
@@ -382,9 +488,9 @@ const OrdersTab = ({ profileData, navigate }) => {
                           }}
                           className={`${
                             order.trang_thai === "cancelled"
-                              ? "bg-[#ee4d2d] text-white hover:bg-[#d73211] border border-transparent"
+                              ? "bg-[#ee4d2d] text-white hover:bg-[#d73211]"
                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
-                          } px-3 py-1.5 rounded-sm text-sm transition cursor-pointer min-w-[120px]`}
+                          } flex-1 sm:flex-none px-4 py-2 rounded-sm text-sm transition cursor-pointer min-w-[100px] font-medium`}
                         >
                           Mua Lại
                         </button>
@@ -392,9 +498,9 @@ const OrdersTab = ({ profileData, navigate }) => {
 
                       <button
                         onClick={() => navigate(`/order-detail/${order.id}`)}
-                        className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-sm text-sm hover:bg-gray-50 transition cursor-pointer min-w-[120px]"
+                        className="flex-1 sm:flex-none bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-sm text-sm hover:bg-gray-50 transition cursor-pointer min-w-[100px] font-medium text-center"
                       >
-                        Xem Chi Tiết
+                        Chi Tiết
                       </button>
                     </div>
                   </div>
