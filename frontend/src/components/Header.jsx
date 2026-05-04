@@ -169,12 +169,11 @@ const Header = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY < 30) {
-        // Gần đỉnh trang → luôn hiện thanh top bar
+      if (currentScrollY < 50) {
         setIsScrolled(false);
-      } else if (currentScrollY > lastScrollY.current + 8) {
+      } else if (currentScrollY > lastScrollY.current + 20) {
         setIsScrolled(true);
-      } else if (currentScrollY < lastScrollY.current - 8) {
+      } else if (currentScrollY < lastScrollY.current - 20) {
         setIsScrolled(false);
       }
 
@@ -243,13 +242,13 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-[#4A44F2] text-white font-sans shadow-md sticky top-0 z-[1000]">
+      <header className="bg-[#4A44F2] text-white font-sans shadow-md sticky top-0 z-[1000] transition-all duration-300">
         {/* --- 1. THANH TOP BAR TRÊN CÙNG --- */}
         <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out bg-[#3a35d1] relative z-[1001] ${
+          className={`overflow-hidden transition-all duration-500 ease-in-out bg-[#3a35d1] relative z-[1001] will-change-[max-height,opacity] ${
             isScrolled
-              ? "h-0 opacity-0 -translate-y-full"
-              : "h-[40px] md:h-[50px] opacity-100 translate-y-0"
+              ? "max-h-0 opacity-0 pointer-events-none"
+              : "max-h-[60px] opacity-100"
           }`}
         >
           {/* Desktop Top Bar */}
@@ -324,8 +323,7 @@ const Header = () => {
 
         {/* --- 2. THANH HEADER CHÍNH --- */}
         <div className="w-full bg-[#4A44F2] border-b border-white/10">
-          <div className="w-full max-w-7xl mx-auto px-4 md:py-1 flex items-center justify-between gap-3 md:gap-6">
-            {/* Mobile Header Layout: Logo (No Name) -> Search -> Cart */}
+          <div className="w-full max-w-7xl mx-auto px-4 pt-2 pb-1 md:py-2 flex items-center justify-between gap-3 md:gap-6">
             <div className="flex md:hidden items-center justify-between w-full gap-2">
               <Link to="/" className="shrink-0">
                 <img
@@ -577,7 +575,7 @@ const Header = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate("/cart")}
-                  className="flex items-center gap-1.5 hover:bg-white/10 px-4 py-2 rounded-xl transition relative"
+                  className="flex items-center gap-1.5 hover:bg-white/10 px-4 py-2 rounded-xl transition relative cursor-pointer"
                 >
                   <Icons.ShoppingCart className="w-5 h-5 brightness-0 invert" />
                   <span className="font-semibold text-sm">Giỏ hàng</span>
@@ -594,7 +592,10 @@ const Header = () => {
                     onMouseEnter={() => setShowDropdown(true)}
                     onMouseLeave={() => setShowDropdown(false)}
                   >
-                    <div className="flex items-center gap-2 hover:bg-white/10 transition px-2 py-1.5 rounded-xl cursor-pointer">
+                    <div className="flex items-center gap-2 hover:bg-white/20 transition px-2 py-1.5 rounded-xl cursor-pointer  bg-white/10">
+                      <span className="font-bold text-sm max-w-[100px] truncate">
+                        {user.ho_ten || user.so_dien_thoai}
+                      </span>
                       <img
                         src={
                           user.anh_dai_dien?.startsWith("http")
@@ -606,15 +607,12 @@ const Header = () => {
                         alt="User"
                         className="w-9 h-9 rounded-full object-cover border-2 border-white/20"
                       />
-                      <span className="font-bold text-sm max-w-[100px] truncate">
-                        {user.ho_ten || user.so_dien_thoai}
-                      </span>
                     </div>
                     {showDropdown && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-[1100] animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 text-gray-800 z-[1100] animate-in fade-in slide-in-from-top-2 duration-200 font-medium">
                         <button
                           onClick={() => navigate("/profile")}
-                          className="w-full text-left px-4 py-3 text-sm hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 cursor-pointer"
                         >
                           Hồ sơ tài khoản
                         </button>
@@ -624,14 +622,14 @@ const Header = () => {
                               state: { activeTab: "orders" },
                             })
                           }
-                          className="w-full text-left px-4 py-3 text-sm hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition flex items-center gap-3 cursor-pointer"
                         >
                           Đơn hàng của tôi
                         </button>
                         <div className="border-t border-gray-100 mt-2 pt-2">
                           <button
                             onClick={handleLogout}
-                            className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3 font-semibold"
+                            className="w-full text-left px-4 py-1 text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3 font-semibold cursor-pointer"
                           >
                             Đăng xuất
                           </button>
@@ -643,14 +641,14 @@ const Header = () => {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => navigate("/register")}
-                      className="px-4 py-2 border border-white/30 rounded-xl hover:bg-white/10 transition flex items-center gap-2"
+                      className="px-4 py-2 border border-white/30 rounded-xl hover:bg-white/10 transition flex items-center gap-2 cursor-pointer"
                     >
                       <Icons.User className="w-5 h-5 brightness-0 invert" />
                       <span className="font-semibold text-sm">Đăng ký</span>
                     </button>
                     <button
                       onClick={() => navigate("/login")}
-                      className="px-4 py-2 border border-white/30 rounded-xl hover:bg-white/10 transition flex items-center gap-2"
+                      className="px-4 py-2 border border-white/30 rounded-xl hover:bg-white/10 transition flex items-center gap-2 cursor-pointer"
                     >
                       <Icons.User className="w-5 h-5 brightness-0 invert" />
                       <span className="font-semibold text-sm">Đăng nhập</span>
@@ -670,14 +668,6 @@ const Header = () => {
               isScrolled ? "top-[60px]" : "top-[100px]"
             }`}
           >
-            {/* Nút đóng (X) cho Mobile Menu */}
-            <button
-              onClick={() => setShowCategories(false)}
-              className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md z-[2002] text-gray-500 hover:text-red-500 transition-all active:scale-95"
-            >
-              <Icons.Close className="w-6 h-6" />
-            </button>
-
             {/* Cột trái: Danh sách danh mục chính (Sidebar) */}
             <div className="w-[100px] flex-shrink-0 bg-white border-r border-gray-100 overflow-y-auto no-scrollbar">
               <div className="flex flex-col">

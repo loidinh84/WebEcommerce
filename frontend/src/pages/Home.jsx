@@ -6,10 +6,8 @@ import HeroBanner from "../components/HeroBanner";
 import SidebarMenu from "../components/SideBarMenu";
 import ProductSection from "../components/ProductSection";
 import AccessoryBar from "../components/AccessoryBar";
-import ContactSupport from "../components/ContactSupport";
 import ShopReviews from "../components/ShopReviews";
-import * as Images from "../assets/images/index";
-import { toast, Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import BASE_URL from "../config/api";
 
 function Home() {
@@ -35,7 +33,7 @@ function Home() {
       <Header />
       <Toaster position="bottom-center" />
 
-      <main className="flex-grow w-full max-w-[1280px] mx-auto px-4 mt-4 mb-10">
+      <main className="flex-grow w-full max-w-[1280px] mx-auto px-4 mt-3 mb-10">
         {/* TẦNG 1: Sidebar + Hero Slideshow */}
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-1/4 xl:w-1/5">
@@ -48,7 +46,7 @@ function Home() {
 
         {/* CÁC TẦNG NỘI DUNG LINH ĐỘNG */}
         {loading ? (
-          <div className="mt-8 space-y-8">
+          <div className="mt-4 space-y-6">
             <div className="w-full h-80 bg-white rounded-2xl animate-pulse" />
             <div className="w-full h-80 bg-white rounded-2xl animate-pulse" />
           </div>
@@ -59,8 +57,12 @@ function Home() {
                 <ProductSection
                   key={section.id}
                   title={section.ten_phan}
-                  tab1={section.ten_tab_1 || section.ten_phan?.split("&")[0]?.trim()}
-                  tab2={section.ten_tab_2 || section.ten_phan?.split("&")[1]?.trim()}
+                  tab1={
+                    section.ten_tab_1 || section.ten_phan?.split("&")[0]?.trim()
+                  }
+                  tab2={
+                    section.ten_tab_2 || section.ten_phan?.split("&")[1]?.trim()
+                  }
                   danhMucId1={section.danh_muc_id_1}
                   danhMucId2={section.danh_muc_id_2}
                 />
@@ -83,7 +85,6 @@ function Home() {
       </main>
 
       <Footer />
-      <ContactSupport />
     </div>
   );
 }

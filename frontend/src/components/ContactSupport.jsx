@@ -12,7 +12,15 @@ const ContactSupport = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [isVisible, setIsVisible] = useState(true);
   const chatEndRef = useRef(null);
+
+  // LOGIC KÉO THẢ (DRAG & DROP)
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [moved, setMoved] = useState(false);
+  const buttonContainerRef = useRef(null);
 
   const { storeConfig } = useContext(StoreContext);
 
@@ -42,6 +50,65 @@ const ContactSupport = () => {
     fetchHistory();
   }, []);
 
+  // Xử lý kéo bắt đầu
+  const handleStart = (e) => {
+    const clientX = e.type === "touchstart" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchstart" ? e.touches[0].clientY : e.clientY;
+
+    setIsDragging(true);
+    setDragStart({ x: clientX - position.x, y: clientY - position.y });
+    setMoved(false);
+  };
+
+  // Xử lý khi đang kéo
+  const handleMove = (e) => {
+    if (!isDragging) return;
+
+    const clientX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+
+    const newX = clientX - dragStart.x;
+    const newY = clientY - dragStart.y;
+
+    // Giới hạn vùng kéo
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    // Bán kính vùng an toàn (80px từ biên)
+    const boundedX = Math.min(Math.max(newX, -screenWidth + 100), 20);
+    const boundedY = Math.min(Math.max(newY, -screenHeight + 150), 20);
+
+    if (Math.abs(newX - position.x) > 5 || Math.abs(newY - position.y) > 5) {
+      setMoved(true);
+    }
+
+    setPosition({ x: boundedX, y: boundedY });
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMove);
+      window.addEventListener("mouseup", handleEnd);
+      window.addEventListener("touchmove", handleMove, { passive: false });
+      window.addEventListener("touchend", handleEnd);
+    } else {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleEnd);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+  }, [isDragging, position, dragStart]);
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg = input.trim();
@@ -50,14 +117,14 @@ const ContactSupport = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("${BASE_URL}/api/ai/chat", {
+      const response = await fetch(`${BASE_URL}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
       });
       const data = await response.json();
       setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "bot", text: "Bạn ơi, tôi hơi lag, đợi tôi tí nhé!" },
@@ -67,12 +134,10 @@ const ContactSupport = () => {
     }
   };
 
-  // HÀM MỚI: Xóa lịch sử chat
   const handleClearHistory = async () => {
     if (!window.confirm("Ông chủ có chắc muốn xóa sạch trí nhớ của AI không?"))
       return;
 
-    // 1. Xóa ngay trên giao diện
     setMessages([
       {
         role: "bot",
@@ -80,17 +145,26 @@ const ContactSupport = () => {
       },
     ]);
 
-    // 2. Gọi API để xóa sạch trong SQL Database
     try {
-      await fetch("${BASE_URL}/api/ai/history", { method: "DELETE" });
+      await fetch(`${BASE_URL}/api/ai/history`, { method: "DELETE" });
     } catch (error) {
       console.error("Lỗi xóa lịch sử:", error);
     }
   };
 
+  if (!isVisible) return null;
+
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-6 z-[9999] flex flex-col items-end gap-3 font-sans text-gray-800">
-      {/* ... (Phần Menu và Nút Khiếu Nại giữ nguyên không đổi) ... */}
+    <div
+      ref={buttonContainerRef}
+      className="fixed z-[9999] flex flex-col items-end gap-3 font-sans text-gray-800 select-none"
+      style={{
+        bottom: `calc(env(safe-area-inset-bottom, 0px) + ${80 - position.y}px)`,
+        right: `calc(24px - ${position.x}px)`,
+        touchAction: "none",
+        transition: isDragging ? "none" : "all 0.1s ease-out",
+      }}
+    >
       {showMenu && (
         <div className="flex flex-col items-end gap-2 animate-in slide-in-from-bottom-5 duration-300">
           <button
@@ -129,22 +203,36 @@ const ContactSupport = () => {
         </div>
       )}
 
-      <button
-        onClick={() => {
-          setShowMenu(!showMenu);
-          if (showChat) setShowChat(false);
-        }}
-        className={`bg-red-500 hover:bg-red-600 text-white p-3.5 md:px-6 md:py-3.5 rounded-full md:rounded-xl shadow-xl flex items-center gap-2 font-bold transition-all cursor-pointer active:scale-95 ${showMenu ? "ring-4 ring-red-200" : ""}`}
-      >
-        <span className="hidden md:inline">Liên hệ</span>
-        <Icons.Support className="w-6 h-6 text-white" />
-      </button>
+      <div className="relative group">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsVisible(false);
+          }}
+          className="absolute -top-2 -right-2 w-4 h-4 bg-gray-200 text-black rounded-full flex items-center justify-center shadow-lg opacity-100 transition-opacity cursor-pointer z-10 border border-white"
+          title="Tắt hỗ trợ"
+        >
+          <Icons.Close className="w-3 h-3" />
+        </button>
 
-      {/* ... (Phần form Feedback giữ nguyên) ... */}
+        <button
+          onMouseDown={handleStart}
+          onTouchStart={handleStart}
+          onClick={() => {
+            if (!moved) {
+              setShowMenu(!showMenu);
+              if (showChat) setShowChat(false);
+            }
+          }}
+          className={`bg-red-500 hover:bg-red-600 text-white p-3.5 md:px-6 md:py-3.5 rounded-full md:rounded-xl shadow-xl flex items-center gap-2 font-bold transition-all cursor-move active:scale-95 ${showMenu ? "ring-4 ring-red-200" : ""} ${isDragging ? "opacity-70 scale-110 rotate-3" : ""}`}
+        >
+          <span className="hidden md:inline">Liên hệ</span>
+          <Icons.Support className="w-6 h-6 text-white" />
+        </button>
+      </div>
 
       {showChat && (
         <div className="fixed bottom-36 md:bottom-24 right-6 w-80 sm:w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-500">
-          {/* HEADER CHAT CÓ THÊM NÚT XÓA */}
           <div className="bg-red-500 p-4 text-white flex justify-between items-center">
             <div className="flex items-center gap-2">
               <div
@@ -152,8 +240,6 @@ const ContactSupport = () => {
               ></div>
               <span className="font-bold">LTLShop Support</span>
             </div>
-
-            {/* THÊM NÚT TẠI ĐÂY */}
             <div className="flex items-center gap-1">
               <button
                 onClick={handleClearHistory}
@@ -183,7 +269,6 @@ const ContactSupport = () => {
               </button>
             </div>
           </div>
-
           <div className="flex-1 bg-gray-50 p-4 text-sm overflow-y-auto space-y-4 scrollbar-hide">
             {messages.map((msg, index) => (
               <div
@@ -204,7 +289,6 @@ const ContactSupport = () => {
             )}
             <div ref={chatEndRef} />
           </div>
-
           <div className="p-3 bg-white border-t border-gray-100 flex gap-2">
             <input
               className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-red-400"
@@ -232,9 +316,9 @@ const ContactSupport = () => {
         </div>
       )}
 
-      <ShopFeedbackModal 
-        isOpen={showFeedbackModal} 
-        onClose={() => setShowFeedbackModal(false)} 
+      <ShopFeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
       />
     </div>
   );

@@ -74,7 +74,7 @@ const ProductCard = ({ product, onLikeChange }) => {
     }
   };
 
-  let imageUrl = "https://via.placeholder.com/200x200?text=No+Image";
+  let imageUrl = "../assets/NoImage.webp";
   if (product.hinh_anh && product.hinh_anh.length > 0) {
     const mainImg =
       product.hinh_anh.find((img) => img.la_anh_chinh === true) ||

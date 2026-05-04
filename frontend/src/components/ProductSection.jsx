@@ -34,7 +34,7 @@ const ProductSection = ({
       }
       try {
         const res = await axios.get(
-          `${BASE_URL}/api/sanPham/thuong-hieu/${currentDanhMucId}`
+          `${BASE_URL}/api/sanPham/thuong-hieu/${currentDanhMucId}`,
         );
         if (isMounted) {
           setBrands(Array.isArray(res.data) ? res.data : []);
@@ -98,7 +98,6 @@ const ProductSection = ({
     setActiveFilter(null);
   };
 
-  // Tạo link "Xem tất cả" dựa trên slug
   const currentSlug = (activeTab === 0 ? tab1 : tab2)
     ?.toLowerCase()
     .normalize("NFD")
@@ -111,7 +110,7 @@ const ProductSection = ({
   const filtersToDisplay = brands.length > 0 ? brands : initialFilters;
 
   return (
-    <div className="w-full mt-8 group/section">
+    <div className="w-full mt-4 group/section">
       <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-5 lg:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
         {/* 1. Header: Tab & View All */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 mb-2 gap-4">

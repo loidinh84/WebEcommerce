@@ -36,6 +36,7 @@ import AuthPromptModal from "./components/AuthPromptModal";
 import ComparePage from "./pages/ComparePage";
 
 import ContactSupport from "./components/ContactSupport";
+const API_URL = BASE_URL;
 
 function App() {
   const { storeConfig } = useContext(StoreContext);
