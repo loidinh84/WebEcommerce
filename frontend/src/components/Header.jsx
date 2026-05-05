@@ -171,9 +171,9 @@ const Header = () => {
 
       if (currentScrollY < 50) {
         setIsScrolled(false);
-      } else if (currentScrollY > lastScrollY.current + 20) {
+      } else if (currentScrollY > lastScrollY.current + 8) {
         setIsScrolled(true);
-      } else if (currentScrollY < lastScrollY.current - 20) {
+      } else if (currentScrollY < lastScrollY.current - 8) {
         setIsScrolled(false);
       }
 

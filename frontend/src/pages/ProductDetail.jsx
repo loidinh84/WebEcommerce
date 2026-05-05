@@ -587,7 +587,7 @@ const ProductDetail = () => {
           const data = await res.json();
           Swal.fire("Lỗi!", data.message || "Không thể xóa đánh giá.", "error");
         }
-      } catch (e) {
+      } catch  {
         Swal.fire("Lỗi!", "Đã xảy ra lỗi kết nối.", "error");
       }
     }
@@ -619,7 +619,7 @@ const ProductDetail = () => {
         const data = await res.json();
         Swal.fire("Lỗi!", data.message || "Lỗi cập nhật trạng thái.", "error");
       }
-    } catch (e) {
+    } catch {
       Swal.fire("Lỗi!", "Đã xảy ra lỗi kết nối.", "error");
     }
   };

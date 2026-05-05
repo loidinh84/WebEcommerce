@@ -1,7 +1,78 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Icons } from "./Icons";
 import toast from "react-hot-toast";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import BASE_URL from "../../config/api";
+
+const CustomSelect = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  label,
+  disabled = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((opt) => opt.value === value);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full p-2.5 border border-gray-200 rounded-xl flex items-center justify-between cursor-pointer text-sm ${
+          disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"
+        }`}
+      >
+        <span className={!selectedOption ? "text-gray-400" : ""}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <Icons.ArrowDown
+          className={`w-4 h-4 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </div>
+      {isOpen && (
+        <div className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto animate-fade-in">
+          {options.map((opt) => (
+            <div
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`p-2.5 hover:bg-blue-50 cursor-pointer text-sm transition-colors ${
+                value === opt.value
+                  ? "bg-blue-50 text-blue-600 font-bold"
+                  : "text-gray-700"
+              }`}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
   const userInfo = profileData?.userInfo || {};
@@ -33,6 +104,16 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
   const [addressToDelete, setAddressToDelete] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
 
+  const [ngaySinh, setNgaySinh] = useState(null);
+  const [gioiTinh, setGioiTinh] = useState("");
+
+  useEffect(() => {
+    if (userInfo.ngay_sinh) {
+      setNgaySinh(new Date(userInfo.ngay_sinh));
+    }
+    setGioiTinh(userInfo.gioi_tinh || "");
+  }, [userInfo]);
+
   useEffect(() => {
     if (allLocations.length === 0) {
       fetch("https://provinces.open-api.vn/api/?depth=3")
@@ -42,8 +123,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
     }
   }, [allLocations.length]);
 
-  const handleProvinceChange = (e) => {
-    const provCode = e.target.value;
+  const handleProvinceChange = (provCode) => {
     setSelectedProv(provCode);
     setSelectedDist("");
     setSelectedWard("");
@@ -53,8 +133,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
     setWards([]);
   };
 
-  const handleDistrictChange = (e) => {
-    const distCode = e.target.value;
+  const handleDistrictChange = (distCode) => {
     setSelectedDist(distCode);
     setSelectedWard("");
 
@@ -107,14 +186,15 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
       const so_dien_thoai = document.getElementById(
         "so_dien_thoai_profile",
       ).value;
-      const gioi_tinh = document.getElementById("gioi_tinh").value;
-      const ngay_sinh = document.getElementById("ngay_sinh").value;
 
       const formData = new FormData();
       formData.append("ho_ten", ho_ten);
       formData.append("so_dien_thoai", so_dien_thoai || "");
-      formData.append("gioi_tinh", gioi_tinh);
-      formData.append("ngay_sinh", ngay_sinh || "");
+      formData.append("gioi_tinh", gioiTinh);
+      formData.append(
+        "ngay_sinh",
+        ngaySinh ? ngaySinh.toISOString().split("T")[0] : "",
+      );
 
       if (avatarFile) {
         formData.append("anh_dai_dien", avatarFile);
@@ -329,7 +409,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-24 md:pb-0">
       {/* Khối 1: Thông tin cá nhân */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex justify-between items-center mb-5">
@@ -338,7 +418,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
           </h2>
           <button
             onClick={() => setIsProfileModalOpen(true)}
-            className="text-sm text-red-500 font-medium hover:underline flex items-center gap-1"
+            className="text-sm text-red-500 font-medium hover:underline flex items-center gap-1 cursor-pointer"
           >
             <Icons.Edit />
             Cập nhật
@@ -405,7 +485,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
           </h2>
           <button
             onClick={openAddModal}
-            className="flex text-sm text-red-500 font-medium hover:underline gap-1.5"
+            className="flex text-sm text-red-500 font-medium hover:underline gap-1.5 cursor-pointer"
           >
             <Icons.Plus />
             Thêm địa chỉ
@@ -501,11 +581,10 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
 
       {/* Modal Cập nhật profile */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md px-7 py-5 animate-fade-in">
+        <div className="fixed inset-0 bg-black/50 z-1000 flex items-center justify-center p-3 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md px-7 py-3 animate-scale-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-gray-200">
-              {" "}
-              <h3 className="text-xl font-bold mb-2">Cập nhật hồ sơ</h3>
+              <h3 className="text-xl font-bold mb-1">Cập nhật hồ sơ</h3>
               <button
                 onClick={() => setIsProfileModalOpen(false)}
                 className="text-2xl text-center pb-4 hover:text-red-500 cursor-pointer"
@@ -560,7 +639,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                   type="text"
                   id="ho_ten"
                   defaultValue={userInfo.ho_ten}
-                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
                 />
               </div>
               <div>
@@ -572,7 +651,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                   id="so_dien_thoai_profile"
                   defaultValue={userInfo.so_dien_thoai}
                   disabled
-                  className="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed text-sm"
                 />
               </div>
               <div>
@@ -584,45 +663,47 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                   id="email"
                   defaultValue={userInfo.email}
                   disabled
-                  className="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Giới tính
-                </label>
-                <select
-                  id="gioi_tinh"
-                  defaultValue={userInfo.gioi_tinh}
-                  className="w-full p-3 border border-gray-200 rounded-xl appearance-none cursor-pointer "
-                >
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-              <div>
+              <CustomSelect
+                label="Giới tính"
+                placeholder="Chọn giới tính"
+                value={gioiTinh}
+                onChange={setGioiTinh}
+                options={[
+                  { value: "male", label: "Nam" },
+                  { value: "female", label: "Nữ" },
+                  { value: "other", label: "Khác" },
+                ]}
+              />
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ngày sinh
                 </label>
-                <input
-                  type="date"
-                  id="ngay_sinh"
-                  defaultValue={userInfo.ngay_sinh?.split("T")[0]}
-                  className="w-full p-3 border border-gray-200 rounded-xl"
+                <DatePicker
+                  selected={ngaySinh}
+                  onChange={(date) => setNgaySinh(date)}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="Chọn ngày sinh"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  wrapperClassName="w-full"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsProfileModalOpen(false)}
-                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold"
+                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={handleUpdateProfile}
-                className="flex-1 py-2 bg-[#4A44F2] text-white rounded-xl font-bold"
+                className="flex-1 py-2 bg-[#4A44F2] text-white rounded-xl font-bold cursor-pointer"
               >
                 Lưu thay đổi
               </button>
@@ -633,11 +714,19 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
 
       {/* Modal Thêm địa chỉ */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-fade-in">
-            <h3 className="text-xl font-bold mb-4">
-              {editingAddressId ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
-            </h3>
+        <div className="fixed inset-0 bg-black/40 z-1000 flex items-center justify-center p-4 animate-fade-in ">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md px-6 py-2 animate-scale-up max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-gray-200 mb-2">
+              <h3 className="text-xl font-bold mb-1">
+                {editingAddressId ? "Cập nhật địa chỉ" : "Thêm địa chỉ mới"}
+              </h3>
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="text-2xl text-center pb-4 hover:text-red-500 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Họ tên người nhận
@@ -652,7 +741,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                     ho_ten_nguoi_nhan: e.target.value,
                   })
                 }
-                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
               />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -668,63 +757,45 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                       so_dien_thoai_dc: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 ">
-                  Tỉnh/Thành phố
-                </label>
-                <select
-                  value={selectedProv}
-                  onChange={handleProvinceChange}
-                  className="w-full p-3 border  border-gray-200 focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 rounded-xl cursor-pointer appearance-none"
-                >
-                  <option value="">Chọn Tỉnh/Thành phố</option>
-                  {allLocations.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quận/Huyện
-                </label>
-                <select
-                  value={selectedDist}
-                  onChange={handleDistrictChange}
-                  disabled={!selectedProv}
-                  className="w-full p-3 border border-gray-200 rounded-xl cursor-pointer disabled:bg-gray-100 appearance-none focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
-                >
-                  <option value="">Chọn Quận/Huyện</option>
-                  {districts.map((d) => (
-                    <option key={d.code} value={d.code}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phường/Xã
-                </label>
-                <select
-                  value={selectedWard}
-                  onChange={(e) => setSelectedWard(e.target.value)}
-                  disabled={!selectedDist}
-                  className="w-full p-3 border border-gray-200 rounded-xl cursor-pointer disabled:bg-gray-100 appearance-none focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
-                >
-                  <option value="">Chọn Phường/Xã</option>
-                  {wards.map((w) => (
-                    <option key={w.code} value={w.code}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                label="Tỉnh/Thành phố"
+                placeholder="Chọn Tỉnh/Thành phố"
+                value={selectedProv}
+                onChange={handleProvinceChange}
+                options={allLocations.map((p) => ({
+                  value: p.code,
+                  label: p.name,
+                }))}
+              />
+
+              <CustomSelect
+                label="Quận/Huyện"
+                placeholder="Chọn Quận/Huyện"
+                value={selectedDist}
+                onChange={handleDistrictChange}
+                disabled={!selectedProv}
+                options={districts.map((d) => ({
+                  value: d.code,
+                  label: d.name,
+                }))}
+              />
+
+              <CustomSelect
+                label="Phường/Xã"
+                placeholder="Chọn Phường/Xã"
+                value={selectedWard}
+                onChange={setSelectedWard}
+                disabled={!selectedDist}
+                options={wards.map((w) => ({
+                  value: w.code,
+                  label: w.name,
+                }))}
+              />
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Địa chỉ cụ thể
@@ -739,7 +810,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                       dia_chi_cu_the: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
                 />
               </div>
 
@@ -755,13 +826,13 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                   }
                   className="w-4 h-4 cursor-pointer"
                 />{" "}
-                <span>Đặt làm địa chỉ mặc định</span>
+                <span className="text-sm">Đặt làm địa chỉ mặc định</span>
               </label>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsAddressModalOpen(false)}
-                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold"
+                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold cursor-pointer"
               >
                 Hủy
               </button>
@@ -795,14 +866,14 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
             <div className="flex border-t border-gray-100">
               <button
                 onClick={() => setAddressToDelete(null)}
-                className="flex-1 py-3 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 py-3 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 Hủy bỏ
               </button>
               <div className="w-px bg-gray-100"></div>
               <button
                 onClick={confirmDeleteAddress}
-                className="flex-1 py-3 text-red-600 font-bold hover:bg-red-50 transition-colors"
+                className="flex-1 py-3 text-red-600 font-bold hover:bg-red-50 transition-colors cursor-pointer"
               >
                 Vâng, xóa đi!
               </button>
@@ -813,8 +884,8 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
 
       {/* Modal Thay đổi mật khẩu */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm px-7 py-5 animate-scale-up">
+        <div className="fixed inset-0 bg-black/50 z-1000 flex items-center justify-center p-3 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm px-6 py-3 animate-scale-up max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-gray-200 mb-4">
               <h3 className="text-xl font-bold mb-2">Đổi mật khẩu</h3>
               <button
@@ -839,7 +910,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                       oldPassword: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
                 />
               </div>
               <div>
@@ -856,7 +927,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                       newPassword: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
                 />
               </div>
               <div>
@@ -873,14 +944,14 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                       confirmPassword: e.target.value,
                     })
                   }
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-200 focus:ring-1 focus:ring-blue-200 text-sm"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setIsPasswordModalOpen(false)}
-                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold"
+                className="flex-1 py-2 border border-gray-200 rounded-xl font-bold cursor-pointer "
               >
                 Hủy
               </button>

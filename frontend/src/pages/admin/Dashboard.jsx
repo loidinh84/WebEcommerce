@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import * as Icons from "../../assets/icons/index";
 import axios from "axios";
 import BASE_URL from "../../config/api";
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { vi } from "date-fns/locale/vi";
+
+registerLocale("vi", vi);
 
 const statusConfig = {
   pending: { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-700" },
@@ -34,14 +40,46 @@ const Dashboard = () => {
   const [topByQty, setTopByQty] = useState([]);
   const [topByRevenue, setTopByRevenue] = useState([]);
 
+  // BỘ LỌC THỜI GIAN
+  const [filterPeriod, setFilterPeriod] = useState("month");
+  const [filterDateFrom, setFilterDateFrom] = useState(
+    startOfMonth(new Date())
+  );
+  const [filterDateTo, setFilterDateTo] = useState(new Date());
+
+  useEffect(() => {
+    const now = new Date();
+    if (filterPeriod === "month") {
+      setFilterDateFrom(startOfMonth(now));
+      setFilterDateTo(now);
+    } else if (filterPeriod === "week") {
+      setFilterDateFrom(startOfWeek(now, { weekStartsOn: 1 }));
+      setFilterDateTo(now);
+    } else if (filterPeriod === "2months") {
+      setFilterDateFrom(startOfMonth(subMonths(now, 1)));
+      setFilterDateTo(now);
+    }
+  }, [filterPeriod]);
+
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const params = {};
+      if (filterDateFrom) params.fromDate = format(filterDateFrom, "yyyy-MM-dd");
+      if (filterDateTo) params.toDate = format(filterDateTo, "yyyy-MM-dd");
+
+      console.log("Fetching dashboard data with params:", params);
+
       const response = await axios.get(
         `${BASE_URL}/api/dashboard/summary`,
-        getAuthHeader(),
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: params
+        }
       );   
 
+      console.log("Dashboard API Response:", response.data);
       const data = response.data;
 
       if (data.success) {
@@ -54,7 +92,7 @@ const Dashboard = () => {
               new Intl.NumberFormat("vi-VN").format(
                 data.stats?.totalRevenue || 0,
               ) + " ₫",
-            change: "Tháng này",
+            change: filterPeriod === "custom" ? "Tùy chọn" : "Trong kỳ",
             positive: true,
             sub: "Đơn giao thành công",
             accent: "#2563eb",
@@ -65,7 +103,7 @@ const Dashboard = () => {
             id: 2,
             label: "Đơn hàng mới",
             value: data.stats?.newOrders || 0,
-            change: "Tháng này",
+            change: filterPeriod === "custom" ? "Tùy chọn" : "Trong kỳ",
             positive: true,
             sub: "Tổng số đơn",
             accent: "#059669",
@@ -105,6 +143,9 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error("Lỗi tải dữ liệu Dashboard:", error);
+      if (error.response?.status === 401) {
+        console.error("Lỗi xác thực: Token không hợp lệ hoặc đã hết hạn.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +153,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [filterDateFrom, filterDateTo]);
 
   const maxChart =
     revenueChart.length > 0 ? Math.max(...revenueChart.map((d) => d.value)) : 1;
@@ -148,19 +189,75 @@ const Dashboard = () => {
   return (
     <div className="w-full h-full overflow-y-auto bg-[#f0f2f5] font-sans p-4 lg:p-6 pb-20">
       {/* ── HEADER ── */}
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-800 ">
-          Tổng quan hệ thống
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          {new Date().toLocaleDateString("vi-VN", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}{" "}
-          · Dữ liệu cập nhật vừa xong
-        </p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-800 ">
+            Tổng quan hệ thống
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            {new Date().toLocaleDateString("vi-VN", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}{" "}
+            · Dữ liệu cập nhật vừa xong
+          </p>
+        </div>
+
+        {/* BỘ LỌC */}
+        <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-200">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Thời gian</span>
+            <select
+              value={filterPeriod}
+              onChange={(e) => setFilterPeriod(e.target.value)}
+              className="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+            >
+              <option value="month">Tháng này</option>
+              <option value="week">Tuần này</option>
+              <option value="2months">2 tháng trước</option>
+              <option value="custom">Tùy chọn</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Từ ngày</span>
+              <DatePicker
+                selected={filterDateFrom}
+                onChange={(date) => {
+                  setFilterDateFrom(date);
+                  if (filterPeriod !== "custom") setFilterPeriod("custom");
+                }}
+                dateFormat="dd/MM/yyyy"
+                locale="vi"
+                className="w-28 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-gray-400 uppercase ml-1 mb-1">Đến ngày</span>
+              <DatePicker
+                selected={filterDateTo}
+                onChange={(date) => {
+                  setFilterDateTo(date);
+                  if (filterPeriod !== "custom") setFilterPeriod("custom");
+                }}
+                dateFormat="dd/MM/yyyy"
+                locale="vi"
+                className="w-28 bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+              />
+            </div>
+          </div>
+          
+          <button 
+            onClick={fetchDashboardData}
+            className="mt-5 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
+            title="Làm mới dữ liệu"
+          >
+            <Icons.Add className="w-4 h-4 rotate-45" /> 
+          </button>
+        </div>
       </div>
 
       {/* STATS CARDS */}
@@ -266,7 +363,9 @@ const Dashboard = () => {
             Trạng thái đơn hàng
           </h3>
           <p className="text-xs text-gray-400 mb-5">
-            Tháng {new Date().getMonth() + 1} / {new Date().getFullYear()}
+            {filterDateFrom && filterDateTo 
+              ? `${format(filterDateFrom, "dd/MM/yyyy")} - ${format(filterDateTo, "dd/MM/yyyy")}`
+              : `Tháng ${new Date().getMonth() + 1} / ${new Date().getFullYear()}`}
           </p>
 
           {/* SVG Donut chart */}
