@@ -7,22 +7,39 @@ const sequelize = require("../config/db");
 
 const getDashboardSummary = async (req, res) => {
   try {
-    const startOfMonth = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      1,
-    );
+    const { fromDate, toDate } = req.query;
+
+    let startRange, endRange;
+
+    if (fromDate && toDate) {
+      startRange = `${fromDate} 00:00:00`;
+      endRange = `${toDate} 23:59:59`;
+    } else {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      startRange = firstDay.toISOString().slice(0, 10) + " 00:00:00";
+      endRange = now.toISOString().slice(0, 10) + " 23:59:59";
+    }
+    
 
     const totalRevenue =
       (await DonHang.sum("tong_thanh_toan", {
         where: {
           trang_thai: "delivered",
-          created_at: { [Op.gte]: startOfMonth },
+          created_at: { 
+            [Op.gte]: startRange,
+            [Op.lte]: endRange 
+          },
         },
       })) || 0;
 
     const newOrders = await DonHang.count({
-      where: { created_at: { [Op.gte]: startOfMonth } },
+      where: { 
+        created_at: { 
+          [Op.gte]: startRange,
+          [Op.lte]: endRange 
+        } 
+      },
     });
 
     const totalCustomers = await TaiKhoan.count({
@@ -58,7 +75,7 @@ const getDashboardSummary = async (req, res) => {
           productName = `${order.chi_tiet[0].ten_sp_luc_mua} ... (+${order.chi_tiet.length - 1} sp khác)`;
         }
       }
-      
+
       return {
         id: order.ma_don_hang,
         customer: order.nguoi_mua ? order.nguoi_mua.ho_ten : "Khách vãng lai",
@@ -81,7 +98,6 @@ const getDashboardSummary = async (req, res) => {
       limit: 5,
     });
 
-    // 2. LẤY TOP 5 SẢN PHẨM GIÁ TRỊ NHẤT
     const topProductsRevenue = await ChiTietDonHang.findAll({
       attributes: [
         "ten_sp_luc_mua",
@@ -108,14 +124,22 @@ const getDashboardSummary = async (req, res) => {
       }));
     };
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // Chart data range: if custom range is small (< 10 days), show day-by-day. 
+    // For simplicity, we'll keep the 7-day logic but use the endRange as the reference.
+    const chartEnd = new Date(`${toDate || new Date().toISOString().slice(0,10)} 23:59:59`);
+    const chartStart = new Date(chartEnd);
+    chartStart.setDate(chartStart.getDate() - 6);
+    
+    const chartStartStr = chartStart.toISOString().slice(0, 10) + " 00:00:00";
+    const chartEndStr = chartEnd.toISOString().slice(0, 10) + " 23:59:59";
 
     const orders7Days = await DonHang.findAll({
       where: {
         trang_thai: "delivered",
-        created_at: { [Op.gte]: sevenDaysAgo },
+        created_at: { 
+          [Op.gte]: chartStartStr,
+          [Op.lte]: chartEndStr 
+        },
       },
       attributes: ["created_at", "tong_thanh_toan"],
     });
@@ -124,7 +148,7 @@ const getDashboardSummary = async (req, res) => {
 
     const chartDataMap = {};
     for (let i = 6; i >= 0; i--) {
-      const d = new Date();
+      const d = new Date(chartEnd);
       d.setDate(d.getDate() - i);
       const dateStr = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
       chartDataMap[dateStr] = { day: dateStr, value: 0, amount: "0" };
@@ -149,7 +173,12 @@ const getDashboardSummary = async (req, res) => {
         "trang_thai",
         [sequelize.fn("COUNT", sequelize.col("id")), "count"],
       ],
-      where: { created_at: { [Op.gte]: startOfMonth } },
+      where: { 
+        created_at: { 
+          [Op.gte]: startRange,
+          [Op.lte]: endRange 
+        } 
+      },
       group: ["trang_thai"],
     });
 
