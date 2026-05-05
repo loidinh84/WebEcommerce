@@ -46,10 +46,10 @@ const ShopReviews = () => {
   if (reviews.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8 my-8">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 md:p-8 my-2 md:my-8">
       {/* Tiêu đề */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">
           Khách hàng nói gì về {storeConfig?.ten_cua_hang || "Shop"}
         </h2>
         <p className="text-sm text-gray-500">
@@ -62,7 +62,7 @@ const ShopReviews = () => {
         {reviews.map((review) => (
           <div
             key={review.id}
-            className="bg-[#F8F9FA] rounded-xl p-6 border border-gray-100 hover:shadow-md transition-shadow duration-300 flex flex-col h-full min-w-[300px] md:min-w-[350px] snap-center"
+            className="bg-[#F8F9FA] rounded-xl p-4 md:p-6 border border-gray-100 hover:shadow-md transition-shadow duration-300 flex flex-col h-full min-w-[260px] md:min-w-[350px] snap-center"
           >
             {/* Header: Avatar + Tên + Sao */}
             <div className="flex items-center gap-4 mb-4">
