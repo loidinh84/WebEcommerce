@@ -110,8 +110,8 @@ const ProductSection = ({
   const filtersToDisplay = brands.length > 0 ? brands : initialFilters;
 
   return (
-    <div className="w-full mt-4 group/section">
-      <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-5 lg:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
+    <div className="w-full mt-2 sm:mt-4 group/section">
+      <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-4 lg:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
         {/* 1. Header: Tab & View All */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 mb-2 gap-4">
           <div className="flex gap-2">
@@ -124,7 +124,7 @@ const ProductSection = ({
                 <button
                   key={i}
                   onClick={() => handleTabChange(i)}
-                  className={`relative px-6 py-1 text-lg font-medium cursor-pointer transition-all duration-300 ${
+                  className={`relative px-3 sm:px-6 py-1 text-base sm:text-lg font-medium cursor-pointer transition-all duration-300 ${
                     activeTab === i
                       ? "text-[#4A44F2]"
                       : "text-gray-400 hover:text-gray-600"
@@ -150,9 +150,9 @@ const ProductSection = ({
           </Link>
         </div>
 
-        {/* 2. Brand Filters */}
+        {/* 2. Brand Filters — cuộn ngang trên mobile */}
         {filtersToDisplay && filtersToDisplay.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
+          <div className="flex gap-2 mb-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
             <button
               onClick={() => setActiveFilter(null)}
               className={`rounded-xl px-4.5 py-1 text-sm font-medium transition-all duration-300 border cursor-pointer ${

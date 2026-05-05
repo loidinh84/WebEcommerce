@@ -4,21 +4,24 @@ import BASE_URL from "../config/api";
 
 const AccessoryBar = ({ title, data }) => {
   return (
-    <div className="mt-4 mb-4">
-      <div className="flex items-center gap-4 mb-2">
+    <div className="mt-2 mb-2 sm:mt-4 sm:mb-4">
+      <div className="flex items-center gap-4 mb-3">
         {/* Tên mục tự động thay đổi theo biến title */}
-        <h2 className="text-xl font-medium text-gray-800">{title}</h2>
+        <h2 className="text-base sm:text-xl font-medium text-gray-800 whitespace-nowrap">
+          {title}
+        </h2>
         <div className="flex-1 border-b border-gray-200"></div>
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      {/* Cuộn ngang trên mobile, layout icon-trên/text-dưới kiểu CellphoneS */}
+      <div className="flex gap-2 overflow-x-auto pb-2 snap-x no-scrollbar -mx-2 px-2">
         {data.map((item, index) => (
           <Link
             key={index}
             to={item.categoryId ? `/category/${item.categoryId}` : "#"}
-            className="flex items-center justify-start gap-3 bg-white px-3 py-4 rounded-lg shadow-sm hover:shadow-md hover:text-blue-600 cursor-pointer transition border border-gray-100 min-w-[180px] group"
+            className="flex flex-col items-center justify-start gap-1.5 bg-white px-2 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:text-[#4A44F2] cursor-pointer transition border border-gray-100 min-w-[68px] sm:min-w-[80px] snap-start shrink-0 group"
           >
-            <div className="h-7 flex items-center justify-center">
+            <div className="h-8 w-8 flex items-center justify-center">
               {item.icon && typeof item.icon === "string" ? (
                 <img
                   src={
@@ -35,7 +38,7 @@ const AccessoryBar = ({ title, data }) => {
                 </div>
               )}
             </div>
-            <span className="font-bold text-gray-700 whitespace-nowrap group-hover:text-blue-600 transition-colors">
+            <span className="font-medium text-[11px] sm:text-xs text-gray-700 text-center leading-tight whitespace-normal group-hover:text-[#4A44F2] transition-colors">
               {item.label || item.name}
             </span>
           </Link>

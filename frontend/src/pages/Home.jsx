@@ -33,12 +33,14 @@ function Home() {
       <Header />
       <Toaster position="bottom-center" />
 
-      <main className="flex-grow w-full max-w-[1280px] mx-auto px-4 mt-3 mb-10">
+      <main className="flex-grow w-full max-w-[1280px] mx-auto px-2 sm:px-4 mt-2 sm:mt-3 mb-4 sm:mb-10 pb-16 md:pb-0">
         {/* TẦNG 1: Sidebar + Hero Slideshow */}
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="w-full lg:w-1/4 xl:w-1/5">
+          {/* SidebarMenu chỉ hiện trên desktop lg+ */}
+          <div className="hidden lg:block w-full lg:w-1/4 xl:w-1/5">
             <SidebarMenu />
           </div>
+          {/* HeroBanner full-width trên mobile/tablet */}
           <div className="w-full lg:w-3/4 xl:w-4/5">
             <HeroBanner />
           </div>
