@@ -219,23 +219,23 @@ const Checkout = () => {
       <Header />
       <Toaster position="top-center" />
 
-      <main className="container mx-auto p-4 max-w-6xl mt-2 mb-12">
-        <h1 className="text-3xl font-bold text-gray-800 mb-3">
+      <main className="container mx-auto px-3 sm:px-4 py-3 max-w-6xl mt-1 mb-4 sm:mb-12 pb-16 md:pb-0">
+        <h1 className="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-3">
           Thanh toán đơn hàng
         </h1>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6">
           {/* ================= CỘT TRÁI: THÔNG TIN ================= */}
-          <div className="w-full lg:w-2/3 flex flex-col gap-6">
+          <div className="w-full lg:w-2/3 flex flex-col gap-3 lg:gap-6">
             {/* 1. THÔNG TIN NHẬN HÀNG */}
-            <div className="bg-white rounded-lg shadow-sm px-6 py-4">
+            <div className="bg-white rounded-lg shadow-sm px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex justify-between items-center mb-1">
                 <h2 className="text-lg font-medium text-gray-800">
                   Thông tin nhận hàng
                 </h2>
                 <button
                   onClick={() => setIsAddressModalOpen(true)}
-                  className="text-blue-600 text-xs font-medium hover:underline hover:underline cursor-pointer"
+                  className="text-blue-600 text-xs font-medium hover:underline hover:underline cursor-pointer whitespace-nowrap"
                 >
                   Thay đổi
                 </button>
@@ -266,7 +266,7 @@ const Checkout = () => {
               )}
             </div>
             {/* 2. KIỂM TRA SẢN PHẨM  */}
-            <div className="bg-white rounded-lg shadow-sm px-6 pt-3 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm px-4 pt-3 sm:px-6 border border-gray-100">
               <h2 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
                 Danh sách sản phẩm
               </h2>
@@ -305,7 +305,7 @@ const Checkout = () => {
               </div>
             </div>
             {/* 2. VẬN CHUYỂN */}
-            <div className="bg-white rounded-lg shadow-sm px-6 pt-3">
+            <div className="bg-white rounded-lg shadow-sm px-4 pt-3 sm:px-6">
               <h2 className="text-lg font-medium text-gray-800 mb-4">
                 Phương thức vận chuyển
               </h2>
@@ -341,7 +341,7 @@ const Checkout = () => {
             </div>
 
             {/* 3. PHƯƠNG THỨC THANH TOÁN */}
-            <div className="bg-white rounded-lg shadow-sm px-6 py-4 border border-gray-100">
+            <div className="bg-white rounded-lg shadow-sm px-3 py-2 sm:px-6 sm:py-4 border border-gray-100 whitespace-nowrap">
               <h2 className="text-lg font-medium mb-4 text-gray-800">
                 Phương thức thanh toán
               </h2>
@@ -367,7 +367,7 @@ const Checkout = () => {
 
                   {/* Khối chứa Tên và Ghi chú */}
                   <div>
-                    <p className="font-bold text-gray-800 text-base">
+                    <p className="font-bold text-gray-800 text-base text-[15px]">
                       {paymentMethod?.ten_phuong_thuc ||
                         "Chọn phương thức thanh toán"}
                     </p>
@@ -381,14 +381,14 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <button className="text-blue-600 font-bold text-sm cursor-pointer hover:underline">
+                <button className="text-blue-600 font-bold text-sm cursor-pointer hover:underline whitespace-nowrap">
                   Thay đổi
                 </button>
               </div>
             </div>
 
             {/* CÁC CHECKBOX TIỆN ÍCH */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100 space-y-4">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100 space-y-3 sm:space-y-4">
               <label className="flex items-center font-medium gap-3 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
@@ -453,7 +453,7 @@ const Checkout = () => {
 
           {/* ================= CỘT PHẢI: TÓM TẮT ĐƠN HÀNG ================= */}
           <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-30">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 sticky top-30">
               <h2 className="text-xl font-bold font-inter text-gray-800">
                 Chi tiết thanh toán
               </h2>
