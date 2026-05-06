@@ -308,6 +308,18 @@ const Order = () => {
     documentTitle: `HoaDon_${selectedOrderForPrint?.id || "LTL_Store"} `,
   });
 
+  const [shouldPrint, setShouldPrint] = useState(false);
+
+  React.useEffect(() => {
+    if (shouldPrint && selectedOrderForPrint) {
+      const timer = setTimeout(() => {
+        handlePrint();
+        setShouldPrint(false);
+      }, 900);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldPrint, selectedOrderForPrint]);
+
   return (
     <div className="flex w-full h-full bg-[#f0f2f5] overflow-hidden justify-center relative font-sans">
       <div className="flex w-full max-w-[1536px] h-full p-4 lg:p-6 gap-4 lg:gap-4">
@@ -866,7 +878,7 @@ const Order = () => {
                                   <button
                                     onClick={() => {
                                       setSelectedOrderForPrint(order);
-                                      setTimeout(() => handlePrint(), 150);
+                                      setShouldPrint(true);
                                     }}
                                     className="w-full py-2.5 bg-gray-50 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors mt-auto cursor-pointer"
                                   >
@@ -1056,9 +1068,11 @@ const Order = () => {
           {toast.message}
         </div>
       )}
-      <div className="absolute left-[-9999px] top-[-9999px]">
-        <InvoiceTemplate ref={componentRef} order={selectedOrderForPrint} />
-      </div>
+      {selectedOrderForPrint && (
+        <div className="absolute left-[-9999px] top-[-9999px]">
+          <InvoiceTemplate ref={componentRef} order={selectedOrderForPrint} />
+        </div>
+      )}
     </div>
   );
 };

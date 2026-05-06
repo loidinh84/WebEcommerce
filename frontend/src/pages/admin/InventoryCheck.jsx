@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/api";
 import * as Icons from "../../assets/icons/index";
 import ConfirmModal from "./ConfirmModal";
+import { useReactToPrint } from "react-to-print";
+import DynamicPrintTemplate from "../../components/DynamicPrintTemplate";
 
 const STATUS_MAP = {
   balanced: { label: "Đã cân bằng kho", color: "bg-green-100 text-green-700 border-green-200" },
@@ -36,6 +38,8 @@ const InventoryCheck = () => {
   const [expandedDetail, setExpandedDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [page, setPage] = useState(1);
+  const [storeInfo, setStoreInfo] = useState(null);
+  const printRef = React.useRef();
   const LIMIT = 20;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,6 +77,18 @@ const InventoryCheck = () => {
 
   useEffect(() => { fetchData(1); setPage(1); }, [fetchData]);
 
+  // Fetch store info for printing
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const res = await fetch(`${BASE_URL}/api/store-settings`, { headers: { Authorization: `Bearer ${token}` } });
+        setStoreInfo(await res.json());
+      } catch {}
+    };
+    fetchStore();
+  }, []);
+
   // ── Fetch detail ────────────────────────────────────────────────────────
   const handleToggleRow = async (id) => {
     if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); return; }
@@ -100,6 +116,30 @@ const InventoryCheck = () => {
       if (expandedId === confirmModal.checkId) { setExpandedId(null); setExpandedDetail(null); }
     } catch { showToast("Lỗi khi hủy phiếu!", "error"); }
     setConfirmModal({ isOpen: false, checkId: null });
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `PhieuKiem_${expandedDetail?.ma_phieu || ""}`,
+  });
+
+  const preparePrintData = () => {
+    if (!expandedDetail) return null;
+    return {
+      TEN_CUA_HANG: storeInfo?.ten_cua_hang || "Tên Cửa Hàng",
+      DIA_CHI: storeInfo?.dia_chi || "Địa chỉ cửa hàng",
+      SDT: storeInfo?.so_dien_thoai || "Số điện thoại",
+      MA_PHIEU_KK: expandedDetail.ma_phieu,
+      NGAY_KIEM: new Date(expandedDetail.created_at).toLocaleString("vi-VN"),
+      NGUOI_KIEM: expandedDetail.nguoi_tao_tk?.ho_ten || "Admin",
+      GHI_CHU: expandedDetail.ghi_chu || "—",
+      items: expandedDetail.chi_tiet?.map(ct => ({
+        TEN_SP: (ct.bien_the?.san_pham?.ten_san_pham || "") + (ct.bien_the?.mau_sac ? ` / ${ct.bien_the.mau_sac}` : ""),
+        SL_HE_THONG: ct.so_luong_he_thong,
+        SL_THUC_TE: ct.so_luong_thuc_te,
+        CHENH_LECH: ct.so_luong_thuc_te - ct.so_luong_he_thong
+      })) || []
+    };
   };
 
   const hasFilter = filterStatus !== "all" || filterDateFrom || filterDateTo || searchTerm;
@@ -268,6 +308,10 @@ const InventoryCheck = () => {
                                           <Icons.Delete className="w-4 h-4" /> Hủy phiếu
                                         </button>
                                       )}
+                                      <button onClick={handlePrint}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold cursor-pointer transition flex items-center gap-1.5">
+                                        In phiếu kiểm
+                                      </button>
                                     </div>
                                     <div className="text-sm space-y-1 min-w-[220px]">
                                       <div className="flex justify-between"><span className="text-gray-400">Lệch tăng:</span><span className="text-green-600 font-bold">+{expandedDetail.lenh_tang}</span></div>
@@ -337,6 +381,13 @@ const InventoryCheck = () => {
           {toast.message}
         </div>
       )}
+      <div style={{ display: "none" }}>
+        <DynamicPrintTemplate 
+          ref={printRef} 
+          templateCode="CHECK_REPORT" 
+          data={preparePrintData()} 
+        />
+      </div>
     </div>
   );
 };

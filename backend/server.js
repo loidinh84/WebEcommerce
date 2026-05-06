@@ -23,6 +23,7 @@ const danhGiaCuaHangRoutes = require("./routers/danhGiaCuaHangRoutes");
 const KhuyenMaiRoutes = require("./routers/KhuyenMaiRoutes");
 const PhieuNhapRoutes = require("./routers/phieuNhapRoutes");
 const PhieuKiemKhoRoutes = require("./routers/phieuKiemKhoRoutes");
+const MauInRoutes = require("./routers/mauInRoutes");
 const maintenanceMiddleware = require("./middlewares/maintenanceMiddleware");
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/danh-gia-shop", danhGiaCuaHangRoutes);
 app.use("/api/khuyenMai", KhuyenMaiRoutes);
 app.use("/api/phieu-nhap", PhieuNhapRoutes);
 app.use("/api/kiem-kho", PhieuKiemKhoRoutes);
+app.use("/api/mau-in", MauInRoutes);
 
 const PORT = process.env.PORT || 5000;
 sequelize

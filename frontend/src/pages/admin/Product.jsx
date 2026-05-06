@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import BASE_URL from "../../config/api";
 import * as Icons from "../../assets/icons/index";
 
+
 const getAuthHeader = () => {
   const token =
     localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -115,6 +116,7 @@ const Product = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [editingSupplier, setEditingSupplier] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -523,6 +525,7 @@ const Product = () => {
     if (!activeDetailTab[id])
       setActiveDetailTab((prev) => ({ ...prev, [id]: "info" }));
   };
+
 
   const handleEditClick = async (product) => {
     setUploadedFiles([]);
@@ -1455,6 +1458,7 @@ const Product = () => {
         onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={executeConfirmAction}
       />
+
     </div>
   );
 };

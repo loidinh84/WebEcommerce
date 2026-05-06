@@ -34,6 +34,7 @@ import SearchPage from "./pages/SearchPage";
 import Profile from "./pages/admin/Profile";
 import AuthPromptModal from "./components/AuthPromptModal";
 import ComparePage from "./pages/ComparePage";
+import PrintTemplateBuilder from "./pages/admin/PrintTemplateBuilder";
 
 import ContactSupport from "./components/ContactSupport";
 const API_URL = BASE_URL;
@@ -101,6 +102,7 @@ function App() {
             <Route path="home-settings" element={<HomeSettings />} />
             <Route path="vouchers" element={<VoucherManagement />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="settings/templates" element={<PrintTemplateBuilder />} />
           </Route>
         </Route>
       </Routes>

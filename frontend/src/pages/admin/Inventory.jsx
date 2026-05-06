@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/api";
+import { useReactToPrint } from "react-to-print";
+import DynamicPrintTemplate from "../../components/DynamicPrintTemplate";
 
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n || 0);
 
@@ -30,6 +32,8 @@ const Inventory = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [expandedDetail, setExpandedDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [storeInfo, setStoreInfo] = useState(null);
+  const printRef = React.useRef();
 
   // Filters
   const [searchMa, setSearchMa] = useState("");
@@ -81,6 +85,18 @@ const Inventory = () => {
   useEffect(() => { fetchData(1); setPage(1); }, [searchMa, searchHang, searchNcc, statusFilters, timeFilter, ngayTu, ngayDen]);
   useEffect(() => { fetchData(page); }, [page]);
 
+  // Fetch store info for printing
+  useEffect(() => {
+    const fetchStore = async () => {
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const res = await fetch(`${BASE_URL}/api/store-settings`, { headers: { Authorization: `Bearer ${token}` } });
+        setStoreInfo(await res.json());
+      } catch {}
+    };
+    fetchStore();
+  }, []);
+
   // ── Fetch detail ───────────────────────────────────────
   const handleToggleRow = async (id) => {
     if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); return; }
@@ -111,6 +127,34 @@ const Inventory = () => {
       fetchData(page);
       if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); }
     } catch { alert("Lỗi khi hủy phiếu!"); }
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `PhieuNhap_${expandedDetail?.ma_phieu || ""}`,
+  });
+
+  const preparePrintData = () => {
+    if (!expandedDetail) return null;
+    return {
+      TEN_CUA_HANG: storeInfo?.ten_cua_hang || "Tên Cửa Hàng",
+      DIA_CHI: storeInfo?.dia_chi || "Địa chỉ cửa hàng",
+      SDT: storeInfo?.so_dien_thoai || "Số điện thoại",
+      MA_PHIEU_NHAP: expandedDetail.ma_phieu,
+      NGAY_NHAP: new Date(expandedDetail.created_at).toLocaleString("vi-VN"),
+      NHA_CUNG_CAP: expandedDetail.nha_cung_cap?.ten_nha_cc || "—",
+      GHI_CHU: expandedDetail.ghi_chu || "—",
+      TONG_TIEN_HANG: fmt(expandedDetail.tong_tien + Number(expandedDetail.giam_gia)) + " đ",
+      GIAM_GIA_PHIEU: fmt(expandedDetail.giam_gia) + " đ",
+      CAN_TRA_NCC: fmt(expandedDetail.tong_tien) + " đ",
+      items: expandedDetail.chi_tiet?.map(ct => ({
+        SKU: ct.bien_the?.sku || ct.bien_the_id,
+        TEN_HANG: (ct.bien_the?.san_pham?.ten_san_pham || "") + (ct.bien_the?.mau_sac ? ` / ${ct.bien_the.mau_sac}` : ""),
+        SL: ct.so_luong,
+        DON_GIA_NHAP: fmt(ct.don_gia_nhap),
+        THANH_TIEN: fmt(ct.so_luong * ct.don_gia_nhap - (ct.giam_gia || 0))
+      })) || []
+    };
   };
 
   // ── Status filter toggle ───────────────────────────────
@@ -329,6 +373,10 @@ const Inventory = () => {
                                           Hủy phiếu
                                         </button>
                                       )}
+                                      <button onClick={handlePrint}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold cursor-pointer transition flex items-center gap-1.5">
+                                        In phiếu nhập
+                                      </button>
                                     </div>
                                     <div className="text-sm space-y-1 min-w-[240px]">
                                       <div className="flex justify-between">
@@ -386,6 +434,13 @@ const Inventory = () => {
             )}
           </div>
         </div>
+      </div>
+      <div style={{ display: "none" }}>
+        <DynamicPrintTemplate 
+          ref={printRef} 
+          templateCode="IMPORT_RECEIPT" 
+          data={preparePrintData()} 
+        />
       </div>
     </div>
   );

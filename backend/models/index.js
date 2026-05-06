@@ -19,6 +19,7 @@ const PhieuNhapHang = require("./PhieuNhapHang");
 const ChiTietPhieuNhap = require("./ChiTietPhieuNhap");
 const PhieuKiemKho = require("./PhieuKiemKho");
 const ChiTietKiemKho = require("./ChiTietKiemKho");
+const MauIn = require("./MauIn");
 
 const DanhGiaSanPham = require("./DanhGiaSanPham");
 const DanhGiaCuaHang = require("./DanhGiaCuaHang");
@@ -186,5 +187,6 @@ module.exports = {
   PhieuKiemKho,
   ChiTietKiemKho,
   ThichDanhGia,
+  MauIn,
 };
 
