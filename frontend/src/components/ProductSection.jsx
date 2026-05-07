@@ -113,8 +113,8 @@ const ProductSection = ({
     <div className="w-full mt-2 sm:mt-4 group/section">
       <div className="w-full mx-auto flex flex-col bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 p-4 lg:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]">
         {/* 1. Header: Tab & View All */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 mb-2 gap-4">
-          <div className="flex gap-2">
+        <div className="flex items-center justify-between border-b border-gray-100 mb-2 gap-2">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {[
               { label: tab1, id: danhMucId1 },
               { label: tab2, id: danhMucId2 },
@@ -124,7 +124,7 @@ const ProductSection = ({
                 <button
                   key={i}
                   onClick={() => handleTabChange(i)}
-                  className={`relative px-3 sm:px-6 py-1 text-base sm:text-lg font-medium cursor-pointer transition-all duration-300 ${
+                  className={`whitespace-nowrap flex-shrink-0 relative px-3 sm:px-6 py-1 text-base sm:text-lg font-medium cursor-pointer transition-all duration-300 ${
                     activeTab === i
                       ? "text-[#4A44F2]"
                       : "text-gray-400 hover:text-gray-600"
@@ -144,7 +144,7 @@ const ProductSection = ({
 
           <Link
             to={viewAllLink || dynamicViewAllLink}
-            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-[#4A44F2] transition-colors group/all pr-1 hover:underline"
+            className="flex-shrink-0 whitespace-nowrap flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-[#4A44F2] transition-colors group/all pr-1 hover:underline"
           >
             Xem tất cả
           </Link>
@@ -152,10 +152,10 @@ const ProductSection = ({
 
         {/* 2. Brand Filters — cuộn ngang trên mobile */}
         {filtersToDisplay && filtersToDisplay.length > 0 && (
-          <div className="flex gap-2 mb-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mb-2 md:mb-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
             <button
               onClick={() => setActiveFilter(null)}
-              className={`rounded-xl px-4.5 py-1 text-sm font-medium transition-all duration-300 border cursor-pointer ${
+              className={`flex-shrink-0 whitespace-nowrap rounded-xl px-4 py-1 text-sm font-medium transition-all duration-300 border cursor-pointer ${
                 activeFilter === null
                   ? "bg-[#4A44F2] text-white border-[#4A44F2] shadow-[0_4px_12px_rgba(74,68,242,0.25)]"
                   : "bg-gray-50 border-gray-100 text-gray-600 hover:border-[#4A44F2] hover:text-[#4A44F2] hover:bg-white"
@@ -167,7 +167,7 @@ const ProductSection = ({
               <button
                 key={i}
                 onClick={() => setActiveFilter(i)}
-                className={`rounded-xl px-4.5 py-1 text-sm font-medium transition-all duration-300 border cursor-pointer ${
+                className={`flex-shrink-0 whitespace-nowrap rounded-xl px-4 py-1 text-sm font-medium transition-all duration-300 border cursor-pointer ${
                   activeFilter === i
                     ? "bg-[#4A44F2] text-white border-[#4A44F2] shadow-[0_4px_12px_rgba(74,68,242,0.25)]"
                     : "bg-gray-50 border-gray-100 text-gray-600 hover:border-[#4A44F2] hover:text-[#4A44F2] hover:bg-white"
