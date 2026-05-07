@@ -93,9 +93,9 @@ const Login = () => {
     <div className="bg-[#F3F4F6] min-h-screen flex flex-col font-sans">
       <Header />
       <Toaster position="top-center" />
-      <main className="flex-grow flex flex-col items-center justify-end p-4 pt-12 pb-8">
-        <div className="max-w-[600px] w-full bg-white shadow-sm border border-gray-100 p-12">
-          <h2 className="text-center text-3xl font-bold uppercase mb-10 text-gray-800 tracking-tight">
+      <main className="flex-grow flex flex-col items-center justify-end p-4 pt-12 pb-24 lg:pb-8">
+        <div className="max-w-[600px] w-full bg-white shadow-sm border border-gray-100 p-6 sm:p-8 md:p-12">
+          <h2 className="text-center text-2xl sm:text-3xl font-bold uppercase mb-8 sm:mb-10 text-gray-800 tracking-tight">
             Đăng nhập tài khoản
           </h2>
 
