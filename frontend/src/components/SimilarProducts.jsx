@@ -27,9 +27,7 @@ const SimilarProducts = ({ products, user }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-medium text-gray-800">
-          Sản phẩm tương tự
-        </h2>
+        <h2 className="text-lg font-medium text-gray-800">Sản phẩm tương tự</h2>
       </div>
 
       <Swiper
@@ -86,7 +84,7 @@ const SimilarProducts = ({ products, user }) => {
                 {/* Ảnh */}
                 <div className="relative bg-gray-50 p-3 flex items-center justify-center h-[160px]">
                   {discount > 0 && (
-                    <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-medium px-1.5 py-0.5 rounded z-10">
+                    <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-medium px-1.5 py-0.5 rounded z-10">
                       -{discount}%
                     </span>
                   )}

@@ -35,7 +35,7 @@ import Profile from "./pages/admin/Profile";
 import AuthPromptModal from "./components/AuthPromptModal";
 import ComparePage from "./pages/ComparePage";
 import PrintTemplateBuilder from "./pages/admin/PrintTemplateBuilder";
-
+import ScrollToTopButton from "./components/ScrollToTopButton";
 import ContactSupport from "./components/ContactSupport";
 const API_URL = BASE_URL;
 
@@ -69,6 +69,7 @@ function App() {
     <>
       <AuthPromptModal />
       {!isAdminPath && <ContactSupport />}
+      {!isAdminPath && <ScrollToTopButton />}
       <Routes>
         {/* Nhánh khách hàng */}
         <Route path="/" element={<Home />} />

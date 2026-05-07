@@ -230,7 +230,6 @@ const ProductDetail = () => {
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [showTopBtn, setShowTopBtn] = useState(false);
 
   // 4. Quản lý Form Đánh giá
   const [userRating, setUserRating] = useState(0);
@@ -383,14 +382,7 @@ const ProductDetail = () => {
     }
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 400) setShowTopBtn(true);
-      else setShowTopBtn(false);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN").format(price) + "đ";
@@ -402,9 +394,7 @@ const ProductDetail = () => {
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+
 
   const handleSubmitReview = async () => {
     if (!user) {
@@ -1295,15 +1285,7 @@ const ProductDetail = () => {
 
       <Footer />
 
-      {/* Nút Lên đầu trang */}
-      {showTopBtn && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-36 md:bottom-8 right-8 z-[100] w-12 h-12 bg-gray-800 text-white rounded-full text-2xl shadow-xl hover:bg-red-600 transition-colors cursor-pointer"
-        >
-          ↑
-        </button>
-      )}
+
 
       {/* ================= MODAL CHIA SẺ ================= */}
       {isShareModalOpen && (

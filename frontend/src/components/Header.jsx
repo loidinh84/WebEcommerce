@@ -275,7 +275,16 @@ const Header = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 ml-auto">
-              <span className="cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90 transition-colors whitespace-nowrap">
+              <span
+                onClick={() => {
+                  if (user) {
+                    navigate('/profile', { state: { activeTab: 'orders' } });
+                  } else {
+                    navigate('/login');
+                  }
+                }}
+                className="cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90 transition-colors whitespace-nowrap"
+              >
                 <Icons.Bill className="w-4 h-4 brightness-0 invert" />
                 Tra cứu đơn hàng
               </span>
