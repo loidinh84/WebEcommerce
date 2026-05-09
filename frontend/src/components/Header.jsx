@@ -334,7 +334,15 @@ const Header = () => {
         <div className="w-full bg-[#4A44F2] border-b border-white/10">
           <div className="w-full max-w-7xl mx-auto px-4 pt-2 pb-1 md:py-2 flex items-center justify-between gap-3 md:gap-6">
             <div className="flex md:hidden items-center justify-between w-full gap-2">
-              <Link to="/" className="shrink-0">
+              <Link
+                to="/"
+                className="shrink-0"
+                onClick={() => {
+                  setShowCategories(false);
+                  setSearchTerm("");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
                 <img
                   src={
                     storeConfig?.logo_url
@@ -374,7 +382,15 @@ const Header = () => {
             </div>
 
             <div className="hidden md:flex items-center justify-between w-full gap-6">
-              <Link to="/" className="shrink-0">
+              <Link
+                to="/"
+                className="shrink-0"
+                onClick={() => {
+                  setShowCategories(false);
+                  setSearchTerm("");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
                 <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full hover:bg-white/20 transition">
                   <img
                     src={

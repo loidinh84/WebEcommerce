@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const SanPham = require("../models/SanPham");
+const BienTheSanPham = require("../models/BienTheSanPham");
 const ChatHistory = require("../models/ChatHistory");
 
 exports.getChatHistory = async (req, res) => {
@@ -29,18 +30,18 @@ exports.chatWithAI = async (req, res) => {
 
     // Lệnh tối cao (Kỷ luật thép)
     const systemInstruction = `
-      Bạn là nhân viên CSKH của LTLShop. Ngày ${new Date().toLocaleDateString("vi-VN")}để treck thông tin sản phẩm mới nhất hiện tại, không càn nói ngày tháng ra đâu.
-      Danh sách sản phẩm: [${chuoiSanPham}].
-
-      KỶ LUẬT BẮT BUỘC PHẢI TUÂN THỦ:
-      1. KHI KHÁCH CHỈ CHÀO HỎI (Vd: "hi", "hello", "alo", "chào", "y"): BẠN CHỈ ĐƯỢC CHÀO LẠI VÀ HỎI HỌ CẦN GIÚP GÌ. TUYỆT ĐỐI CẤM TỰ Ý NHẮC ĐẾN HOẶC GỢI Ý BẤT KỲ TÊN SẢN PHẨM NÀO.
-      2. Chỉ tư vấn thông tin khi khách HỎI ĐÍCH DANH sản phẩm đó hoặc nhờ tư vấn theo nhu cầu.
-      3. Nếu khách hỏi giá, đáp: "Giá đang được cập nhật, vui lòng liên hệ hotline".
-      4. Trả lời ngắn gọn, lịch sự.
+      Bạn là Chuyên gia tư vấn cao cấp của LTLShop, có kiến thức sâu rộng về phần cứng máy tính và Gaming Gear.
+      
+      PHONG CÁCH TƯ VẤN:
+      1. Nhiệt tình, chuyên nghiệp, luôn đặt lợi ích của khách hàng lên hàng đầu.
+      2. Biết khen ngợi những lựa chọn thông minh của khách.
+      3. Khi khách chào hỏi, hãy chào lại thật nồng nhiệt và giới thiệu các chương trình khuyến mãi hiện có.
+      4. Nếu khách hỏi giá, hãy tư vấn khoảng giá thị trường và mời khách liên hệ Hotline để có giá ưu đãi nhất.
+      5. HỖ TRỢ TOÀN DIỆN: Bạn tư vấn được tất cả từ linh kiện PC cho đến Màn hình, Bàn phím, Chuột, Tai nghe, và cả Ghế Gaming.
     `;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-2.5-flash",
       systemInstruction: systemInstruction,
     });
 
@@ -65,8 +66,11 @@ exports.chatWithAI = async (req, res) => {
 
     res.status(200).json({ reply: botReply });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ reply: "Xin lỗi tôi đang lag!" });
+    console.error("Lỗi Gemini Chat:", error);
+    const errorMsg = error.status === 503 
+      ? "Hệ thống AI đang quá tải, bạn vui lòng đợi 1 phút rồi thử lại nhé!" 
+      : "Rất tiếc, AI đang gặp chút sự cố kỹ thuật!";
+    res.status(200).json({ reply: errorMsg });
   }
 };
 
@@ -74,64 +78,63 @@ exports.buildPcWithAI = async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     const genAI = new GoogleGenerativeAI(apiKey);
-    const { message } = req.body;
+    const { message, currentBuild } = req.body;
+    
+    // Chuyển build hiện tại sang text để AI đọc
+    const buildText = currentBuild ? Object.entries(currentBuild)
+      .filter(([_, val]) => val !== null)
+      .map(([key, val]) => `- ${key.toUpperCase()}: ${val.name} (${val.price}đ)`)
+      .join("\n") : "Chưa chọn gì";
 
     // 1. CHỈ LẤY SẢN PHẨM ĐANG BÁN
-    // (Lưu ý: Thuộc hạ đang giả sử cột trạng thái bán trong DB của ông chủ là 'trang_thai: 1' hoặc 'so_luong > 0'. Ông chủ nhớ đổi tên cột này cho đúng với DB thực tế nhé!)
     const listSP = await SanPham.findAll({
       where: {
-        trang_thai: 1, // Chỉ lấy hàng đang bán (Ông chủ sửa lại điều kiện này cho khớp DB)
+        trang_thai: "active",
       },
-      limit: 150, // Tăng limit lên để AI có nhiều "đồ chơi" cân đo đong đếm hơn
+      include: [{ model: BienTheSanPham, as: "bien_the" }],
+      limit: 150,
     });
 
     const khoHang = listSP.map((sp) => ({
       ten: sp.ten_san_pham,
-      gia: sp.gia,
-      anh: sp.hinh_anh || "https://via.placeholder.com/80",
+      gia: sp.bien_the?.[0]?.gia_ban || 0,
+      anh: sp.hinh_anh || "https://placehold.co/80",
     }));
 
     // 2. PROMPT CHUYÊN BIỆT: ÉP CHIA NGÂN SÁCH VÀ NHIỀU LỰA CHỌN
     const systemInstruction = `
-      Bạn là AI Kỹ Thuật của Shop, TRÁCH NHIỆM DUY NHẤT LÀ TƯ VẤN RÁP MÁY TÍNH ĐỂ BÀN (DESKTOP PC).
+      Bạn là Chuyên gia Build PC & Gaming Setup chuyên nghiệp. Nhiệm vụ của bạn là giúp khách hàng sở hữu dàn máy mơ ước.
+      
+      QUY TẮC TƯ VẤN CAO CẤP:
+      1. CẤU HÌNH HIỆN TẠI:
+      ${buildText}
+      => Hãy phân tích cấu hình này, khen ngợi nếu nó hợp lý hoặc cảnh báo nếu có sự mất cân đối. Đừng hỏi lại những gì khách đã chọn.
+
+      2. PHẠM VI TƯ VẤN RỘNG: Bạn hỗ trợ trọn gói 21 món linh kiện. TUYỆT ĐỐI KHÔNG ĐƯỢC TỪ CHỐI tư vấn bất kỳ món nào trong danh sách 21 món (đặc biệt là Chuột, Bàn phím, Màn hình, Ghế). Nếu khách hỏi, bạn BẮT BUỘC phải đưa ra gợi ý từ kho hàng.
+      3. TƯ DUY TỐI ƯU: Nếu khách có ngân sách cụ thể, hãy phân bổ tiền cực kỳ thông minh giữa hiệu năng (CPU/VGA) và thẩm mỹ (Case/Fan/Gear).
+      4. ĐA DẠNG LỰA CHỌN: Mỗi món cần đề xuất 3-4 phương án (Giá rẻ - Hiệu năng - Cao cấp) để khách dễ chọn.
+
       KHO HÀNG HIỆN CÓ: ${JSON.stringify(khoHang)}.
       
-      QUY TẮC BÁN HÀNG TỐI THƯỢNG:
-      1. TUYỆT ĐỐI KHÔNG tư vấn LAPTOP, MÀN HÌNH, CHUỘT, BÀN PHÍM. Chỉ tư vấn linh kiện PC (CPU, Mainboard, RAM, VGA, SSD, PSU, Case).
-      2. NGHIỆP VỤ KẾ TOÁN (RẤT QUAN TRỌNG): Khi khách hàng nói ra tổng ngân sách (Ví dụ: 15 triệu, 20 triệu), BẠN PHẢI TỰ ĐỘNG PHÂN BỔ TỶ LỆ TIỀN cho 7 món linh kiện sao cho hợp lý (VD: VGA chiếm khoảng 30-40%, CPU chiếm 20% tổng ngân sách...). CÁC ĐỀ XUẤT CỦA BẠN PHẢI NẰM ĐÚNG TRONG PHẦN NGÂN SÁCH ĐÃ CHIA, tuyệt đối không tư vấn 1 món linh kiện quá đắt làm lố tổng tiền của khách.
-      3. MỖI LẦN TƯ VẤN MỘT LOẠI LINH KIỆN, BẠN BẮT BUỘC PHẢI ĐỀ XUẤT ÍT NHẤT 3 ĐẾN 4 LỰA CHỌN KHÁC NHAU (nằm trong tầm tiền vừa phân bổ) để khách hàng so sánh.
-
-      BẮT BUỘC TRẢ VỀ CHUẨN JSON NHƯ SAU:
+      BẮT BUỘC TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON NHƯ SAU, KHÔNG CÓ BẤT KỲ VĂN BẢN NÀO KHÁC BÊN NGOÀI JSON:
       {
-        "text": "Lời tư vấn ráp máy (VD: Với ngân sách 15 triệu của bạn, mình sẽ trích khoảng 3 triệu cho CPU. Dưới đây là 3 mẫu CPU ngon nhất trong khoảng giá này để bạn chọn...)",
+        "text": "Lời tư vấn ráp máy (Ngắn gọn, chuyên nghiệp, nhiệt tình)",
         "options": [
           {
             "type": "cpu", 
-            "name": "Tên linh kiện số 1",
+            "name": "Tên linh kiện từ KHO HÀNG",
             "price": 1000000,
-            "image": "Link ảnh",
-            "desc": "Ưu điểm của con này là giá rẻ..."
-          },
-          {
-            "type": "cpu", 
-            "name": "Tên linh kiện số 2",
-            "price": 1500000,
-            "image": "Link ảnh",
-            "desc": "Hiệu năng cân bằng, rất đáng tiền..."
-          },
-          {
-            "type": "cpu", 
-            "name": "Tên linh kiện số 3",
-            "price": 2500000,
-            "image": "Link ảnh",
-            "desc": "Con quái vật hiệu năng trong phân khúc..."
+            "image": "Link ảnh từ KHO HÀNG",
+            "desc": "Ưu điểm ngắn gọn"
           }
         ]
       }
+      
+      LƯU Ý: Nếu khách hàng chưa chọn xong các linh kiện trước đó (CPU, Mainboard...), hãy nhắc nhở họ chọn các bước quan trọng đó trước để có thể tư vấn PSU/VGA chính xác nhất.
     `;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.1-flash-lite-preview",
+      model: "gemini-2.5-flash",
       systemInstruction: systemInstruction,
     });
 
@@ -141,21 +144,28 @@ exports.buildPcWithAI = async (req, res) => {
 
     let botResponseData;
     try {
-      const cleanJson = rawReply
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
+      // Bug Fix: Sử dụng regex không tham lam để chỉ lấy khối JSON ĐẦU TIÊN
+      const jsonMatch = rawReply.match(/\{[\s\S]*?\}/); 
+      let cleanJson = jsonMatch ? jsonMatch[0] : rawReply;
+      
       botResponseData = JSON.parse(cleanJson);
     } catch (e) {
-      botResponseData = { text: rawReply, options: [] };
+      console.error("Lỗi parse JSON AI:", e.message);
+      // Fallback: Tuyệt đối không để trả về lỗi 500
+      const textOnly = rawReply.replace(/\{[\s\S]*\}/g, "").split("{")[0].trim();
+      botResponseData = { 
+        text: textOnly || "Mình đã tìm được những linh kiện tuyệt vời nhất cho bạn, cùng xem nhé!", 
+        options: [] 
+      };
     }
 
     res.status(200).json(botResponseData);
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ text: "Hệ thống Build PC đang bảo trì!", options: [] });
+    console.error("Lỗi Gemini Build PC:", error.message);
+    res.status(200).json({ 
+      text: "AI đang bận một chút, bạn nhấn gửi lại để mình tư vấn tiếp nhé!", 
+      options: [] 
+    });
   }
 };
 

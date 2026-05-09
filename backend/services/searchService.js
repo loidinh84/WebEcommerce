@@ -1,4 +1,5 @@
 const SanPham = require("../models/SanPham");
+const BienTheSanPham = require("../models/BienTheSanPham");
 const { Op } = require("sequelize");
 
 const MEILI_HOST = process.env.MEILI_HOST;
@@ -70,13 +71,24 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
     
     return result;
   } catch (error) {
-    console.error("Lỗi search bằng Meilisearch, chuyển sang SQL fallback:", error.message);
+    // console.warn("Meilisearch bận, dùng SQL fallback...");
     
     // Fallback sang SQL Search
     try {
       const whereCondition = { trang_thai: "active" };
+      
+      // Áp dụng từ khóa tìm kiếm
       if (query && query.trim() !== "") {
         whereCondition.ten_san_pham = { [Op.like]: `%${query}%` };
+      }
+      
+      // Áp dụng bộ lọc (ví dụ: danh_muc_id = 32)
+      if (filter) {
+        // filter thường có dạng "danh_muc_id = 32"
+        const match = filter.match(/danh_muc_id\s*=\s*(\d+)/);
+        if (match) {
+          whereCondition.danh_muc_id = match[1];
+        }
       }
       
       const sqlResults = await SanPham.findAll({
@@ -87,11 +99,31 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
           "mo_ta_ngan",
           "thuong_hieu",
           "slug",
+          "hinh_anh"
+        ],
+        include: [
+          {
+            model: BienTheSanPham,
+            as: "bien_the",
+            attributes: ["gia_ban", "ton_kho"],
+          },
         ],
         limit: limit,
       });
       
-      return { hits: sqlResults, estimatedTotalHits: sqlResults.length };
+      const hits = sqlResults.map((sp) => ({
+        id: sp.id,
+        ten_san_pham: sp.ten_san_pham,
+        mo_ta_ngan: sp.mo_ta_ngan,
+        thuong_hieu: sp.thuong_hieu,
+        slug: sp.slug,
+        hinh_anh: sp.hinh_anh,
+        gia_ban: sp.bien_the?.[0]?.gia_ban || 0,
+        ton_kho: sp.bien_the?.[0]?.ton_kho || 0,
+        bien_the: sp.bien_the,
+      }));
+
+      return { hits, estimatedTotalHits: hits.length };
     } catch (sqlError) {
       console.error("Lỗi SQL fallback:", sqlError.message);
       return { hits: [] };
