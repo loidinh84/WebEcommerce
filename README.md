@@ -77,7 +77,7 @@ WebEcommerce/
 Thành viên nhóm
 Họ tên              MSSV            Phụ trách
 Đinh Thành Lợi      2380601285      Backend
-                                    Frontend
+Vũ Thái Tài         2380601970      Frontend
                                     Database
 
 Lưu ý quan trọng
