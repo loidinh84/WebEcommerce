@@ -23,7 +23,7 @@ const syncDataToMeilisearch = async () => {
     console.log("Đang lấy dữ liệu từ SQL Server...");
     const products = await SanPham.findAll({
       where: { trang_thai: "active" },
-      raw: true,
+      include: [{ model: BienTheSanPham, as: "bien_the" }],
     });
 
     if (products.length === 0) {
@@ -31,12 +31,21 @@ const syncDataToMeilisearch = async () => {
       return;
     }
 
+    const dataToSync = products.map(sp => {
+      const plain = sp.get({ plain: true });
+      return {
+        ...plain,
+        gia_ban: sp.bien_the?.[0]?.gia_ban || 0,
+        ton_kho: sp.bien_the?.[0]?.ton_kho || 0,
+      };
+    });
+
     const result = await meiliRequest(
       "POST",
       "/indexes/san_pham/documents?primaryKey=id",
-      products,
+      dataToSync,
     );
-    console.log(`Đã đẩy ${products.length} sản phẩm!`, result);
+    console.log(`Đã đẩy ${dataToSync.length} sản phẩm!`, result);
 
     await meiliRequest("PATCH", "/indexes/san_pham/settings", {
       searchableAttributes: ["ten_san_pham", "mo_ta_ngan", "thuong_hieu"],
@@ -59,6 +68,8 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
         "mo_ta_ngan",
         "thuong_hieu",
         "slug",
+        "gia_ban",
+        "ton_kho",
       ],
     };
     if (filter) body.filter = filter;
@@ -84,44 +95,41 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
       
       // Áp dụng bộ lọc (ví dụ: danh_muc_id = 32)
       if (filter) {
-        // filter thường có dạng "danh_muc_id = 32"
-        const match = filter.match(/danh_muc_id\s*=\s*(\d+)/);
+        // filter thường có dạng "danh_muc_id IN (32,56)" hoặc "danh_muc_id = 32"
+        const match = filter.match(/danh_muc_id\s*(?:IN\s*\(([^)]+)\)|=\s*(\d+))/i);
         if (match) {
-          whereCondition.danh_muc_id = match[1];
+          const idsStr = match[1] || match[2];
+          whereCondition.danh_muc_id = {
+            [Op.in]: idsStr.split(",").map((id) => Number(id.trim())),
+          };
         }
       }
       
       const sqlResults = await SanPham.findAll({
         where: whereCondition,
-        attributes: [
-          "id",
-          "ten_san_pham",
-          "mo_ta_ngan",
-          "thuong_hieu",
-          "slug",
-          "hinh_anh"
-        ],
+        attributes: ["id", "ten_san_pham", "mo_ta_ngan", "thuong_hieu", "slug"],
         include: [
           {
-            model: BienTheSanPham,
+            model: require("../models/BienTheSanPham"),
             as: "bien_the",
             attributes: ["gia_ban", "ton_kho"],
+          },
+          {
+            model: require("../models/HinhAnhSanPham"),
+            as: "hinh_anh",
           },
         ],
         limit: limit,
       });
       
-      const hits = sqlResults.map((sp) => ({
-        id: sp.id,
-        ten_san_pham: sp.ten_san_pham,
-        mo_ta_ngan: sp.mo_ta_ngan,
-        thuong_hieu: sp.thuong_hieu,
-        slug: sp.slug,
-        hinh_anh: sp.hinh_anh,
-        gia_ban: sp.bien_the?.[0]?.gia_ban || 0,
-        ton_kho: sp.bien_the?.[0]?.ton_kho || 0,
-        bien_the: sp.bien_the,
-      }));
+      const hits = sqlResults.map((sp) => {
+        const item = sp.get({ plain: true });
+        return {
+          ...item,
+          gia_ban: item.bien_the && item.bien_the.length > 0 ? Number(item.bien_the[0].gia_ban) : 0,
+          ton_kho: item.bien_the && item.bien_the.length > 0 ? Number(item.bien_the[0].ton_kho) : 0,
+        };
+      });
 
       return { hits, estimatedTotalHits: hits.length };
     } catch (sqlError) {

@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const SanPham = require("../models/SanPham");
 const BienTheSanPham = require("../models/BienTheSanPham");
+const HinhAnhSanPham = require("../models/HinhAnhSanPham");
 const ChatHistory = require("../models/ChatHistory");
 
 exports.getChatHistory = async (req, res) => {
@@ -86,20 +87,32 @@ exports.buildPcWithAI = async (req, res) => {
       .map(([key, val]) => `- ${key.toUpperCase()}: ${val.name} (${val.price}đ)`)
       .join("\n") : "Chưa chọn gì";
 
-    // 1. CHỈ LẤY SẢN PHẨM ĐANG BÁN
+    // 1. CHỈ LẤY SẢN PHẨM ĐANG BÁN (Kèm theo Biến thể và Hình ảnh)
     const listSP = await SanPham.findAll({
-      where: {
-        trang_thai: "active",
-      },
-      include: [{ model: BienTheSanPham, as: "bien_the" }],
-      limit: 150,
+      where: { trang_thai: "active" },
+      include: [
+        { model: require("../models/BienTheSanPham"), as: "bien_the" },
+        { model: require("../models/HinhAnhSanPham"), as: "hinh_anh" }
+      ],
+      limit: 1000, // Tăng lên 1000 để AI có đủ data tư vấn
     });
 
-    const khoHang = listSP.map((sp) => ({
-      ten: sp.ten_san_pham,
-      gia: sp.bien_the?.[0]?.gia_ban || 0,
-      anh: sp.hinh_anh || "https://placehold.co/80",
-    }));
+    const khoHang = listSP.map((sp) => {
+      // Ưu tiên lấy giá bán của biến thể đầu tiên
+      const price = sp.bien_the && sp.bien_the.length > 0 
+        ? Number(sp.bien_the[0].gia_ban) 
+        : 0;
+      
+      // Ưu tiên lấy ảnh chính, nếu không có thì lấy ảnh đầu tiên
+      const mainImage = sp.hinh_anh?.find(img => img.la_anh_chinh) || sp.hinh_anh?.[0];
+      const imageUrl = mainImage ? mainImage.url_anh : "https://placehold.co/150";
+
+      return {
+        name: sp.ten_san_pham,
+        price: price,
+        image: imageUrl,
+      };
+    });
 
     // 2. PROMPT CHUYÊN BIỆT: ÉP CHIA NGÂN SÁCH VÀ NHIỀU LỰA CHỌN
     const systemInstruction = `
@@ -121,10 +134,10 @@ exports.buildPcWithAI = async (req, res) => {
         "text": "Lời tư vấn ráp máy (Ngắn gọn, chuyên nghiệp, nhiệt tình)",
         "options": [
           {
-            "type": "cpu", 
-            "name": "Tên linh kiện từ KHO HÀNG",
-            "price": 1000000,
-            "image": "Link ảnh từ KHO HÀNG",
+            "type": "MÃ LOẠI LINH KIỆN", // CHỈ ĐƯỢC DÙNG 1 TRONG CÁC MÃ SAU: cpu, mainboard, ram, ssd1, ssd2, hdd, vga, psu, case, cooler_air, cooler_aio, cooler_custom, fan, monitor1, monitor2, keyboard, mouse, pad, headphone, speaker, chair
+            "name": "Tên linh kiện LẤY TỪ KHO HÀNG",
+            "price": 1000000, // Số nguyên
+            "image": "Link ảnh LẤY TỪ KHO HÀNG",
             "desc": "Ưu điểm ngắn gọn"
           }
         ]
@@ -142,19 +155,35 @@ exports.buildPcWithAI = async (req, res) => {
     const result = await chatSession.sendMessage(message);
     const rawReply = result.response.text();
 
+    console.log("AI Raw Reply:", rawReply); // LOG ĐỂ KIỂM TRA DỮ LIỆU THỰC TẾ
+
     let botResponseData;
     try {
-      // Bug Fix: Sử dụng regex không tham lam để chỉ lấy khối JSON ĐẦU TIÊN
-      const jsonMatch = rawReply.match(/\{[\s\S]*?\}/); 
+      // Sử dụng regex tham lam để lấy trọn vẹn khối JSON
+      const jsonMatch = rawReply.match(/\{[\s\S]*\}/); 
       let cleanJson = jsonMatch ? jsonMatch[0] : rawReply;
       
       botResponseData = JSON.parse(cleanJson);
+      
+      // Ép kiểu giá tiền về Number cho tất cả options
+      if (botResponseData.options) {
+        botResponseData.options = botResponseData.options.map(opt => ({
+          ...opt,
+          price: Number(opt.price) || 0
+        }));
+      }
     } catch (e) {
       console.error("Lỗi parse JSON AI:", e.message);
-      // Fallback: Tuyệt đối không để trả về lỗi 500
-      const textOnly = rawReply.replace(/\{[\s\S]*\}/g, "").split("{")[0].trim();
+      
+      // Cải tiến lọc văn bản: Xóa khối JSON và các thẻ markdown thừa
+      let textOnly = rawReply
+        .replace(/\{[\s\S]*\}/g, "") // Xóa khối JSON
+        .replace(/```json|```/g, "") // Xóa thẻ markdown
+        .replace(/`|json/gi, "")     // Xóa ký tự thừa
+        .trim();
+
       botResponseData = { 
-        text: textOnly || "Mình đã tìm được những linh kiện tuyệt vời nhất cho bạn, cùng xem nhé!", 
+        text: textOnly || "Mình đã tìm được những linh kiện tuyệt vời nhất cho bạn!", 
         options: [] 
       };
     }

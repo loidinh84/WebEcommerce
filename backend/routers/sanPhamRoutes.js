@@ -11,7 +11,7 @@ router.get("/search", async (req, res) => {
   try {
     const { q = "", limit = 10, danhMucId } = req.query;
 
-    const filter = danhMucId ? `danh_muc_id = ${danhMucId}` : null;
+    const filter = danhMucId ? `danh_muc_id IN (${danhMucId})` : null;
 
     const result = await searchSanPham(q, {
       limit: Number(limit),
