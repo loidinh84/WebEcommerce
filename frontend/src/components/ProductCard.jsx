@@ -97,23 +97,38 @@ const ProductCard = ({ product, onLikeChange }) => {
       ? Math.round(((giaCu - giaMoi) / giaCu) * 100)
       : 0;
 
-  // Kiểm tra sản phẩm mới (trong 5 ngày)
   const isNewProduct = product.created_at
     ? (Date.now() - new Date(product.created_at).getTime()) /
         (1000 * 60 * 60 * 24) <=
       5
     : false;
 
-  const avgRating = product.danh_gia_trung_binh
-    ? Number(product.danh_gia_trung_binh)
-    : null;
+  const avgRating = product.diem_danh_gia
+    ? Number(product.diem_danh_gia)
+    : product.danh_gia_trung_binh
+      ? Number(product.danh_gia_trung_binh)
+      : null;
+  const tongDanhGia = Number(product.tong_danh_gia || 0);
+  const firstVariant = product.bien_the?.[0];
+  const ram = firstVariant?.ram;
+  const dungLuong = firstVariant?.dung_luong;
+  const thuongHieu = product.thuong_hieu;
+  const uniqueColors = product.bien_the
+    ? [
+        ...new Map(
+          product.bien_the
+            .filter((bt) => bt.mau_sac)
+            .map((bt) => [bt.mau_sac, bt]),
+        ).values(),
+      ]
+    : [];
 
   return (
     <Link
       to={`/product/${product.slug || product.id}`}
-      className="bg-white border border-gray-100 rounded-lg p-3 shadow-sm hover:shadow-md transition-all group cursor-pointer relative font-sans flex flex-col h-full"
+      className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer relative font-sans flex flex-col h-full"
     >
-      {/* Khối Header của thẻ: Tag giảm giá & Nút Yêu thích */}
+      {/* ── Badge giảm giá / Mới ─────────────────────────────────────────── */}
       <div className="flex justify-between items-start z-10 absolute w-full pr-6 top-3">
         {phanTramGiam > 0 ? (
           <div className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm">
@@ -149,31 +164,73 @@ const ProductCard = ({ product, onLikeChange }) => {
         </button>
       </div>
 
-      {/* Ảnh Sản phẩm */}
+      {/* ── Ảnh sản phẩm ────────────────────────────────────────────────── */}
       <div className="w-full aspect-square flex items-center justify-center overflow-hidden mt-2">
         <img
           src={imageUrl}
           alt={product.ten_san_pham}
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 mix-blend-multiply"
         />
       </div>
 
-      {/* Thông tin chữ */}
-      <div className="flex-grow flex flex-col">
-        <h3 className="text-gray-800 text-xs font-bold leading-tight group-hover:text-blue-600 line-clamp-2 min-h-[25px]">
+      {/* ── Thông tin chữ ───────────────────────────────────────────────── */}
+      <div className="flex-grow flex flex-col mt-2">
+
+        {/* Thương hiệu */}
+        {thuongHieu && (
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded w-fit mb-1">
+            {thuongHieu}
+          </span>
+        )}
+
+        {/* Tên sản phẩm */}
+        <h3 className="text-gray-800 text-xs font-bold leading-tight group-hover:text-blue-600 line-clamp-2 min-h-[30px]">
           {product.ten_san_pham}
         </h3>
 
-        {/* Tag Hàng mới về */}
-        {isNewProduct && (
-          <div className="mb-2">
-            <span className="bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded-sm font-medium">
-              Hàng mới về
-            </span>
+        {/* Mô tả ngắn */}
+        {product.mo_ta_ngan && (
+          <p className="text-[10px] text-gray-400 leading-relaxed line-clamp-2 mt-1">
+            {product.mo_ta_ngan}
+          </p>
+        )}
+
+        {/* Tags thông số kỹ thuật */}
+        {(ram || dungLuong) && (
+          <div className="flex flex-wrap gap-1 mt-1.5 mb-1">
+            {ram && (
+              <span className="bg-gray-100 text-gray-600 text-[9px] font-medium px-1.5 py-0.5 rounded">
+                RAM {ram}
+              </span>
+            )}
+            {dungLuong && (
+              <span className="bg-gray-100 text-gray-600 text-[9px] font-medium px-1.5 py-0.5 rounded">
+                {dungLuong}
+              </span>
+            )}
           </div>
         )}
 
-        {/* Cụm Giá */}
+        {/* Chấm màu sắc */}
+        {uniqueColors.length > 1 && (
+          <div className="flex items-center gap-1 mb-1.5">
+            {uniqueColors.slice(0, 5).map((bt) => (
+              <span
+                key={bt.mau_sac}
+                title={bt.mau_sac}
+                className="w-3 h-3 rounded-full border border-gray-300 inline-block flex-shrink-0"
+                style={{ background: bt.ma_mau_hex || "#ccc" }}
+              />
+            ))}
+            {uniqueColors.length > 5 && (
+              <span className="text-[9px] text-gray-400">
+                +{uniqueColors.length - 5}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Giá */}
         <div className="mb-1 flex items-baseline gap-2">
           <span className="text-red-600 text-sm font-bold">
             {giaMoi > 0 ? giaMoi.toLocaleString("vi-VN") + "đ" : "Liên hệ"}
@@ -185,23 +242,25 @@ const ProductCard = ({ product, onLikeChange }) => {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer: Sao + Số đánh giá + Lượt xem */}
         <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-2">
           <div className="flex text-[10px] gap-0.5 text-yellow-400 font-medium items-center">
+            <Icons.Star className="w-3 h-3 fill-yellow-400" />
             {avgRating !== null ? (
-              <>
-                <Icons.Star className="w-3 h-3 fill-yellow-400" />
-                <span>{avgRating.toFixed(1)}</span>
-              </>
+              <span className="text-yellow-500">{avgRating.toFixed(1)}</span>
             ) : (
-              <>
-                <Icons.Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-yellow-400">5.0 </span>
-              </>
+              <span className="text-yellow-400">5.0</span>
+            )}
+            {tongDanhGia > 0 && (
+              <span className="text-gray-400 ml-0.5">({tongDanhGia})</span>
             )}
           </div>
-          <div className="text-[10px] text-gray-500 font-medium">
-            Lượt xem: {product.luot_xem || 0}
+          <div className="text-[10px] text-gray-400 font-medium flex items-center gap-0.5">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            {product.luot_xem || 0}
           </div>
         </div>
       </div>

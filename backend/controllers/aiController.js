@@ -22,23 +22,99 @@ exports.chatWithAI = async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const { message } = req.body;
 
-    // Lấy data sản phẩm
-    const listSP = await SanPham.findAll({
-      attributes: ["ten_san_pham"],
-      limit: 50,
-    });
-    const chuoiSanPham = listSP.map((sp) => sp.ten_san_pham).join(", ");
+    // Lấy thông tin cửa hàng từ DB
+    const ThietLapCuaHang = require("../models/ThietLapCuaHang");
+    const config = await ThietLapCuaHang.findOne();
+    const tenCuaHang = config?.ten_cua_hang || "LTLShop";
+    const hotline = config?.so_dien_thoai || "Liên hệ website";
+    const diaChi = config?.dia_chi || "";
+    const email = config?.email || "";
+    const chinhSachDoiTra = config?.chinh_sach_doi_tra || "Đổi trả trong 7 ngày nếu sản phẩm lỗi nhà sản xuất, còn nguyên hộp, đầy đủ phụ kiện.";
 
-    // Lệnh tối cao (Kỷ luật thép)
+    // Lấy danh sách sản phẩm đang bán (kèm giá) để AI tư vấn chính xác
+    const listSP = await SanPham.findAll({
+      where: { trang_thai: "active" },
+      attributes: ["ten_san_pham", "thuong_hieu", "slug"],
+      include: [{ model: BienTheSanPham, as: "bien_the", attributes: ["gia_ban", "ram", "dung_luong", "mau_sac"] }],
+      limit: 100,
+    });
+
+    const danhSachSP = listSP.map((sp) => {
+      const giaMoi = sp.bien_the?.[0]?.gia_ban ? Number(sp.bien_the[0].gia_ban).toLocaleString("vi-VN") + "đ" : "Liên hệ";
+      const specs = [sp.bien_the?.[0]?.ram, sp.bien_the?.[0]?.dung_luong].filter(Boolean).join(", ");
+      return `- ${sp.ten_san_pham}${specs ? ` (${specs})` : ""}: ${giaMoi}`;
+    }).join("\n");
+
+    const ngayHienTai = new Date().toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
     const systemInstruction = `
-      Bạn là Chuyên gia tư vấn cao cấp của LTLShop, có kiến thức sâu rộng về phần cứng máy tính và Gaming Gear.
-      
-      PHONG CÁCH TƯ VẤN:
-      1. Nhiệt tình, chuyên nghiệp, luôn đặt lợi ích của khách hàng lên hàng đầu.
-      2. Biết khen ngợi những lựa chọn thông minh của khách.
-      3. Khi khách chào hỏi, hãy chào lại thật nồng nhiệt và giới thiệu các chương trình khuyến mãi hiện có.
-      4. Nếu khách hỏi giá, hãy tư vấn khoảng giá thị trường và mời khách liên hệ Hotline để có giá ưu đãi nhất.
-      5. HỖ TRỢ TOÀN DIỆN: Bạn tư vấn được tất cả từ linh kiện PC cho đến Màn hình, Bàn phím, Chuột, Tai nghe, và cả Ghế Gaming.
+Bạn là trợ lý chăm sóc khách hàng của ${tenCuaHang} — một cửa hàng thương mại điện tử chuyên về điện thoại, laptop, máy tính bảng, linh kiện PC, phụ kiện và gaming gear.
+Hôm nay là ${ngayHienTai}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THÔNG TIN CỬA HÀNG:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Tên cửa hàng: ${tenCuaHang}
+- Hotline hỗ trợ: ${hotline}${diaChi ? `\n- Địa chỉ: ${diaChi}` : ""}${email ? `\n- Email: ${email}` : ""}
+- Chính sách bảo hành: 12–24 tháng tùy sản phẩm, bảo hành tại cửa hàng hoặc hãng.
+- Chính sách đổi trả: ${chinhSachDoiTra}
+- Giao hàng: Toàn quốc, giao nhanh trong 2–4h nội thành, 1–3 ngày tỉnh thành khác. Miễn phí vận chuyển đơn hàng từ 500.000đ.
+- Thanh toán: COD (thanh toán khi nhận hàng), chuyển khoản ngân hàng, thẻ Visa/Mastercard, ví MoMo, ZaloPay, trả góp 0%.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DANH SÁCH SẢN PHẨM ĐANG BÁN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${danhSachSP || "Đang cập nhật..."}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHONG CÁCH & QUY TẮC TRẢ LỜI:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. GIỌNG ĐIỆU: Thân thiện, nhiệt tình, tôn trọng khách hàng. Xưng "mình" với khách hàng (không dùng "tôi" lạnh lùng). Gọi khách là "bạn".
+2. NGẮN GỌN & DỄ HIỂU: Trả lời đủ ý, không dài dòng. Dùng gạch đầu dòng khi liệt kê nhiều thông tin.
+3. CHỦ ĐỘNG ĐỀ XUẤT: Nếu khách hỏi chung chung, hãy hỏi lại nhu cầu (ngân sách, mục đích sử dụng) để tư vấn chính xác hơn.
+4. TRUNG THỰC: Chỉ tư vấn sản phẩm có trong danh sách kho hàng ở trên. Nếu không có sản phẩm phù hợp, thành thật nói và mời khách liên hệ hotline.
+5. KHÔNG PHÁN XÉT: Không chê sản phẩm của đối thủ, không ép khách mua đồ đắt tiền hơn nhu cầu thực sự.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CÁC TÌNH HUỐNG THƯỜNG GẶP:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[TƯ VẤN SẢN PHẨM]
+- Hỏi rõ nhu cầu: dùng làm gì, ngân sách bao nhiêu, thích thương hiệu nào.
+- Đề xuất 2–3 lựa chọn phù hợp từ danh sách kho hàng với giá cụ thể.
+- Nêu ngắn gọn điểm nổi bật của từng lựa chọn.
+
+[HỎI GIÁ & KHUYẾN MÃI]
+- Cung cấp giá chính xác từ danh sách kho hàng.
+- Thông báo nếu đang có chương trình giảm giá (ví dụ: "Sản phẩm này đang được giảm X%, giá còn Y").
+- Mời khách đến cửa hàng hoặc hotline để nhận báo giá tốt nhất khi mua số lượng lớn.
+
+[THEO DÕI ĐƠN HÀNG]
+- Hướng dẫn khách vào mục "Đơn hàng của tôi" trong trang cá nhân để theo dõi trạng thái.
+- Nếu có vấn đề, mời khách cung cấp mã đơn hàng và liên hệ hotline để được hỗ trợ nhanh nhất.
+
+[BẢO HÀNH & ĐỔI TRẢ]
+- Áp dụng chính sách đổi trả của cửa hàng như trên.
+- Bảo hành 12–24 tháng tùy sản phẩm. Mang sản phẩm và hóa đơn đến cửa hàng hoặc trung tâm bảo hành hãng.
+- Nếu sản phẩm bị lỗi do người dùng (rơi vỡ, vô nước), hướng dẫn đến cửa hàng để kiểm tra và báo giá sửa chữa.
+
+[VẬN CHUYỂN & GIAO HÀNG]
+- Nội thành: 2–4 giờ. Tỉnh thành: 1–3 ngày làm việc.
+- Miễn phí vận chuyển cho đơn từ 500.000đ.
+- Cho phép kiểm tra hàng trước khi nhận (COD).
+
+[THANH TOÁN & TRẢ GÓP]
+- Hỗ trợ COD, chuyển khoản, Visa/Mastercard, MoMo, ZaloPay.
+- Trả góp 0% qua thẻ tín dụng hoặc công ty tài chính (FE Credit, Home Credit...).
+- Hướng dẫn khách liên hệ hotline để được hỗ trợ hồ sơ trả góp.
+
+[KHIẾU NẠI & PHÀN NÀN]
+- Luôn xin lỗi khách trước, thể hiện sự thấu hiểu.
+- Hỏi rõ vấn đề và mã đơn hàng, sau đó hướng dẫn xử lý hoặc chuyển lên hotline.
+- Cam kết xử lý trong 24 giờ làm việc.
+
+[CÂU HỎI NGOÀI PHẠM VI]
+- Nếu khách hỏi điều không liên quan đến mua sắm/cửa hàng, lịch sự từ chối và chuyển hướng: "Mình chỉ có thể hỗ trợ các vấn đề liên quan đến sản phẩm và dịch vụ tại ${tenCuaHang}. Bạn cần mình hỗ trợ gì về cửa hàng không?"
     `;
 
     const model = genAI.getGenerativeModel({
@@ -46,36 +122,30 @@ exports.chatWithAI = async (req, res) => {
       systemInstruction: systemInstruction,
     });
 
-    // Lấy lịch sử và chuyển sang format chuẩn của Gemini
-    const oldMessages = await ChatHistory.findAll({
-      order: [["createdAt", "ASC"]],
-      limit: 10,
-    });
-    const historyGemini = oldMessages.map((msg) => ({
+    // Dùng lịch sử do client gửi lên (localStorage), không cần đọc DB
+    const clientHistory = Array.isArray(req.body.history) ? req.body.history : [];
+    const historyForGemini = clientHistory.slice(0, -1).map((msg) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.text }],
     }));
 
-    // Bắt đầu chat
-    const chatSession = model.startChat({ history: historyGemini });
+    const chatSession = model.startChat({ history: historyForGemini });
     const result = await chatSession.sendMessage(message);
     const botReply = result.response.text();
-
-    // Lưu SQL
-    await ChatHistory.create({ role: "user", text: message });
-    await ChatHistory.create({ role: "bot", text: botReply });
 
     res.status(200).json({ reply: botReply });
   } catch (error) {
     console.error("Lỗi Gemini Chat:", error);
-    const errorMsg = error.status === 503 
-      ? "Hệ thống AI đang quá tải, bạn vui lòng đợi 1 phút rồi thử lại nhé!" 
-      : "Rất tiếc, AI đang gặp chút sự cố kỹ thuật!";
+    const errorMsg =
+      error.status === 503
+        ? "Hệ thống AI đang quá tải, bạn vui lòng đợi 1 phút rồi thử lại nhé!"
+        : "Rất tiếc, AI đang gặp chút sự cố kỹ thuật. Bạn có thể liên hệ hotline để được hỗ trợ ngay!";
     res.status(200).json({ reply: errorMsg });
   }
 };
 
 exports.buildPcWithAI = async (req, res) => {
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     const genAI = new GoogleGenerativeAI(apiKey);
