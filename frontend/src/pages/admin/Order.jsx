@@ -751,6 +751,16 @@ const Order = () => {
                                   <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-3 mb-1 uppercase text-xs tracking-wider text-center xl:text-left">
                                     Thao tác
                                   </h4>
+
+                                  {/* CẢNH BÁO ĐƠN CHUYỂN KHOẢN PENDING */}
+                                  {order.orderStatus === "pending" &&
+                                    order.paymentMethod?.toLowerCase().includes("chuyển khoản") && (
+                                      <div className="w-full bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs text-amber-800">
+                                        <p className="font-bold mb-1">Chờ xác nhận CK</p>
+                                        <p className="leading-snug">Kiểm tra sao kê ngân hàng trước khi duyệt đơn này.</p>
+                                      </div>
+                                    )}
+
                                   {order.orderStatus === "pending" && (
                                     <button
                                       onClick={() =>
@@ -759,13 +769,23 @@ const Order = () => {
                                           actionType: "process",
                                           orderId: order.id,
                                           newStatus: "confirmed",
-                                          title: "Xác nhận duyệt đơn",
-                                          message: `Duyệt và chuyển đơn hàng ${order.id} sang trạng thái Đang giao?`,
+                                          title: order.paymentMethod?.toLowerCase().includes("chuyển khoản")
+                                            ? "Xác nhận đã nhận tiền"
+                                            : "Xác nhận duyệt đơn",
+                                          message: order.paymentMethod?.toLowerCase().includes("chuyển khoản")
+                                            ? `Bạn đã kiểm tra sao kê và xác nhận nhận được tiền từ đơn hàng ${order.id}?`
+                                            : `Duyệt và chuyển đơn hàng ${order.id} sang trạng thái Đang giao?`,
                                         })
                                       }
-                                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer"
+                                      className={`w-full py-2.5 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer ${
+                                        order.paymentMethod?.toLowerCase().includes("chuyển khoản")
+                                          ? "bg-amber-500 hover:bg-amber-600"
+                                          : "bg-blue-600 hover:bg-blue-700"
+                                      }`}
                                     >
-                                      Duyệt đơn này
+                                      {order.paymentMethod?.toLowerCase().includes("chuyển khoản")
+                                        ? "Đã nhận tiền – Duyệt đơn"
+                                        : "Duyệt đơn này"}
                                     </button>
                                   )}
                                   {order.orderStatus === "confirmed" && (

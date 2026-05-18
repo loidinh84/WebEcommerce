@@ -5,7 +5,7 @@ import axios from "axios";
 import BASE_URL from "../../config/api";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, subMonths } from "date-fns";
 import { vi } from "date-fns/locale/vi";
 
 registerLocale("vi", vi);
@@ -19,11 +19,7 @@ const statusConfig = {
   refunded: { label: "Hoàn tiền", color: "bg-orange-100 text-orange-700" },
 };
 
-const getAuthHeader = () => {
-  const token =
-    localStorage.getItem("token") || sessionStorage.getItem("token");
-  return { headers: { Authorization: `Bearer ${token}` } };
-};
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -69,8 +65,6 @@ const Dashboard = () => {
       if (filterDateFrom) params.fromDate = format(filterDateFrom, "yyyy-MM-dd");
       if (filterDateTo) params.toDate = format(filterDateTo, "yyyy-MM-dd");
 
-      console.log("Fetching dashboard data with params:", params);
-
       const response = await axios.get(
         `${BASE_URL}/api/dashboard/summary`,
         {
@@ -78,8 +72,6 @@ const Dashboard = () => {
           params: params
         }
       );   
-
-      console.log("Dashboard API Response:", response.data);
       const data = response.data;
 
       if (data.success) {

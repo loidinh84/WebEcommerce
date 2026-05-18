@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -32,6 +32,24 @@ const Checkout = () => {
   const [usePoints, setUsePoints] = useState(false);
   const [receiveEmail, setReceiveEmail] = useState(false);
   const [vatRequested, setVatRequested] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [transferConfirmed, setTransferConfirmed] = useState(false);
+  const [bankName, setBankName] = useState("");
+  const [vatErrors, setVatErrors] = useState({});
+
+  const MST_REGEX = /^\d{10}(-\d{3})?$/;
+
+  const validateVat = (info) => {
+    const errs = {};
+    if (!info.ten_cong_ty.trim()) errs.ten_cong_ty = "Vui lòng nhập tên công ty";
+    if (!info.mst.trim()) {
+      errs.mst = "Vui lòng nhập mã số thuế";
+    } else if (!MST_REGEX.test(info.mst.trim())) {
+      errs.mst = "Mã số thuế không đúng định dạng (10 số hoặc 10số-3số)";
+    }
+    if (!info.dia_chi_cty.trim()) errs.dia_chi_cty = "Vui lòng nhập địa chỉ công ty";
+    return errs;
+  };
   const [vatInfo, setVatInfo] = useState({
     ten_cong_ty: "",
     mst: "",
@@ -79,6 +97,25 @@ const Checkout = () => {
         });
     }
   }, [user, navigate]);
+
+  // Lấy tên ngân hàng từ BIN code qua VietQR API
+  useEffect(() => {
+    const bin = storeConfig?.vietqr_bank_bin;
+    if (!bin) return;
+    fetch("https://api.vietqr.io/v2/banks")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.code === "00") {
+          const found = res.data.find((b) => b.bin === bin);
+          if (found) {
+            setBankName(`${found.shortName} - ${found.name}`);
+          } else {
+            setBankName(bin);
+          }
+        }
+      })
+      .catch(() => setBankName(bin));
+  }, [storeConfig?.vietqr_bank_bin]);
 
   const handleApplyVoucher = async () => {
     if (!voucherCode) return toast.error("Vui lòng nhập mã!");
@@ -133,6 +170,34 @@ const Checkout = () => {
   const total =
     subtotal + shippingFee - discountAmount - voucherDiscount - pointsToUse;
 
+  const isBankTransfer = paymentMethod?.loai === "bank_transfer";
+
+  // URL mã QR VietQR sinh động theo số tiền và mã đơn
+  const qrUrl = useMemo(() => {
+    const bin = storeConfig?.vietqr_bank_bin;
+    const stk = storeConfig?.vietqr_account_no;
+    const name = storeConfig?.vietqr_account_name || "";
+    if (!bin || !stk) return null;
+    const finalAmount = storeConfig?.lam_tron_tien
+      ? Math.round(total / 1000) * 1000
+      : Math.round(total);
+    const info = encodeURIComponent(`Thanh toan don hang`);
+    return `https://img.vietqr.io/image/${bin}-${stk}-compact2.png?amount=${finalAmount}&addInfo=${info}&accountName=${encodeURIComponent(name)}`;
+  }, [storeConfig, total]);
+
+  // Điều kiện enable nút thanh toán
+  const vatValid = !vatRequested || Object.keys(validateVat(vatInfo)).length === 0;
+  const canCheckout =
+    !!selectedAddress &&
+    !!selectedShipping &&
+    !!paymentMethod &&
+    (!isBankTransfer || transferConfirmed) &&
+    vatValid;
+
+  const finalTotal = storeConfig?.lam_tron_tien
+    ? Math.round(total / 1000) * 1000
+    : total;
+
   const handleConfirmOrder = async () => {
     if (!user) return toast.error("Vui lòng đăng nhập!");
     if (!selectedAddress)
@@ -184,13 +249,17 @@ const Checkout = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success("Đặt hàng thành công!");
+        if (isBankTransfer) {
+          toast.success("Đơn hàng đã được ghi nhận! Cửa hàng sẽ xác nhận sau khi kiểm tra chuyển khoản.", { duration: 4000 });
+        } else {
+          toast.success("Đặt hàng thành công!");
+        }
 
         const fullCart = JSON.parse(localStorage.getItem("cart")) || [];
         const remainingCart = fullCart.filter((item) => !item.selected);
         localStorage.setItem("cart", JSON.stringify(remainingCart));
 
-        setTimeout(() => navigate("/orders"), 1500);
+        setTimeout(() => navigate("/profile"), 1800);
       } else {
         toast.error(result.message || "Lỗi đặt hàng!");
       }
@@ -350,7 +419,6 @@ const Checkout = () => {
                 className="flex items-center justify-between p-4 border-2 border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-blue-100 transition-all"
               >
                 <div className="flex items-center gap-4">
-                  {/* Khối chứa Logo được thiết kế lại an toàn 100% */}
                   <div className="w-12 h-12 rounded-lg border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                     {paymentMethod?.logo_url ? (
                       <img
@@ -359,32 +427,77 @@ const Checkout = () => {
                         alt="logo"
                       />
                     ) : (
-                      <span className="text-[10px] font-bold text-gray-400">
-                        LOGO
-                      </span>
+                      <span className="text-[10px] font-bold text-gray-400">LOGO</span>
                     )}
                   </div>
-
-                  {/* Khối chứa Tên và Ghi chú */}
                   <div>
                     <p className="font-bold text-gray-800 text-base text-[15px]">
-                      {paymentMethod?.ten_phuong_thuc ||
-                        "Chọn phương thức thanh toán"}
+                      {paymentMethod?.ten_phuong_thuc || "Chọn phương thức thanh toán"}
                     </p>
                     {paymentMethod && (
                       <p className="text-[11px] text-gray-500 mt-0.5">
-                        {paymentMethod.loai === "bank_transfer"
+                        {isBankTransfer
                           ? "Quét mã QR để thanh toán nhanh chóng"
                           : "Thanh toán an toàn khi nhận hàng (COD)"}
                       </p>
                     )}
                   </div>
                 </div>
-
                 <button className="text-blue-600 font-bold text-sm cursor-pointer hover:underline whitespace-nowrap">
                   Thay đổi
                 </button>
               </div>
+
+              {/* HIỂN THỊ KHI CHỌN CHUYỂN KHOẢN */}
+              {isBankTransfer && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-white text-[10px] font-bold">!</span>
+                    </div>
+                    <div className="text-sm text-blue-800">
+                      <p className="font-bold mb-1">Hướng dẫn thanh toán chuyển khoản</p>
+                      <ol className="list-decimal list-inside space-y-1 text-[13px] text-blue-700">
+                        <li>Bấm <strong>"Xem mã QR"</strong> để quét mã thanh toán</li>
+                        <li>Chuyển khoản đúng số tiền và nội dung hiển thị</li>
+                        <li>Tích vào ô <strong>"Tôi đã chuyển khoản"</strong> bên dưới</li>
+                        <li>Cửa hàng sẽ xác nhận trong vòng <strong>15–30 phút</strong></li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-4">
+                    <button
+                      onClick={() => setShowQrModal(true)}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition cursor-pointer shadow-sm"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 17v3M17 14h3"/>
+                      </svg>
+                      Xem mã QR
+                    </button>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-blue-600"
+                        checked={transferConfirmed}
+                        onChange={(e) => setTransferConfirmed(e.target.checked)}
+                      />
+                      <span className="text-sm font-medium text-blue-800">
+                        Tôi đã chuyển khoản
+                      </span>
+                    </label>
+                  </div>
+
+                  {transferConfirmed && (
+                    <p className="mt-3 text-xs text-green-700 font-medium bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                      Đã xác nhận. Đơn hàng sẽ được tạo và chờ cửa hàng kiểm tra chuyển khoản.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* CÁC CHECKBOX TIỆN ÍCH */}
@@ -408,44 +521,79 @@ const Checkout = () => {
                 Yêu cầu xuất hóa đơn công ty
               </label>
               {vatRequested && (
-                <div className="p-4 bg-gray-50 rounded-lg grid grid-rows-3 border-gray-300 font-medium gap-4 ">
-                  <input
-                    type="text"
-                    placeholder="Tên công ty"
-                    className="row-span-1 border-b border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-                    value={vatInfo.ten_cong_ty}
-                    onChange={(e) =>
-                      setVatInfo({ ...vatInfo, ten_cong_ty: e.target.value })
-                    }
-                  />
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3 mt-1">
+                  {/* Tên công ty */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Tên công ty *"
+                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${
+                        vatErrors.ten_cong_ty
+                          ? "border-red-400 bg-red-50 placeholder-red-400"
+                          : "border-gray-300 focus:border-blue-500 bg-transparent"
+                      }`}
+                      value={vatInfo.ten_cong_ty}
+                      onChange={(e) => {
+                        const updated = { ...vatInfo, ten_cong_ty: e.target.value };
+                        setVatInfo(updated);
+                        setVatErrors(validateVat(updated));
+                      }}
+                    />
+                    {vatErrors.ten_cong_ty && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">{vatErrors.ten_cong_ty}</p>
+                    )}
+                  </div>
 
-                  <input
-                    type="text"
-                    placeholder="Mã số thuế"
-                    className="px-3 border-b border-gray-300 text-sm outline-none focus:border-blue-500"
-                    value={vatInfo.mst}
-                    onChange={(e) =>
-                      setVatInfo({ ...vatInfo, mst: e.target.value })
-                    }
-                  />
-                  <p className="text-gray-500 ml-3 font-inter text-xs italic">
-                    Nhập 10 số hoặc 10 số - 3 số chi nhánh. Ví dụ: 1234567890
-                    hoặc 1234567890-123.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Địa chỉ công ty"
-                    className="px-3 py-2 border-b border-gray-400 text-sm outline-none focus:border-blue-500"
-                    value={vatInfo.dia_chi_cty}
-                    onChange={(e) =>
-                      setVatInfo({ ...vatInfo, dia_chi_cty: e.target.value })
-                    }
-                  />
-                  <p className="text-gray-500 ml-3 font-inter text-xs italic">
-                    <strong className="text-gray-700">Lưu ý:</strong> Từ ngày
-                    1/7/2025, Quý khách vui lòng nhập địa chỉ mới theo bản đồ
-                    sáp nhập để đảm bảo hóa đơn hợp lệ.
-                  </p>
+                  {/* Mã số thuế */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Mã số thuế * (VD: 1234567890 hoặc 1234567890-123)"
+                      className={`w-full border-b px-3 py-2 text-sm outline-none font-mono transition-colors ${
+                        vatErrors.mst
+                          ? "border-red-400 bg-red-50 placeholder-red-400"
+                          : vatInfo.mst && !vatErrors.mst
+                          ? "border-green-400 bg-green-50"
+                          : "border-gray-300 focus:border-blue-500 bg-transparent"
+                      }`}
+                      value={vatInfo.mst}
+                      onChange={(e) => {
+                        const updated = { ...vatInfo, mst: e.target.value };
+                        setVatInfo(updated);
+                        setVatErrors(validateVat(updated));
+                      }}
+                    />
+                    {vatErrors.mst ? (
+                      <p className="text-red-500 text-xs mt-1 ml-1">{vatErrors.mst}</p>
+                    ) : vatInfo.mst && (
+                      <p className="text-green-600 text-xs mt-1 ml-1">Mã số thuế hợp lệ</p>
+                    )}
+                  </div>
+
+                  {/* Địa chỉ công ty */}
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Địa chỉ công ty *"
+                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${
+                        vatErrors.dia_chi_cty
+                          ? "border-red-400 bg-red-50 placeholder-red-400"
+                          : "border-gray-300 focus:border-blue-500 bg-transparent"
+                      }`}
+                      value={vatInfo.dia_chi_cty}
+                      onChange={(e) => {
+                        const updated = { ...vatInfo, dia_chi_cty: e.target.value };
+                        setVatInfo(updated);
+                        setVatErrors(validateVat(updated));
+                      }}
+                    />
+                    {vatErrors.dia_chi_cty && (
+                      <p className="text-red-500 text-xs mt-1 ml-1">{vatErrors.dia_chi_cty}</p>
+                    )}
+                    <p className="text-gray-400 ml-1 text-xs italic mt-1">
+                      Từ 1/7/2025, vui lòng nhập địa chỉ theo bản đồ sáp nhập mới.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -559,20 +707,39 @@ const Checkout = () => {
                   Tổng cộng:
                 </span>
                 <span className="text-2xl font-bold text-[#e30019]">
-                  {formatPrice(
-                    storeConfig?.lam_tron_tien
-                      ? Math.round(total / 1000) * 1000
-                      : total,
-                  )}
+                  {formatPrice(finalTotal)}
                 </span>
               </div>
 
+              {/* Thông báo khi chưa đủ điều kiện */}
+              {!canCheckout && (
+                <div className="mb-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-0.5">
+                  {!selectedAddress && <p>• Vui lòng chọn địa chỉ giao hàng</p>}
+                  {!selectedShipping && <p>• Vui lòng chọn phương thức vận chuyển</p>}
+                  {!paymentMethod && <p>• Vui lòng chọn phương thức thanh toán</p>}
+                  {isBankTransfer && !transferConfirmed && (
+                    <p>• Vui lòng xem mã QR và xác nhận đã chuyển khoản</p>
+                  )}
+                  {vatRequested && !vatValid && (
+                    <p>• Vui lòng điền đầy đủ và đúng thông tin xuất hóa đơn VAT</p>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={handleConfirmOrder}
-                disabled={loading}
-                className="w-full bg-[#e30019] text-white py-2.5 rounded-lg font-bold text-lg hover:bg-red-700 shadow-md transition cursor-pointer"
+                disabled={loading || !canCheckout}
+                className={`w-full py-2.5 rounded-lg font-bold text-lg shadow-md transition ${
+                  canCheckout && !loading
+                    ? "bg-[#e30019] hover:bg-red-700 text-white cursor-pointer"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
               >
-                {loading ? "Đang xử lý..." : "Thanh toán"}
+                {loading
+                  ? "Đang xử lý..."
+                  : isBankTransfer
+                  ? "Xác nhận đặt hàng"
+                  : "Thanh toán"}
               </button>
             </div>
           </div>
@@ -726,6 +893,112 @@ const Checkout = () => {
                 className="w-full border border-green-400 bg-green-500 text-white py-2.5 rounded-lg font-medium hover:bg-green-600 transition cursor-pointer flex justify-center items-center gap-2"
               >
                 <Icons.Add /> Thêm địa chỉ mới
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL QR CHUYỂN KHOẢN ── */}
+      {showQrModal && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/70"
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="font-bold text-gray-800 text-base">Thanh toán chuyển khoản</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Quét mã QR bằng app ngân hàng</p>
+              </div>
+              <button
+                onClick={() => setShowQrModal(false)}
+                className="text-2xl text-gray-400 hover:text-red-500 cursor-pointer leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* QR Code */}
+            <div className="px-5 py-4 flex flex-col items-center">
+              {qrUrl ? (
+                <>
+                  <div className="bg-white border-2 border-gray-100 rounded-xl p-2 shadow-sm mb-3">
+                    <img
+                      src={qrUrl}
+                      alt="VietQR"
+                      className="w-56 h-56 object-contain"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "flex";
+                      }}
+                    />
+                    <div
+                      className="hidden w-56 h-56 items-center justify-center text-gray-400 text-sm text-center"
+                    >
+                      Không tải được mã QR. Vui lòng CK thủ công.
+                    </div>
+                  </div>
+
+                  {/* Thông tin chuyển khoản */}
+                  <div className="w-full bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Ngân hàng</span>
+                      <span className="font-bold text-gray-800 text-right max-w-[60%]">
+                        {bankName || storeConfig?.vietqr_bank_bin || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Số tài khoản</span>
+                      <span className="font-bold text-gray-800 font-mono tracking-wider">
+                        {storeConfig?.vietqr_account_no || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Chủ tài khoản</span>
+                      <span className="font-bold text-gray-800 uppercase">
+                        {storeConfig?.vietqr_account_name || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-200 pt-2.5 mt-1">
+                      <span className="text-gray-500 font-medium">Số tiền</span>
+                      <span className="font-extrabold text-[#e30019] text-base">
+                        {formatPrice(finalTotal)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Nội dung CK</span>
+                      <span className="font-bold text-blue-700">Thanh toan don hang</span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-gray-400 text-center mt-3 italic">
+                    Sau khi chuyển khoản, vui lòng đánh dấu "Tôi đã chuyển khoản" để đặt hàng.
+                  </p>
+                </>
+              ) : (
+                <div className="py-8 text-center text-gray-400">
+                  <p className="font-medium">Chưa cấu hình tài khoản ngân hàng.</p>
+                  <p className="text-xs mt-1">Vui lòng liên hệ admin.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer button */}
+            <div className="px-5 pb-5">
+              <button
+                onClick={() => {
+                  setTransferConfirmed(true);
+                  setShowQrModal(false);
+                  toast.success("Đã xác nhận! Bấm 'Xác nhận đặt hàng' để hoàn tất.", { duration: 3000 });
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition cursor-pointer"
+              >
+                Tôi đã chuyển khoản
               </button>
             </div>
           </div>
