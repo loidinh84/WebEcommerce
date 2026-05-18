@@ -4,6 +4,7 @@ import * as Icons from "../assets/icons/index";
 import { StoreContext } from "../context/StoreContext";
 import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
+import AdminDesktopOnly from "../components/AdminDesktopOnly";
 
 const menuItems = [
   { path: "/admin", label: "Tổng quan" },
@@ -42,6 +43,7 @@ const AdminLayout = () => {
   };
 
   return (
+    <AdminDesktopOnly>
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
       <header className="bg-blue-600 text-white flex items-center justify-between px-6 h-16 shadow-md shrink-0 z-20">
         <div className="flex items-center h-full">
@@ -235,6 +237,7 @@ const AdminLayout = () => {
         <Outlet />
       </main>
     </div>
+    </AdminDesktopOnly>
   );
 };
 
