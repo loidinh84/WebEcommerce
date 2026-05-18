@@ -144,8 +144,7 @@ exports.createDonHang = async (req, res) => {
         don_hang_id: newOrder.id,
         phuong_thuc_id: phuong_thuc_tt,
         so_tien: final_thanh_toan,
-        trang_thai: "cho_thanh_toan",
-        ngay_tao: new Date(),
+        trang_thai: "pending", // CHECK constraint: pending | success | failed | refunded
       },
       { transaction: t },
     );
@@ -441,13 +440,8 @@ exports.getAdminOrders = async (req, res) => {
     // Format dữ liệu
     const formattedOrders = orders.map((order) => {
       const diaChi = order.dia_chi || {};
-      if (Array.isArray(order.giao_dich) && order.giao_dich.length > 0) {
-        giaoDich = order.giao_dich[0];
-      } else if (order.giao_dich && !Array.isArray(order.giao_dich)) {
-        giaoDich = order.giao_dich;
-      }
-
-      const giaoDich = order.giao_dich || {};
+      const rawGD = order.giao_dich;
+      const giaoDich = Array.isArray(rawGD) ? (rawGD[0] || {}) : (rawGD || {});
       const phuongThuc = giaoDich.phuong_thuc || {};
 
       // Xử lý ngày tháng thành chuỗi dd/mm/yyyy HH:MM
@@ -478,7 +472,7 @@ exports.getAdminOrders = async (req, res) => {
         note: order.ghi_chu,
         paymentMethod: phuongThuc.ten_phuong_thuc || "COD",
         paymentStatus:
-          giaoDich.trang_thai === "thanh_cong"
+          giaoDich.trang_thai === "success"
             ? "Đã thanh toán"
             : "Chưa thanh toán",
         orderStatus: order.trang_thai,
