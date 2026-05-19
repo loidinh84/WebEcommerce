@@ -334,6 +334,17 @@ exports.getOrderDetail = async (req, res) => {
       };
     }
 
+    // Nếu cả dữ liệu snapshot lẫn quan hệ địa chỉ gốc đều bị null (đơn hàng cũ hoặc bị lỗi), lấy địa chỉ giao hàng mặc định của người dùng làm fallback
+    if (!orderData.dia_chi) {
+      const fallbackDiaChi = await DiaChiGiaoHang.findOne({
+        where: { tai_khoan_id: orderData.tai_khoan_id },
+        order: [["la_mac_dinh", "DESC"]],
+      });
+      if (fallbackDiaChi) {
+        orderData.dia_chi = fallbackDiaChi.toJSON();
+      }
+    }
+
     res.json(orderData);
   } catch (error) {
     console.error(error);

@@ -168,9 +168,19 @@ const OrderDetail = () => {
 
   const currentStepIndex = statusIndex[order.trang_thai] ?? 0;
 
-  const isPaid = order.giao_dich?.trang_thai === "success" || ["delivered", "completed"].includes(order.trang_thai);
-  const paymentMethodName = order.giao_dich?.phuong_thuc?.ten_phuong_thuc || "Thanh toán khi nhận hàng";
-  const isCod = !order.giao_dich || order.giao_dich?.phuong_thuc?.loai === "cod" || paymentMethodName.toLowerCase().includes("nhận hàng") || paymentMethodName.toLowerCase().includes("cod");
+  const rawGD = order.giao_dich;
+  const giaoDich = Array.isArray(rawGD) ? rawGD[0] || {} : rawGD || {};
+
+  const isPaid =
+    giaoDich.trang_thai === "success" ||
+    ["delivered", "completed"].includes(order.trang_thai);
+  const paymentMethodName =
+    giaoDich.phuong_thuc?.ten_phuong_thuc || "Thanh toán khi nhận hàng";
+  const isCod =
+    !giaoDich.phuong_thuc ||
+    giaoDich.phuong_thuc?.loai === "cod" ||
+    paymentMethodName.toLowerCase().includes("nhận hàng") ||
+    paymentMethodName.toLowerCase().includes("cod");
 
   const trackingHistory = (() => {
     const dbLogs = order.lich_su_giao_hang || [];
@@ -596,26 +606,64 @@ const OrderDetail = () => {
               </span>
             </div>
             {isPaid ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border-t border-dashed border-green-400 text-sm text-green-700">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Đơn hàng đã được thanh toán thành công.
+              <div className="flex items-center justify-between px-3 py-2 bg-green-50 border-t border-dashed border-green-400 text-sm text-green-800 font-medium">
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-green-500 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Đơn hàng đã được thanh toán thành công.{" "}
+                </div>
+                <div className="whitespace-nowrap">
+                  Cần thanh toán:{" "}
+                  <strong className="text-green-600 text-base ml-1">0₫</strong>
+                </div>
               </div>
             ) : isCod ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-[#fffaf9] border-t border-dashed border-orange-400 text-sm text-gray-600">
-                Vui lòng thanh toán{" "}
-                <strong className="text-[#ee4d2d] ml-1">
-                  {formatPrice(order.tong_thanh_toan)}₫
-                </strong>{" "}
-                khi nhận hàng.
+              <div className="flex items-center justify-between px-3 py-2 bg-[#fffaf9] border-t border-dashed border-orange-400 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  Vui lòng thanh toán khi nhận hàng.
+                </div>
+                <div>
+                  Cần thanh toán:{" "}
+                  <strong className="text-[#ee4d2d] text-base ml-1">
+                    {formatPrice(order.tong_thanh_toan)}₫
+                  </strong>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border-t border-dashed border-yellow-400 text-sm text-yellow-700">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-600 animate-pulse shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Đơn hàng đang chờ xác nhận thanh toán chuyển khoản.
+              <div className="flex items-center justify-between px-3 py-2 bg-yellow-50 border-t border-dashed border-yellow-400 text-sm text-yellow-800 font-medium">
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-yellow-600 animate-pulse shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Đang chờ xác nhận chuyển khoản.
+                </div>
+                <div>
+                  Cần thanh toán:{" "}
+                  <strong className="text-yellow-600 text-base ml-1">0₫</strong>
+                </div>
               </div>
             )}
             <div className="flex justify-between items-center px-3 py-2">

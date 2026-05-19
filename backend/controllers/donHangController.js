@@ -491,7 +491,8 @@ exports.getAdminOrders = async (req, res) => {
         note: order.ghi_chu,
         paymentMethod: phuongThuc.ten_phuong_thuc || "COD",
         paymentStatus:
-          giaoDich.trang_thai === "success"
+          giaoDich.trang_thai === "success" ||
+          ["delivered", "completed"].includes(order.trang_thai)
             ? "Đã thanh toán"
             : "Chưa thanh toán",
         orderStatus: order.trang_thai,
@@ -550,6 +551,17 @@ exports.updateOrderStatus = async (req, res) => {
     donHang.trang_thai = trang_thai;
     donHang.update_at = new Date();
     await donHang.save();
+
+    // Cập nhật trạng thái giao dịch thanh toán thành công nếu admin duyệt nhận tiền chuyển khoản hoặc đơn đã giao thành công
+    if (trang_thai === "confirmed" || trang_thai === "delivered") {
+      const giaoDich = await GiaoDichThanhToan.findOne({
+        where: { don_hang_id: donHang.id },
+      });
+      if (giaoDich) {
+        giaoDich.trang_thai = "success";
+        await giaoDich.save();
+      }
+    }
 
     // Tự động tạo log lịch sử giao hàng
     const statusLogs = {
