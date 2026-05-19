@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import BASE_URL from "../../config/api";
+import Swal from "sweetalert2";
 
 const ShopFeedback = () => {
   const [rating, setRating] = useState(5);
@@ -100,7 +101,18 @@ const ShopFeedback = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa góp ý này không?")) return;
+    const result = await Swal.fire({
+      title: "Xác nhận xóa?",
+      text: "Bạn có chắc chắn muốn xóa góp ý này không?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3b82f6",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Xóa ngay",
+      cancelButtonText: "Hủy bỏ",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token =
