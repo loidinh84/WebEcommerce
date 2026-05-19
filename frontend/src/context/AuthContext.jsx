@@ -32,14 +32,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (newData) => {
-    const updatedUser = { ...user, ...newData };
-    setUser(updatedUser);
-    if (localStorage.getItem("user")) {
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-    }
-    if (sessionStorage.getItem("user")) {
-      sessionStorage.setItem("user", JSON.stringify(updatedUser));
-    }
+    setUser((prevUser) => {
+      if (!prevUser) return null; // Ngăn chặn hồi sinh user nếu đã logout
+
+      const updatedUser = { ...prevUser, ...newData };
+      
+      // Cập nhật lại vào storage
+      if (localStorage.getItem("user")) {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+      if (sessionStorage.getItem("user")) {
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+      
+      return updatedUser;
+    });
   };
 
   return (

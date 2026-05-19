@@ -108,11 +108,11 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
   const [gioiTinh, setGioiTinh] = useState("");
 
   useEffect(() => {
-    if (userInfo.ngay_sinh) {
-      setNgaySinh(new Date(userInfo.ngay_sinh));
+    if (userInfo.id) {
+      setNgaySinh(userInfo.ngay_sinh ? new Date(userInfo.ngay_sinh) : null);
+      setGioiTinh(userInfo.gioi_tinh || "");
     }
-    setGioiTinh(userInfo.gioi_tinh || "");
-  }, [userInfo]);
+  }, [userInfo.id]);
 
   useEffect(() => {
     if (allLocations.length === 0) {
@@ -256,7 +256,6 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
           newPassword: "",
           confirmPassword: "",
         });
-        if (onProfileUpdated) onProfileUpdated();
 
         if (onLogout) {
           setTimeout(() => {
@@ -338,7 +337,8 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
         toast.success("Đã xóa địa chỉ!");
         fetchDiaChi();
       } else {
-        toast.error("Lỗi khi xóa địa chỉ!");
+        const data = await res.json();
+        toast.error(data.message || "Lỗi khi xóa địa chỉ!");
       }
     } catch {
       toast.error("Lỗi kết nối Server!");
@@ -417,7 +417,12 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
             Thông tin cá nhân
           </h2>
           <button
-            onClick={() => setIsProfileModalOpen(true)}
+            onClick={() => {
+              setNgaySinh(userInfo.ngay_sinh ? new Date(userInfo.ngay_sinh) : null);
+              setGioiTinh(userInfo.gioi_tinh || "");
+              setAvatarFile(null);
+              setIsProfileModalOpen(true);
+            }}
             className="text-sm text-red-500 font-medium hover:underline flex items-center gap-1 cursor-pointer"
           >
             <Icons.Edit />

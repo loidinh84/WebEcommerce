@@ -310,6 +310,18 @@ exports.getOrderDetail = async (req, res) => {
     const orderData = order.toJSON();
     orderData.cua_hang = thietLap;
 
+    // Thay thế dia_chi bằng dữ liệu snapshot nếu có, để bảo toàn lịch sử giao hàng
+    if (orderData.ho_ten_nguoi_nhan) {
+      orderData.dia_chi = {
+        ho_ten_nguoi_nhan: orderData.ho_ten_nguoi_nhan,
+        so_dien_thoai: orderData.so_dien_thoai,
+        dia_chi_cu_the: orderData.dia_chi_cu_the,
+        tinh_thanh: orderData.tinh_thanh,
+        quan_huyen: orderData.quan_huyen,
+        phuong_xa: orderData.phuong_xa,
+      };
+    }
+
     res.json(orderData);
   } catch (error) {
     console.error(error);
@@ -461,6 +473,7 @@ exports.deleteAddress = async (req, res) => {
     await DiaChiGiaoHang.destroy({ where: { id: addressId } });
     res.status(200).json({ message: "Đã xóa địa chỉ!" });
   } catch (error) {
+    console.error("Lỗi xóa địa chỉ:", error);
     res.status(500).json({ message: "Lỗi server khi xóa địa chỉ!" });
   }
 };

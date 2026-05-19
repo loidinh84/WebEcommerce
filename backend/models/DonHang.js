@@ -17,6 +17,13 @@ const DonHang = sequelize.define(
     trang_thai: { type: DataTypes.STRING(20), defaultValue: "pending" },
     ghi_chu: { type: DataTypes.STRING(255) },
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    // Snapshot address info
+    ho_ten_nguoi_nhan: { type: DataTypes.STRING(255), allowNull: true },
+    so_dien_thoai: { type: DataTypes.STRING(50), allowNull: true },
+    dia_chi_cu_the: { type: DataTypes.STRING(500), allowNull: true },
+    tinh_thanh: { type: DataTypes.STRING(255), allowNull: true },
+    quan_huyen: { type: DataTypes.STRING(255), allowNull: true },
+    phuong_xa: { type: DataTypes.STRING(255), allowNull: true },
   },
   {
     tableName: "DonHang",

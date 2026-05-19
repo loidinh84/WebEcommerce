@@ -121,7 +121,16 @@ exports.createDonHang = async (req, res) => {
       initialStatus = "confirmed";
     }
 
-    // 2. Lưu vào bảng DonHang
+    // Lấy thông tin địa chỉ thật để snapshot
+    const thongTinDiaChi = await DiaChiGiaoHang.findByPk(dia_chi_id, {
+      transaction: t,
+    });
+
+    if (!thongTinDiaChi) {
+      throw new Error("Không tìm thấy địa chỉ giao hàng!");
+    }
+
+    // 2. Lưu vào bảng DonHang (cùng với snapshot địa chỉ)
     const newOrder = await DonHang.create(
       {
         ma_don_hang: maDonHang,
@@ -135,6 +144,13 @@ exports.createDonHang = async (req, res) => {
         trang_thai: initialStatus,
         ghi_chu: ghi_chu || "",
         created_at: new Date(),
+        // Các cột snapshot
+        ho_ten_nguoi_nhan: thongTinDiaChi.ho_ten_nguoi_nhan,
+        so_dien_thoai: thongTinDiaChi.so_dien_thoai,
+        dia_chi_cu_the: thongTinDiaChi.dia_chi_cu_the,
+        tinh_thanh: thongTinDiaChi.tinh_thanh,
+        quan_huyen: thongTinDiaChi.quan_huyen,
+        phuong_xa: thongTinDiaChi.phuong_xa,
       },
       { transaction: t },
     );
@@ -439,7 +455,15 @@ exports.getAdminOrders = async (req, res) => {
 
     // Format dữ liệu
     const formattedOrders = orders.map((order) => {
+      // Ưu tiên đọc snapshot từ bảng DonHang. Nếu đơn cũ chưa có snapshot thì fallback về DiaChiGiaoHang (order.dia_chi)
       const diaChi = order.dia_chi || {};
+      const hoTen = order.ho_ten_nguoi_nhan || diaChi.ho_ten_nguoi_nhan;
+      const sdt = order.so_dien_thoai || diaChi.so_dien_thoai;
+      const diachiCuthe = order.dia_chi_cu_the || diaChi.dia_chi_cu_the;
+      const phuongXa = order.phuong_xa || diaChi.phuong_xa;
+      const quanHuyen = order.quan_huyen || diaChi.quan_huyen;
+      const tinhThanh = order.tinh_thanh || diaChi.tinh_thanh;
+
       const rawGD = order.giao_dich;
       const giaoDich = Array.isArray(rawGD) ? (rawGD[0] || {}) : (rawGD || {});
       const phuongThuc = giaoDich.phuong_thuc || {};
@@ -449,19 +473,14 @@ exports.getAdminOrders = async (req, res) => {
       const dateStr = `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
       // Xử lý chuỗi địa chỉ
-      const fullAddress = [
-        diaChi.dia_chi_cu_the,
-        diaChi.phuong_xa,
-        diaChi.quan_huyen,
-        diaChi.tinh_thanh,
-      ]
+      const fullAddress = [diachiCuthe, phuongXa, quanHuyen, tinhThanh]
         .filter(Boolean)
         .join(", ");
 
       return {
         id: order.ma_don_hang,
-        customerName: diaChi.ho_ten_nguoi_nhan || "Khách vãng lai",
-        phone: diaChi.so_dien_thoai || "Chưa cập nhật",
+        customerName: hoTen || "Khách vãng lai",
+        phone: sdt || "Chưa cập nhật",
         address: fullAddress || "Chưa cập nhật",
         date: dateStr,
         total: order.tong_thanh_toan,

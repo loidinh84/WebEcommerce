@@ -90,8 +90,12 @@ const UserProfile = () => {
         setIsLoading(false);
       }
     };
-    if (user?.id) initData();
-  }, [user]);
+    if (user?.id) {
+      initData();
+    } else {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const handleLogout = () => {
     logout();
