@@ -13,6 +13,8 @@ const LichSuGiaoHang = require("../models/LichSuGiaoHang");
 const DonViVanChuyen = require("../models/DonViVanChuyen");
 const ThietLapCuaHang = require("../models/ThietLapCuaHang");
 const DanhGiaSanPham = require("../models/DanhGiaSanPham");
+const GiaoDichThanhToan = require("../models/GiaoDichThanhToan");
+const PhuongThucThanhToan = require("../models/PhuongThucThanhToan");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -290,6 +292,16 @@ exports.getOrderDetail = async (req, res) => {
                   include: [{ model: HinhAnhSanPham, as: "hinh_anh" }],
                 },
               ],
+            },
+          ],
+        },
+        {
+          model: GiaoDichThanhToan,
+          as: "giao_dich",
+          include: [
+            {
+              model: PhuongThucThanhToan,
+              as: "phuong_thuc",
             },
           ],
         },
