@@ -445,6 +445,10 @@ exports.getAdminOrders = async (req, res) => {
           as: "giao_dich",
           include: [{ model: PhuongThucThanhToan, as: "phuong_thuc" }],
         },
+        {
+          model: TaiKhoan,
+          as: "nguoi_mua",
+        },
       ],
       order: [["created_at", "DESC"]],
       limit: parseInt(limit),
@@ -455,10 +459,10 @@ exports.getAdminOrders = async (req, res) => {
 
     // Format dữ liệu
     const formattedOrders = orders.map((order) => {
-      // Ưu tiên đọc snapshot từ bảng DonHang. Nếu đơn cũ chưa có snapshot thì fallback về DiaChiGiaoHang (order.dia_chi)
       const diaChi = order.dia_chi || {};
-      const hoTen = order.ho_ten_nguoi_nhan || diaChi.ho_ten_nguoi_nhan;
-      const sdt = order.so_dien_thoai || diaChi.so_dien_thoai;
+      const nguoiMua = order.nguoi_mua || {};
+      const hoTen = order.ho_ten_nguoi_nhan || diaChi.ho_ten_nguoi_nhan || nguoiMua.ho_ten || "Khách vãng lai";
+      const sdt = order.so_dien_thoai || diaChi.so_dien_thoai || nguoiMua.so_dien_thoai || "Chưa cập nhật";
       const diachiCuthe = order.dia_chi_cu_the || diaChi.dia_chi_cu_the;
       const phuongXa = order.phuong_xa || diaChi.phuong_xa;
       const quanHuyen = order.quan_huyen || diaChi.quan_huyen;

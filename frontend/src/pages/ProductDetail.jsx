@@ -17,7 +17,11 @@ import Swal from "sweetalert2";
 const getImageUrl = (url) => {
   if (!url) return "https://via.placeholder.com/400x400?text=No+Image";
   if (url.startsWith("http")) return url;
-  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  let cleanUrl = url;
+  if (!cleanUrl.startsWith("/uploads/") && !cleanUrl.startsWith("uploads/")) {
+    cleanUrl = `uploads/${cleanUrl.startsWith("/") ? cleanUrl.slice(1) : cleanUrl}`;
+  }
+  return `${BASE_URL}${cleanUrl.startsWith("/") ? "" : "/"}${cleanUrl}`;
 };
 
 const formatTimeAgo = (dateString) => {

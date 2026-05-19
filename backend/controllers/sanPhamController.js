@@ -837,10 +837,22 @@ exports.createDanhGia = async (req, res) => {
     const { so_sao, noi_dung, don_hang_id, parent_id } = req.body;
     const tai_khoan_id = req.user.id; // Lấy ID từ token đã xác thực
 
-    // Nếu không có parent_id (đánh giá gốc) thì bắt buộc có so_sao
-    if (!noi_dung || (!parent_id && !so_sao)) {
-      return res.status(400).json({ message: "Vui lòng điền đủ thông tin!" });
+    const cleanNoiDung = (!noi_dung || noi_dung === "undefined" || noi_dung.trim() === "")
+      ? "Sản phẩm rất tốt!"
+      : noi_dung;
+
+    const cleanParentId = (parent_id && parent_id !== "undefined")
+      ? parseInt(parent_id, 10)
+      : null;
+
+    let cleanSoSao = null;
+    if (!cleanParentId) {
+      cleanSoSao = (so_sao && so_sao !== "undefined") ? parseInt(so_sao, 10) : 5;
     }
+
+    const cleanDonHangId = (don_hang_id && don_hang_id !== "undefined")
+      ? parseInt(don_hang_id, 10)
+      : null;
 
     let mangHinhAnh = [];
     if (req.files && req.files.length > 0) {
@@ -853,12 +865,12 @@ exports.createDanhGia = async (req, res) => {
     const danhGiaMoi = await DanhGiaSanPham.create({
       san_pham_id: id,
       tai_khoan_id: tai_khoan_id,
-      so_sao: parent_id ? null : so_sao,
-      noi_dung: noi_dung,
-      don_hang_id: parent_id ? null : (don_hang_id || null),
+      so_sao: cleanSoSao,
+      noi_dung: cleanNoiDung,
+      don_hang_id: cleanDonHangId,
       hinh_anh: hinh_anh_string,
       trang_thai: "approved",
-      parent_id: parent_id || null,
+      parent_id: cleanParentId,
     });
 
     res.status(201).json({ message: "Đánh giá thành công!", data: danhGiaMoi });

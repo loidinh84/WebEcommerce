@@ -154,12 +154,14 @@ const OrdersTab = ({ profileData, navigate }) => {
         toast.error("Vui lòng đăng nhập để đánh giá!");
         return;
       }
-
       const promises = selectedOrderForReview.chi_tiet.map(async (prod) => {
-        const reviewData = ratingInput[prod.id] || {
-          sao: 5,
-          noi_dung: "Sản phẩm rất tốt!",
-          images: [],
+        const inputData = ratingInput[prod.id] || {};
+        const reviewData = {
+          sao: inputData.sao !== undefined ? inputData.sao : 5,
+          noi_dung: inputData.noi_dung !== undefined && inputData.noi_dung.trim() !== "" 
+            ? inputData.noi_dung 
+            : "Sản phẩm rất tốt!",
+          images: inputData.images || [],
         };
         const formData = new FormData();
         formData.append("tai_khoan_id", profileData.userInfo.id);
@@ -528,7 +530,7 @@ const OrdersTab = ({ profileData, navigate }) => {
         )}
       </div>
       {reviewModalOpen && selectedOrderForReview && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-1000 flex items-center justify-center p-4">
           <div className="bg-white rounded-md shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col animate-fade-in">
             {/* Header Modal */}
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-md">
