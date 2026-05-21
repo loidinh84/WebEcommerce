@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import BASE_URL from "../../config/api";
 
 const Profile = () => {
-  const [user, setUser] = useState({ 
+  const [user, setUser] = useState({
     TENDANGNHAP: "",
     TENNGUOIDUNG: "",
     SDT: "",
@@ -15,7 +15,7 @@ const Profile = () => {
     DIACHI: "",
     QUYENHAN: "",
     HINHANH: "",
-    id: null
+    id: null,
   });
   const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,9 +32,12 @@ const Profile = () => {
   });
 
   const fetchProfile = () => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const savedUser = JSON.parse(localStorage.getItem("user") || sessionStorage.getItem("user") || "{}");
-    const userId = savedUser?.id || 1; // Fallback to id 1 if not found for admin safety
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    const savedUser = JSON.parse(
+      localStorage.getItem("user") || sessionStorage.getItem("user") || "{}",
+    );
+    const userId = savedUser?.id || 1;
 
     if (!userId) {
       toast.error("Không tìm thấy thông tin người dùng!");
@@ -50,7 +53,6 @@ const Profile = () => {
         return res.json();
       })
       .then((data) => {
-        // Map backend fields to frontend state format if necessary
         const mappedUser = {
           id: data.id,
           TENNGUOIDUNG: data.ho_ten || "",
@@ -60,15 +62,21 @@ const Profile = () => {
           HINHANH: data.anh_dai_dien || "",
           NGAYSINH: data.ngay_sinh ? data.ngay_sinh.split("T")[0] : "",
           GIOITINH: data.gioi_tinh || "male",
-          TENDANGNHAP: data.email || "", // Assuming email is login name
-          created_at: data.created_at
+          TENDANGNHAP: data.email || "",
+          created_at: data.created_at,
         };
         setUser(mappedUser);
         setTempUser(mappedUser);
-        setAvatarPreview(mappedUser.HINHANH?.startsWith('http') ? mappedUser.HINHANH : (mappedUser.HINHANH ? `${BASE_URL}${mappedUser.HINHANH}` : ""));
+        setAvatarPreview(
+          mappedUser.HINHANH?.startsWith("http")
+            ? mappedUser.HINHANH
+            : mappedUser.HINHANH
+              ? `${BASE_URL}${mappedUser.HINHANH}`
+              : "",
+        );
         setIsLoading(false);
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Lỗi lấy thông tin người dùng!");
         setIsLoading(false);
       });
@@ -78,7 +86,13 @@ const Profile = () => {
     if (isEditing) {
       setUser(tempUser);
       setAvatarFile(null);
-      setAvatarPreview(tempUser.HINHANH?.startsWith('http') ? tempUser.HINHANH : (tempUser.HINHANH ? `${BASE_URL}${tempUser.HINHANH}` : ""));
+      setAvatarPreview(
+        tempUser.HINHANH?.startsWith("http")
+          ? tempUser.HINHANH
+          : tempUser.HINHANH
+            ? `${BASE_URL}${tempUser.HINHANH}`
+            : "",
+      );
     } else {
       setTempUser(user);
     }
@@ -103,14 +117,15 @@ const Profile = () => {
   const handleUpdateProfile = async () => {
     const toastId = toast.loading("Đang lưu thay đổi...");
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+
       const formData = new FormData();
       formData.append("ho_ten", user.TENNGUOIDUNG);
       formData.append("so_dien_thoai", user.SDT);
       formData.append("gioi_tinh", user.GIOITINH);
       formData.append("ngay_sinh", user.NGAYSINH);
-      
+
       if (avatarFile) {
         formData.append("anh_dai_dien", avatarFile);
       } else {
@@ -125,7 +140,7 @@ const Profile = () => {
             Authorization: `Bearer ${token}`,
           },
           body: formData,
-        }
+        },
       );
 
       const data = await response.json();
@@ -139,16 +154,19 @@ const Profile = () => {
         setTempUser(user);
         setIsEditing(false);
         fetchProfile(); // Refresh to get the new avatar path
-        
+
         // Update user data in local storage / session storage
-        const storageUserStr = localStorage.getItem("user") ? localStorage.getItem("user") : sessionStorage.getItem("user");
+        const storageUserStr = localStorage.getItem("user")
+          ? localStorage.getItem("user")
+          : sessionStorage.getItem("user");
         if (storageUserStr) {
-            const savedUser = JSON.parse(storageUserStr);
-            savedUser.ho_ten = user.TENNGUOIDUNG;
-            if (localStorage.getItem("user")) localStorage.setItem("user", JSON.stringify(savedUser));
-            if (sessionStorage.getItem("user")) sessionStorage.setItem("user", JSON.stringify(savedUser));
+          const savedUser = JSON.parse(storageUserStr);
+          savedUser.ho_ten = user.TENNGUOIDUNG;
+          if (localStorage.getItem("user"))
+            localStorage.setItem("user", JSON.stringify(savedUser));
+          if (sessionStorage.getItem("user"))
+            sessionStorage.setItem("user", JSON.stringify(savedUser));
         }
-        
       } else {
         toast.update(toastId, {
           render: "Lỗi từ server: " + data.message,
@@ -176,41 +194,45 @@ const Profile = () => {
 
     const toastId = toast.loading("Đang xử lý...");
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      const response = await fetch(`${BASE_URL}/api/taiKhoan/change-password/${user.id}`, {
-        method: "PUT",
-        headers: {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      const response = await fetch(
+        `${BASE_URL}/api/taiKhoan/change-password/${user.id}`,
+        {
+          method: "PUT",
+          headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+          },
+          body: JSON.stringify({
             oldPassword: passwordData.oldPassword,
             newPassword: passwordData.newPassword,
-        })
-      });
-      
+          }),
+        },
+      );
+
       const data = await response.json();
 
       if (response.ok) {
-          toast.update(toastId, {
-            render: data.message || "Đổi mật khẩu thành công!",
-            type: "success",
-            isLoading: false,
-            autoClose: 2000,
-          });
-          setPasswordData({
-            oldPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-          });
-          setShowPasswordModal(false);
+        toast.update(toastId, {
+          render: data.message || "Đổi mật khẩu thành công!",
+          type: "success",
+          isLoading: false,
+          autoClose: 2000,
+        });
+        setPasswordData({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setShowPasswordModal(false);
       } else {
-          toast.update(toastId, {
-            render: data.message || "Lỗi khi đổi mật khẩu",
-            type: "error",
-            isLoading: false,
-            autoClose: 3000,
-          });
+        toast.update(toastId, {
+          render: data.message || "Lỗi khi đổi mật khẩu",
+          type: "error",
+          isLoading: false,
+          autoClose: 3000,
+        });
       }
     } catch {
       toast.update(toastId, {
@@ -298,7 +320,10 @@ const Profile = () => {
                 </h4>
                 <div className="space-y-4">
                   <StatusItem label="Xác thực Email" isDone={true} />
-                  <StatusItem label="Xác thực Số Điện Thoại" isDone={user.SDT ? true : false} />
+                  <StatusItem
+                    label="Xác thực Số Điện Thoại"
+                    isDone={user.SDT ? true : false}
+                  />
                 </div>
                 <button
                   onClick={() => setShowPasswordModal(true)}
@@ -311,90 +336,89 @@ const Profile = () => {
 
             {/* --- CỘT PHẢI: FORM THÔNG TIN --- */}
             <div className="flex-1 flex flex-col gap-6">
-                
-                <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm border border-gray-100 relative">
+              <div className="bg-white rounded-2xl p-8 lg:p-10 shadow-sm border border-gray-100 relative">
                 <div className="flex justify-between items-center mb-8 pb-5 border-b border-gray-100">
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                        Hồ sơ cá nhân
-                    </h2>
-                    <button
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                    Hồ sơ cá nhân
+                  </h2>
+                  <button
                     onClick={toggleEdit}
                     className="flex items-center justify-center gap-2.5 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 transition-all cursor-pointer"
-                    >
+                  >
                     {isEditing ? "Hủy chỉnh sửa" : "Chỉnh sửa"}
-                    </button>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
-                    <InfoField
-                    label="Tên đăng nhập (Email)"
+                  <InfoField
+                    label="Tên đăng nhập"
                     name="TENDANGNHAP"
                     value={user.TENDANGNHAP}
                     isLocked={true}
-                    />
-                    <InfoField
+                  />
+                  <InfoField
                     label="Họ và tên"
                     name="TENNGUOIDUNG"
                     value={user.TENNGUOIDUNG}
                     isLocked={!isEditing}
                     onChange={handleChange}
-                    />
-                    <InfoField
+                  />
+                  <InfoField
                     label="Số điện thoại"
                     name="SDT"
                     value={user.SDT}
                     isLocked={!isEditing}
                     onChange={handleChange}
-                    />
-                    <InfoField
-                    label="Email liên hệ"
+                  />
+                  <InfoField
+                    label="Email"
                     name="EMAIL"
                     value={user.EMAIL}
                     isLocked={true}
                     onChange={handleChange}
-                    />
+                  />
 
-                    <div className="md:col-span-2 grid grid-cols-2 gap-10">
+                  <div className="md:col-span-2 grid grid-cols-2 gap-10">
                     <InfoField
-                        label="Ngày Sinh"
-                        name="NGAYSINH"
-                        value={user.NGAYSINH}
-                        type="date"
-                        isLocked={!isEditing}
-                        onChange={handleChange}
+                      label="Ngày Sinh"
+                      name="NGAYSINH"
+                      value={user.NGAYSINH}
+                      type="date"
+                      isLocked={!isEditing}
+                      onChange={handleChange}
                     />
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase ml-1 tracking-widest">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase ml-1 tracking-widest">
                         Giới tính
-                        </label>
-                        <div className="relative">
+                      </label>
+                      <div className="relative">
                         <select
-                            name="GIOITINH"
-                            value={user.GIOITINH || "male"}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            className={`w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-gray-800 outline-none appearance-none focus:border-blue-600 transition-all disabled:opacity-60 ${!isEditing ? "" : "cursor-pointer"}`}
+                          name="GIOITINH"
+                          value={user.GIOITINH || "male"}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={`w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl font-bold text-gray-800 outline-none appearance-none focus:border-blue-600 transition-all disabled:opacity-60 ${!isEditing ? "" : "cursor-pointer"}`}
                         >
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="other">Khác</option>
+                          <option value="male">Nam</option>
+                          <option value="female">Nữ</option>
+                          <option value="other">Khác</option>
                         </select>
-                        </div>
+                      </div>
                     </div>
-                    </div>
+                  </div>
                 </div>
 
                 {isEditing && (
-                    <div className="flex gap-4 mt-8 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex gap-4 mt-8 pt-6 border-t border-gray-100 animate-in fade-in slide-in-from-bottom-2">
                     <button
-                        onClick={handleUpdateProfile}
-                        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                      onClick={handleUpdateProfile}
+                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:shadow-lg transition-all active:scale-95 cursor-pointer"
                     >
-                        Lưu thay đổi thông tin
+                      Lưu thay đổi thông tin
                     </button>
-                    </div>
+                  </div>
                 )}
-                </div>
+              </div>
             </div>
           </div>
         )}
@@ -472,11 +496,10 @@ function InfoField({
         onChange={onChange}
         readOnly={isLocked}
         placeholder={placeholder}
-        className={`w-full p-3.5 rounded-2xl border text-sm font-bold outline-none transition-all ${
-          isLocked
+        className={`w-full p-3.5 rounded-2xl border text-sm font-bold outline-none transition-all ${isLocked
             ? "bg-gray-100 border-transparent text-gray-500 cursor-not-allowed"
             : "bg-white border-gray-200 text-gray-800 focus:border-blue-600"
-        }`}
+          }`}
       />
     </div>
   );
@@ -485,7 +508,9 @@ function InfoField({
 function PasswordField({ label, name, value, onChange, placeholder }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-bold text-gray-500 uppercase ml-1 tracking-widest">{label}</label>
+      <label className="text-xs font-bold text-gray-500 uppercase ml-1 tracking-widest">
+        {label}
+      </label>
       <input
         type="password"
         name={name}

@@ -230,6 +230,12 @@ const ProductDetail = () => {
   const [mainImage, setMainImage] = useState("");
   const [quantity, setQuantity] = useState(1);
 
+  useEffect(() => {
+    if (selectedVariant && quantity > selectedVariant.ton_kho) {
+      setQuantity(Math.max(1, selectedVariant.ton_kho));
+    }
+  }, [selectedVariant]);
+
   // 3. Quản lý giao diện
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
@@ -327,7 +333,7 @@ const ProductDetail = () => {
           localStorage.setItem(storageKey, String(now));
           fetch(`${BASE_URL}/api/sanPham/${dataDetail.id}/view`, {
             method: "POST",
-          }).catch(() => {});
+          }).catch(() => { });
         }
 
         if (dataDetail.bien_the?.length > 0)
@@ -581,7 +587,7 @@ const ProductDetail = () => {
           const data = await res.json();
           Swal.fire("Lỗi!", data.message || "Không thể xóa đánh giá.", "error");
         }
-      } catch  {
+      } catch {
         Swal.fire("Lỗi!", "Đã xảy ra lỗi kết nối.", "error");
       }
     }
@@ -624,7 +630,7 @@ const ProductDetail = () => {
     setIsShareModalOpen(false);
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (shouldRedirect = false) => {
     if (!user) {
       toast.error("Vui lòng đăng nhập!");
       navigate("/login");
@@ -651,6 +657,15 @@ const ProductDetail = () => {
       (item) => item.variantId === selectedVariant.id,
     );
 
+    const existingQty = existingIndex > -1 ? currentCart[existingIndex].so_luong : 0;
+    const newTotalQty = existingQty + quantity;
+
+    if (newTotalQty > selectedVariant.ton_kho) {
+      return toast.error(
+        `Không thể thêm! Bạn đang có ${existingQty} sản phẩm trong giỏ hàng. Số lượng tối đa của sản phẩm này là ${selectedVariant.ton_kho}.`
+      );
+    }
+
     if (existingIndex > -1) {
       currentCart[existingIndex].so_luong += quantity;
     } else {
@@ -660,6 +675,10 @@ const ProductDetail = () => {
     window.dispatchEvent(new Event("cartUpdated"));
 
     toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
+
+    if (shouldRedirect === true) {
+      navigate("/cart");
+    }
   };
 
   if (isLoading) {
@@ -699,9 +718,9 @@ const ProductDetail = () => {
   const avgRating =
     parentReviews.length > 0
       ? (
-          parentReviews.reduce((sum, r) => sum + r.so_sao, 0) /
-          parentReviews.length
-        ).toFixed(1)
+        parentReviews.reduce((sum, r) => sum + r.so_sao, 0) /
+        parentReviews.length
+      ).toFixed(1)
       : 0;
 
   return (
@@ -779,9 +798,8 @@ const ProductDetail = () => {
                 <button
                   onClick={handleToggleFavorite}
                   disabled={isLiking}
-                  className={`flex items-center gap-1.5 cursor-pointer transition-all ${
-                    isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
-                  } ${isLiking ? "opacity-50" : ""}`}
+                  className={`flex items-center gap-1.5 cursor-pointer transition-all ${isLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
+                    } ${isLiking ? "opacity-50" : ""}`}
                 >
                   {isLiked ? (
                     <Icons.Favorite className="w-5 h-5 fill-red-500" />
@@ -949,7 +967,17 @@ const ProductDetail = () => {
                     className="w-10 text-center font-medium text-gray-800 outline-none bg-transparent text-sm border-x border-gray-200 h-full"
                   />
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
+                    onClick={() => {
+                      if (selectedVariant) {
+                        if (quantity < selectedVariant.ton_kho) {
+                          setQuantity(quantity + 1);
+                        } else {
+                          toast.warning(`Chỉ còn ${selectedVariant.ton_kho} sản phẩm ở cửa hàng!`);
+                        }
+                      } else {
+                        toast.error("Vui lòng chọn phân loại sản phẩm!");
+                      }
+                    }}
                     className="px-3 hover:bg-gray-50 h-full font-bold text-gray-500"
                   >
                     +
@@ -960,20 +988,21 @@ const ProductDetail = () => {
               <div className="flex flex-col sm:flex-row gap-2 mt-auto w-full">
                 <button
                   onClick={() => {
-                    handleAddToCart();
+                    handleAddToCart(true);
                   }}
                   disabled={!selectedVariant || selectedVariant.ton_kho === 0}
-                  className={`flex-[1.5] text-white cursor-pointer h-12 rounded-lg font-bold transition shadow-md flex items-center justify-center ${
-                    !selectedVariant || selectedVariant.ton_kho === 0
+                  className={`flex-[1.5] text-white cursor-pointer h-12 rounded-lg font-bold transition shadow-md flex items-center justify-center ${!selectedVariant || selectedVariant.ton_kho === 0
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-red-600 hover:bg-red-700"
-                  }`}
+                    }`}
                 >
                   <span className="text-[16px]">Mua ngay</span>
                 </button>
                 <button
                   disabled={!selectedVariant || selectedVariant.ton_kho === 0}
-                  onClick={handleAddToCart}
+                  onClick={() => {
+                    handleAddToCart(false);
+                  }}
                   className={`flex-1 text-white h-12 rounded-lg cursor-pointer font-bold transition flex items-center justify-center ${!selectedVariant || selectedVariant.ton_kho === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
                 >
                   <span className="text-[16px]">Thêm vào giỏ hàng</span>
@@ -1161,105 +1190,105 @@ const ProductDetail = () => {
 
                     {allReplies.filter((rp) => rp.parent_id === rv.id).length >
                       0 && (
-                      <div className="mt-2 md:ml-12">
-                        {!expandedThreads[rv.id] ? (
-                          <button
-                            onClick={() =>
-                              setExpandedThreads((prev) => ({
-                                ...prev,
-                                [rv.id]: true,
-                              }))
-                            }
-                            className="flex items-center gap-2 text-xs text-blue-600 font-bold p-1.5 transition cursor-pointer"
-                          >
-                            Xem{" "}
-                            {
-                              allReplies.filter((rp) => rp.parent_id === rv.id)
-                                .length
-                            }{" "}
-                            câu trả lời
-                          </button>
-                        ) : (
-                          <div className="space-y-4 border-l-2 border-gray-100 pl-4 animate-in fade-in duration-300">
-                            {allReplies
-                              .filter((rp) => rp.parent_id === rv.id)
-                              .map((reply) => (
-                                <React.Fragment key={reply.id}>
-                                  <ReviewItem
-                                    rv={reply}
-                                    user={user}
-                                    isReply={true}
-                                    onReply={() => {
-                                      setReplyingTo(reply.id); // Hiện textarea dưới reply con
-                                      setReplyText("");
-                                    }}
-                                    onLike={(loai) =>
-                                      handleToggleLike(reply.id, loai)
-                                    }
-                                    onDelete={handleAdminDelete}
-                                    onHide={handleAdminHide}
-                                    imgError={imgError}
-                                    setImgError={setImgError}
-                                  />
-
-                                  {/* Hộp thoại trả lời cho PHẢN HỒI CON */}
-                                  {replyingTo === reply.id && (
-                                    <div className="mt-1 ml-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-1">
-                                      <textarea
-                                        value={replyText}
-                                        onChange={(e) => {
-                                          setReplyText(e.target.value);
-                                          e.target.style.height = "auto";
-                                          e.target.style.height =
-                                            e.target.scrollHeight + "px";
-                                        }}
-                                        placeholder={`Trả lời ${reply.nguoi_dung?.ho_ten}...`}
-                                        className="w-full border-none rounded-lg p-2 text-sm outline-none focus:ring-0 resize-none min-h-[36px] max-h-32 overflow-y-auto"
-                                        rows={1}
-                                        autoFocus
-                                      ></textarea>
-                                      <div className="flex justify-end gap-2 mt-1 border-t border-gray-50 pt-2">
-                                        <button
-                                          onClick={() => {
-                                            setReplyingTo(null);
-                                            setReplyText("");
-                                          }}
-                                          className="px-3 py-1 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer"
-                                        >
-                                          Hủy
-                                        </button>
-                                        <button
-                                          onClick={() =>
-                                            handleReplySubmit(rv.id)
-                                          }
-                                          disabled={
-                                            isSubmittingReply ||
-                                            !replyText.trim()
-                                          }
-                                          className="text-blue-600 px-4 py-1 rounded-lg text-xs font-bold hover:bg-blue-50 disabled:text-gray-300 disabled:cursor-not-allowed transition cursor-pointer"
-                                        >
-                                          Gửi
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </React.Fragment>
-                              ))}
+                        <div className="mt-2 md:ml-12">
+                          {!expandedThreads[rv.id] ? (
                             <button
                               onClick={() =>
                                 setExpandedThreads((prev) => ({
                                   ...prev,
-                                  [rv.id]: false,
+                                  [rv.id]: true,
                                 }))
                               }
-                              className="text-xs text-gray-400 hover:text-blue-600 font-medium transition pl-2 cursor-pointer"
+                              className="flex items-center gap-2 text-xs text-blue-600 font-bold p-1.5 transition cursor-pointer"
                             >
-                              Ẩn bớt
+                              Xem{" "}
+                              {
+                                allReplies.filter((rp) => rp.parent_id === rv.id)
+                                  .length
+                              }{" "}
+                              câu trả lời
                             </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          ) : (
+                            <div className="space-y-4 border-l-2 border-gray-100 pl-4 animate-in fade-in duration-300">
+                              {allReplies
+                                .filter((rp) => rp.parent_id === rv.id)
+                                .map((reply) => (
+                                  <React.Fragment key={reply.id}>
+                                    <ReviewItem
+                                      rv={reply}
+                                      user={user}
+                                      isReply={true}
+                                      onReply={() => {
+                                        setReplyingTo(reply.id); // Hiện textarea dưới reply con
+                                        setReplyText("");
+                                      }}
+                                      onLike={(loai) =>
+                                        handleToggleLike(reply.id, loai)
+                                      }
+                                      onDelete={handleAdminDelete}
+                                      onHide={handleAdminHide}
+                                      imgError={imgError}
+                                      setImgError={setImgError}
+                                    />
+
+                                    {/* Hộp thoại trả lời cho PHẢN HỒI CON */}
+                                    {replyingTo === reply.id && (
+                                      <div className="mt-1 ml-4 bg-white p-2 rounded-xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-top-1">
+                                        <textarea
+                                          value={replyText}
+                                          onChange={(e) => {
+                                            setReplyText(e.target.value);
+                                            e.target.style.height = "auto";
+                                            e.target.style.height =
+                                              e.target.scrollHeight + "px";
+                                          }}
+                                          placeholder={`Trả lời ${reply.nguoi_dung?.ho_ten}...`}
+                                          className="w-full border-none rounded-lg p-2 text-sm outline-none focus:ring-0 resize-none min-h-[36px] max-h-32 overflow-y-auto"
+                                          rows={1}
+                                          autoFocus
+                                        ></textarea>
+                                        <div className="flex justify-end gap-2 mt-1 border-t border-gray-50 pt-2">
+                                          <button
+                                            onClick={() => {
+                                              setReplyingTo(null);
+                                              setReplyText("");
+                                            }}
+                                            className="px-3 py-1 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                                          >
+                                            Hủy
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleReplySubmit(rv.id)
+                                            }
+                                            disabled={
+                                              isSubmittingReply ||
+                                              !replyText.trim()
+                                            }
+                                            className="text-blue-600 px-4 py-1 rounded-lg text-xs font-bold hover:bg-blue-50 disabled:text-gray-300 disabled:cursor-not-allowed transition cursor-pointer"
+                                          >
+                                            Gửi
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </React.Fragment>
+                                ))}
+                              <button
+                                onClick={() =>
+                                  setExpandedThreads((prev) => ({
+                                    ...prev,
+                                    [rv.id]: false,
+                                  }))
+                                }
+                                className="text-xs text-gray-400 hover:text-blue-600 font-medium transition pl-2 cursor-pointer"
+                              >
+                                Ẩn bớt
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </div>
                 ))
               ) : (

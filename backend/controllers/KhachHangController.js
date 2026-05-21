@@ -155,8 +155,11 @@ const sendEmailToCustomer = async (req, res) => {
         .json({ success: false, message: "Vui lòng điền đủ thông tin!" });
     }
 
+    const config = await ThietLapCuaHang.findOne({ where: { id: 1 } });
+    const storeName = config && config.ten_cua_hang ? config.ten_cua_hang : "Cửa hàng";
+
     // Cấu hình bức thư
-    const html = `
+    const htmlMessage = `
         <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
           <h2 style="color: #2563eb;">Thông báo từ ${storeName}</h2>
           <p>${message.replace(/\n/g, "<br>")}</p>

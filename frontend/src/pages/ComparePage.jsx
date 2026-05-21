@@ -81,7 +81,7 @@ const ProductSearchSlot = ({ label, selectedProduct, onSelect, onClear, otherPro
             })
           });
           const aiCheckData = await aiCheckRes.json();
-          
+
           if (aiCheckData.isSameType === false) {
             const result = await Swal.fire({
               title: "Sản phẩm khác loại",
@@ -93,7 +93,7 @@ const ProductSearchSlot = ({ label, selectedProduct, onSelect, onClear, otherPro
               confirmButtonText: "Tiếp tục",
               cancelButtonText: "Hủy bỏ"
             });
-            
+
             if (!result.isConfirmed) return;
           } else {
             Swal.close();
@@ -312,7 +312,9 @@ const ComparePage = () => {
             <div className="mt-8 animate-fade-in-up">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <h3 className="font-bold text-xl text-gray-800 flex items-center gap-2">
-                  <Icons.List className="w-6 h-6 text-blue-600" />
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                  </svg>
                   Bảng so sánh chi tiết
                 </h3>
 

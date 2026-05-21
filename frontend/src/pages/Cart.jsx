@@ -26,6 +26,64 @@ const Cart = () => {
     }
   }, []);
 
+  const [variantStocks, setVariantStocks] = useState({});
+
+  useEffect(() => {
+    const fetchStocks = async () => {
+      const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+      if (savedCart.length === 0) return;
+
+      const productIds = [...new Set(savedCart.map((item) => item.id))];
+      const stockMap = {};
+
+      try {
+        await Promise.all(
+          productIds.map(async (id) => {
+            const res = await fetch(`${BASE_URL}/api/sanPham/${id}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.bien_the) {
+                data.bien_the.forEach((vt) => {
+                  stockMap[vt.id] = vt.ton_kho;
+                });
+              }
+            }
+          })
+        );
+        setVariantStocks(stockMap);
+
+        // Kiểm tra điều chỉnh số lượng vượt quá tồn kho khả dụng
+        let updated = false;
+        const adjustedCart = savedCart.map((item) => {
+          const maxStock = stockMap[item.variantId];
+          if (maxStock !== undefined) {
+            if (maxStock === 0) {
+              if (item.so_luong > 1) {
+                updated = true;
+                return { ...item, so_luong: 1 };
+              }
+            } else if (item.so_luong > maxStock) {
+              updated = true;
+              toast.error(
+                `Sản phẩm "${item.ten_san_pham}" chỉ còn ${maxStock} sản phẩm. Đã tự động điều chỉnh số lượng.`
+              );
+              return { ...item, so_luong: maxStock };
+            }
+          }
+          return item;
+        });
+
+        if (updated) {
+          saveCartToLocal(adjustedCart);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải thông tin tồn kho:", err);
+      }
+    };
+
+    fetchStocks();
+  }, []);
+
   const saveCartToLocal = (newCart) => {
     localStorage.setItem("cart", JSON.stringify(newCart));
     window.dispatchEvent(new Event("cartUpdated"));
@@ -65,6 +123,14 @@ const Cart = () => {
     const newCart = cartItems.map((item) => {
       if (item.variantId === variantId) {
         const newQuantity = item.so_luong + delta;
+        const maxStock = variantStocks[variantId];
+
+        if (maxStock !== undefined) {
+          if (newQuantity > maxStock) {
+            toast.error(`Chỉ còn ${maxStock} sản phẩm!`);
+            return { ...item, so_luong: maxStock };
+          }
+        }
         return { ...item, so_luong: newQuantity > 0 ? newQuantity : 1 };
       }
       return item;
@@ -83,6 +149,24 @@ const Cart = () => {
       return toast.error("Vui lòng chọn sản phẩm cần xóa!");
     const newCart = cartItems.filter((item) => !item.selected);
     saveCartToLocal(newCart);
+  };
+
+  const handleCheckout = () => {
+    const invalidItem = selectedItems.find((item) => {
+      const stock = variantStocks[item.variantId];
+      return stock !== undefined && (stock === 0 || item.so_luong > stock);
+    });
+
+    if (invalidItem) {
+      const stock = variantStocks[invalidItem.variantId];
+      if (stock === 0) {
+        return toast.error(`Sản phẩm "${invalidItem.ten_san_pham}" đã hết hàng! Vui lòng bỏ chọn hoặc xóa khỏi giỏ hàng.`);
+      } else {
+        return toast.error(`Sản phẩm "${invalidItem.ten_san_pham}" chỉ còn ${stock} sản phẩm ở cửa hàng!`);
+      }
+    }
+
+    navigate("/checkout");
   };
 
   const formatPrice = (price) => {
@@ -287,12 +371,11 @@ const Cart = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate("/checkout")}
-                  className={`px-5 lg:px-6 py-2 lg:py-2 rounded-full lg:rounded-lg text-white font-bold text-sm lg:text-xl transition-all cursor-pointer shadow-md ${
-                    selectedCount > 0
+                  onClick={handleCheckout}
+                  className={`px-5 lg:px-6 py-2 lg:py-2 rounded-full lg:rounded-lg text-white font-bold text-sm lg:text-xl transition-all cursor-pointer shadow-md ${selectedCount > 0
                       ? "bg-[#e30019] hover:bg-red-700 active:scale-95"
                       : "bg-gray-300 cursor-not-allowed shadow-none"
-                  }`}
+                    }`}
                   disabled={selectedCount === 0}
                 >
                   Mua hàng

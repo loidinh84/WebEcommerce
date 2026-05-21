@@ -122,7 +122,7 @@ const testEmailConfig = async (req, res) => {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:480px;padding:24px;border:1px solid #e5e7eb;border-radius:12px">
           <h2 style="color:#2563eb;margin-bottom:8px">Email test thành công!</h2>
-          <p style="color:#374151">Cấu hình SMTP của <b>${config.ten_cua_hang || "LTL Store"}</b> đang hoạt động tốt.</p>
+          <p style="color:#374151">Cấu hình SMTP của <b>${config.ten_cua_hang || "Store"}</b> đang hoạt động tốt.</p>
           <hr style="border:none;border-top:1px solid #f3f4f6;margin:16px 0"/>
           <p style="color:#6b7280;font-size:12px">Email này được gửi tự động từ trang Thiết lập cửa hàng.</p>
         </div>

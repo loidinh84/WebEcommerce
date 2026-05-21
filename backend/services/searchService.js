@@ -74,28 +74,23 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
     };
     if (filter) body.filter = filter;
     const result = await meiliRequest("POST", "/indexes/san_pham/search", body);
-    
+
     // Nếu Meilisearch lỗi mạng và trả về undefined hoặc không có hits
     if (!result || !result.hits) {
       throw new Error("Meilisearch không phản hồi hợp lệ");
     }
-    
+
     return result;
   } catch (error) {
-    // console.warn("Meilisearch bận, dùng SQL fallback...");
-    
-    // Fallback sang SQL Search
     try {
       const whereCondition = { trang_thai: "active" };
-      
+
       // Áp dụng từ khóa tìm kiếm
       if (query && query.trim() !== "") {
         whereCondition.ten_san_pham = { [Op.like]: `%${query}%` };
       }
-      
-      // Áp dụng bộ lọc (ví dụ: danh_muc_id = 32)
+
       if (filter) {
-        // filter thường có dạng "danh_muc_id IN (32,56)" hoặc "danh_muc_id = 32"
         const match = filter.match(/danh_muc_id\s*(?:IN\s*\(([^)]+)\)|=\s*(\d+))/i);
         if (match) {
           const idsStr = match[1] || match[2];
@@ -104,7 +99,7 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
           };
         }
       }
-      
+
       const sqlResults = await SanPham.findAll({
         where: whereCondition,
         attributes: ["id", "ten_san_pham", "mo_ta_ngan", "thuong_hieu", "slug"],
@@ -121,7 +116,7 @@ const searchSanPham = async (query, { limit = 10, filter = null } = {}) => {
         ],
         limit: limit,
       });
-      
+
       const hits = sqlResults.map((sp) => {
         const item = sp.get({ plain: true });
         return {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useContext, useMemo } from "react";
 import Header from "../components/Header";
-import Footer from "../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import BASE_URL from "../config/api";
 import { StoreContext } from "../context/StoreContext";
@@ -1719,7 +1718,6 @@ export default function AiBuilder() {
         </div>
       </div>
 
-      <Footer />
       <ToastContainer theme="light" position="top-center" />
 
       {/* MODAL CHỌN LINH KIỆN THỦ CÔNG */}
@@ -1817,7 +1815,7 @@ export default function AiBuilder() {
                             "<b>$1</b>",
                           );
                           Swal.fire({
-                            title: "⚠️ Không tương thích!",
+                            title: "Không tương thích!",
                             html: `<div class="text-left text-sm leading-relaxed text-slate-600">${htmlReason}</div>`,
                             icon: "warning",
                             confirmButtonColor: "#7c3aed",

@@ -496,7 +496,6 @@ const Product = () => {
       }
     };
 
-    // Khai báo pid NGOÀI try để catch block có thể truy cập
     const pid = confirmModal.product?.id ?? null;
 
     try {
@@ -1415,9 +1414,8 @@ const Product = () => {
       )}
       {isAddSupplierOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/50 p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-            {/* Header */}
-            <div className="px-6 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50 shrink-0">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
               <h3 className="font-medium text-gray-800 text-xl">
                 Thêm Nhà Cung Cấp
               </h3>
@@ -1433,7 +1431,6 @@ const Product = () => {
               </button>
             </div>
 
-            {/* Form thêm/sửa */}
             <form
               onSubmit={handleQuickSaveSupplier}
               className="p-5 border-b border-gray-100 shrink-0"
@@ -1470,7 +1467,7 @@ const Product = () => {
               </div>
             </form>
 
-            {/* Danh sách hiện tại — có thể scroll */}
+            {/* Danh sách hiện tại */}
             <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
               <h4 className="text-sm font-medium text-gray-600 mb-2">
                 Danh sách hiện tại
@@ -1510,7 +1507,6 @@ const Product = () => {
             </div>
           </div>
         </div>
-
       )}
 
       {/* Modal xác nhận thao tác thông thường */}

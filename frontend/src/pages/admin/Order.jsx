@@ -487,8 +487,8 @@ const Order = () => {
                 key={tab.id}
                 onClick={() => setOrderTab(tab.id)}
                 className={`py-3 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${orderTab === tab.id
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-800"
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-800"
                   }`}
               >
                 {tab.label}
@@ -552,8 +552,8 @@ const Order = () => {
                         <tr
                           onClick={() => toggleRow(order.id)}
                           className={`cursor-pointer transition-colors border-b border-gray-200 ${isExpanded
-                              ? "bg-blue-50/50"
-                              : "hover:bg-blue-50/30 bg-white"
+                            ? "bg-blue-50/50"
+                            : "hover:bg-blue-50/30 bg-white"
                             } ${order.orderStatus === "cancelled" ? "opacity-60" : ""}`}
                         >
                           <td className="py-4 px-6 font-bold text-blue-600">
@@ -612,9 +612,9 @@ const Order = () => {
                                       </span>
                                       <span
                                         className={`font-bold text-xs ${order.paymentStatus ===
-                                            "Đã thanh toán"
-                                            ? "text-green-600"
-                                            : "text-amber-600"
+                                          "Đã thanh toán"
+                                          ? "text-green-600"
+                                          : "text-amber-600"
                                           }`}
                                       >
                                         {order.paymentStatus}
@@ -642,14 +642,6 @@ const Order = () => {
                                       </span>
                                       <span className="text-gray-800">
                                         {order.address}
-                                      </span>
-                                    </div>
-                                    <div className="flex">
-                                      <span className="text-gray-500 w-28 font-medium">
-                                        Cập nhật cuối:
-                                      </span>
-                                      <span className="font-bold text-gray-900">
-                                        {order.updatedAt || "Chưa cập nhật"}
                                       </span>
                                     </div>
                                     <div className="mt-4 pt-4 border-t border-dashed border-gray-100">
@@ -812,8 +804,8 @@ const Order = () => {
                                         })
                                       }
                                       className={`w-full py-2.5 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer ${order.paymentMethod?.toLowerCase().includes("chuyển khoản")
-                                          ? "bg-amber-500 hover:bg-amber-600"
-                                          : "bg-blue-600 hover:bg-blue-700"
+                                        ? "bg-amber-500 hover:bg-amber-600"
+                                        : "bg-blue-600 hover:bg-blue-700"
                                         }`}
                                     >
                                       {order.paymentMethod?.toLowerCase().includes("chuyển khoản")

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/api";
 import * as XLSX from "xlsx";
 import * as Icons from "../../assets/icons/index";
+import toast, { Toaster } from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n || 0);
 
@@ -12,7 +14,7 @@ const QuickAddModal = ({ isOpen, onClose, onSave }) => {
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!form.name.trim()) return alert("Vui lòng nhập tên hàng hóa!");
+    if (!form.name.trim()) return toast.error("Vui lòng nhập tên hàng hóa!");
     onSave({
       bien_the_id: null,
       sku: null,
@@ -284,9 +286,9 @@ const InventoryImport = () => {
 
   // ── Save ───────────────────────────────────────────────
   const handleSave = async (trang_thai) => {
-    if (items.length === 0) { alert("Vui lòng thêm ít nhất 1 sản phẩm!"); return; }
+    if (items.length === 0) { toast.error("Vui lòng thêm ít nhất 1 sản phẩm!"); return; }
     const hasNoId = items.some((i) => !i.bien_the_id);
-    if (hasNoId) { alert("Có sản phẩm thiếu biến thể ID (từ file Excel chưa được khớp). Vui lòng tìm kiếm và thêm thủ công!"); return; }
+    if (hasNoId) { toast.error("Có sản phẩm thiếu biến thể ID (từ file Excel chưa được khớp). Vui lòng tìm kiếm và thêm thủ công!"); return; }
 
     setSaving(true);
     try {
@@ -311,12 +313,44 @@ const InventoryImport = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`✅ ${trang_thai === "completed" ? "Hoàn thành" : "Lưu tạm"} phiếu ${data.data?.ma_phieu} thành công!`);
-        navigate("/admin/inventory");
+        Swal.fire({
+          title: "Thành công",
+          text: `${trang_thai === "completed" ? "Hoàn thành" : "Lưu tạm"} phiếu nhập ${data.data?.ma_phieu} thành công!`,
+          icon: "success",
+          confirmButtonColor: "#3b82f6", // Tailwind blue-500
+          confirmButtonText: "Đồng ý",
+          customClass: {
+            popup: 'rounded-xl font-sans',
+            title: 'text-lg font-bold text-gray-800',
+            htmlContainer: 'text-sm text-gray-600',
+          }
+        }).then(() => {
+          navigate("/admin/inventory");
+        });
       } else {
-        alert("❌ Lỗi: " + data.message);
+        Swal.fire({
+          title: "Thất bại",
+          text: "Lỗi: " + data.message,
+          icon: "error",
+          confirmButtonColor: "#ef4444",
+          confirmButtonText: "Đóng",
+          customClass: {
+            popup: 'rounded-xl font-sans',
+          }
+        });
       }
-    } catch { alert("Lỗi kết nối server!"); }
+    } catch {
+      Swal.fire({
+        title: "Lỗi kết nối",
+        text: "Không thể kết nối đến máy chủ!",
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Đóng",
+        customClass: {
+          popup: 'rounded-xl font-sans',
+        }
+      });
+    }
     finally { setSaving(false); }
   };
 
@@ -543,6 +577,7 @@ const InventoryImport = () => {
 
       {/* Search Modal (nếu muốn tìm từ DB) */}
       <QuickSearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} onAdd={addItem} />
+      <Toaster position="top-right" />
     </div>
   );
 };

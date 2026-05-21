@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/api";
 import * as Icons from "../../assets/icons/index";
+import toast, { Toaster } from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const getToken = () => localStorage.getItem("token") || sessionStorage.getItem("token");
 
@@ -11,7 +13,7 @@ const QuickAddModal = ({ isOpen, onClose, onSave }) => {
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!form.name.trim()) return alert("Vui lòng nhập tên hàng hóa!");
+    if (!form.name.trim()) return toast.error("Vui lòng nhập tên hàng hóa!");
     onSave({ bien_the_id: null, sku: null, name: form.name, unit: form.unit, so_luong_he_thong: 0, so_luong_thuc_te: 0 });
     setForm({ name: "", unit: "" });
     onClose();
@@ -111,9 +113,9 @@ const InventoryCheckCreate = () => {
 
   // ── Save ───────────────────────────────────────────────────────────────
   const handleSave = async (trang_thai) => {
-    if (items.length === 0) { alert("Vui lòng thêm ít nhất 1 hàng hóa!"); return; }
+    if (items.length === 0) { toast.error("Vui lòng thêm ít nhất 1 hàng hóa!"); return; }
     const hasNoId = items.some((i) => !i.bien_the_id);
-    if (hasNoId) { alert("Có hàng hóa chưa được khớp với biến thể. Vui lòng tìm kiếm và thêm lại!"); return; }
+    if (hasNoId) { toast.error("Có hàng hóa chưa được khớp với biến thể. Vui lòng tìm kiếm và thêm lại!"); return; }
 
     setSaving(true);
     try {
@@ -133,12 +135,44 @@ const InventoryCheckCreate = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`✅ ${trang_thai === "balanced" ? "Cân bằng kho" : "Lưu"} phiếu ${data.data?.ma_phieu} thành công!`);
-        navigate("/admin/inventory-check");
+        Swal.fire({
+          title: "Thành công",
+          text: `${trang_thai === "balanced" ? "Cân bằng kho" : "Lưu tạm"} phiếu kiểm kho ${data.data?.ma_phieu} thành công!`,
+          icon: "success",
+          confirmButtonColor: "#3b82f6",
+          confirmButtonText: "Đồng ý",
+          customClass: {
+            popup: 'rounded-xl font-sans',
+            title: 'text-lg font-bold text-gray-800',
+            htmlContainer: 'text-sm text-gray-600',
+          }
+        }).then(() => {
+          navigate("/admin/inventory-check");
+        });
       } else {
-        alert("❌ " + data.message);
+        Swal.fire({
+          title: "Thất bại",
+          text: "Lỗi: " + data.message,
+          icon: "error",
+          confirmButtonColor: "#ef4444",
+          confirmButtonText: "Đóng",
+          customClass: {
+            popup: 'rounded-xl font-sans',
+          }
+        });
       }
-    } catch { alert("Lỗi kết nối server!"); }
+    } catch {
+      Swal.fire({
+        title: "Lỗi kết nối",
+        text: "Không thể kết nối đến máy chủ!",
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "Đóng",
+        customClass: {
+          popup: 'rounded-xl font-sans',
+        }
+      });
+    }
     finally { setSaving(false); }
   };
 
@@ -236,7 +270,7 @@ const InventoryCheckCreate = () => {
                       <td className="py-2.5 px-4 text-center font-bold text-sm">
                         {diff === 0 ? <span className="text-gray-400">0</span>
                           : diff > 0 ? <span className="text-green-600">+{diff}</span>
-                          : <span className="text-red-500">{diff}</span>}
+                            : <span className="text-red-500">{diff}</span>}
                       </td>
                       <td className="py-2.5 px-2 text-center">
                         <button onClick={() => setItems(items.filter((_, ii) => ii !== idx))}
@@ -318,6 +352,7 @@ const InventoryCheckCreate = () => {
 
       {/* Quick Add Modal */}
       <QuickAddModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={addItem} />
+      <Toaster position="top-right" />
     </div>
   );
 };

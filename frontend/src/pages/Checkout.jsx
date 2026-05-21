@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import Footer from "../components/Footer";
 import toast, { Toaster } from "react-hot-toast";
 import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
@@ -65,6 +64,49 @@ const Checkout = () => {
     }
     setCheckoutItems(selected);
 
+    // Kiểm tra tồn kho của các sản phẩm đã chọn trước khi thanh toán
+    const checkStockBeforeCheckout = async () => {
+      const productIds = [...new Set(selected.map((item) => item.id))];
+      try {
+        const stockMap = {};
+        await Promise.all(
+          productIds.map(async (id) => {
+            const res = await fetch(`${BASE_URL}/api/sanPham/${id}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.bien_the) {
+                data.bien_the.forEach((vt) => {
+                  stockMap[vt.id] = vt.ton_kho;
+                });
+              }
+            }
+          })
+        );
+
+        let hasIssue = false;
+        for (const item of selected) {
+          const maxStock = stockMap[item.variantId];
+          if (maxStock !== undefined) {
+            if (maxStock === 0) {
+              toast.error(`Sản phẩm "${item.ten_san_pham}" đã hết hàng!`);
+              hasIssue = true;
+            } else if (item.so_luong > maxStock) {
+              toast.error(`Sản phẩm "${item.ten_san_pham}" chỉ còn ${maxStock} sản phẩm ở cửa hàng!`);
+              hasIssue = true;
+            }
+          }
+        }
+
+        if (hasIssue) {
+          setTimeout(() => navigate("/cart"), 2000);
+        }
+      } catch (err) {
+        console.error("Lỗi khi kiểm tra tồn kho:", err);
+      }
+    };
+
+    checkStockBeforeCheckout();
+
     if (user) {
       // Lấy thông tin tài khoản mới nhất để đồng bộ điểm tích lũy và hạng thẻ thực tế
       fetch(`${BASE_URL}/api/taiKhoan/dashboard/${user.id}`)
@@ -91,7 +133,7 @@ const Checkout = () => {
           setAddresses(data);
           setSelectedAddress(
             data.find((a) => a.la_mac_dinh === 1 || a.la_mac_dinh === true) ||
-              data[0],
+            data[0],
           );
         });
 
@@ -181,9 +223,9 @@ const Checkout = () => {
   const discountAmount = Math.round(subtotal * memberDiscountRate);
   const pointsToUse = usePoints
     ? Math.min(
-        user?.diem_tich_luy || 0,
-        subtotal + shippingFee - discountAmount - voucherDiscount,
-      )
+      user?.diem_tich_luy || 0,
+      subtotal + shippingFee - discountAmount - voucherDiscount,
+    )
     : 0;
   const total =
     subtotal + shippingFee - discountAmount - voucherDiscount - pointsToUse;
@@ -490,8 +532,8 @@ const Checkout = () => {
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition cursor-pointer shadow-sm"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 17v3M17 14h3"/>
+                        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" /><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 17v3M17 14h3" />
                       </svg>
                       Xem mã QR
                     </button>
@@ -545,11 +587,10 @@ const Checkout = () => {
                     <input
                       type="text"
                       placeholder="Tên công ty *"
-                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${
-                        vatErrors.ten_cong_ty
+                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${vatErrors.ten_cong_ty
                           ? "border-red-400 bg-red-50 placeholder-red-400"
                           : "border-gray-300 focus:border-blue-500 bg-transparent"
-                      }`}
+                        }`}
                       value={vatInfo.ten_cong_ty}
                       onChange={(e) => {
                         const updated = { ...vatInfo, ten_cong_ty: e.target.value };
@@ -567,13 +608,12 @@ const Checkout = () => {
                     <input
                       type="text"
                       placeholder="Mã số thuế * (VD: 1234567890 hoặc 1234567890-123)"
-                      className={`w-full border-b px-3 py-2 text-sm outline-none font-mono transition-colors ${
-                        vatErrors.mst
+                      className={`w-full border-b px-3 py-2 text-sm outline-none font-mono transition-colors ${vatErrors.mst
                           ? "border-red-400 bg-red-50 placeholder-red-400"
                           : vatInfo.mst && !vatErrors.mst
-                          ? "border-green-400 bg-green-50"
-                          : "border-gray-300 focus:border-blue-500 bg-transparent"
-                      }`}
+                            ? "border-green-400 bg-green-50"
+                            : "border-gray-300 focus:border-blue-500 bg-transparent"
+                        }`}
                       value={vatInfo.mst}
                       onChange={(e) => {
                         const updated = { ...vatInfo, mst: e.target.value };
@@ -593,11 +633,10 @@ const Checkout = () => {
                     <input
                       type="text"
                       placeholder="Địa chỉ công ty *"
-                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${
-                        vatErrors.dia_chi_cty
+                      className={`w-full border-b px-3 py-2 text-sm outline-none transition-colors ${vatErrors.dia_chi_cty
                           ? "border-red-400 bg-red-50 placeholder-red-400"
                           : "border-gray-300 focus:border-blue-500 bg-transparent"
-                      }`}
+                        }`}
                       value={vatInfo.dia_chi_cty}
                       onChange={(e) => {
                         const updated = { ...vatInfo, dia_chi_cty: e.target.value };
@@ -747,26 +786,24 @@ const Checkout = () => {
               <button
                 onClick={handleConfirmOrder}
                 disabled={loading || !canCheckout}
-                className={`w-full py-2.5 rounded-lg font-bold text-lg shadow-md transition ${
-                  canCheckout && !loading
+                className={`w-full py-2.5 rounded-lg font-bold text-lg shadow-md transition ${canCheckout && !loading
                     ? "bg-[#e30019] hover:bg-red-700 text-white cursor-pointer"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 {loading
                   ? "Đang xử lý..."
                   : isBankTransfer
-                  ? "Xác nhận đặt hàng"
-                  : "Thanh toán"}
+                    ? "Xác nhận đặt hàng"
+                    : "Thanh toán"}
               </button>
             </div>
           </div>
         </div>
       </main>
 
-      <Footer />
       {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-fade-in">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-scale-up">
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
               <h3 className="font-bold text-gray-800">
@@ -785,11 +822,10 @@ const Checkout = () => {
                 <div key={method.id}>
                   <div
                     onClick={() => setTempPaymentMethod(method)}
-                    className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${
-                      tempPaymentMethod?.id === method.id
+                    className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${tempPaymentMethod?.id === method.id
                         ? "border-blue-600 bg-blue-50"
                         : "border-gray-300 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     {/* ==== ĐOẠN ĐƯỢC SỬA: HIỂN THỊ LOGO AN TOÀN ==== */}
                     {method.logo_url ? (
@@ -819,11 +855,10 @@ const Checkout = () => {
                     </div>
 
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        tempPaymentMethod?.id === method.id
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${tempPaymentMethod?.id === method.id
                           ? "border-blue-600"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     >
                       {tempPaymentMethod?.id === method.id && (
                         <div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>
@@ -850,7 +885,7 @@ const Checkout = () => {
       )}
 
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-up">
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
               <h3 className="font-bold text-gray-800 text-lg">
@@ -884,10 +919,10 @@ const Checkout = () => {
                         {addr.ho_ten_nguoi_nhan || user?.ho_ten}
                         {(addr.la_mac_dinh === 1 ||
                           addr.la_mac_dinh === true) && (
-                          <span className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
-                            Mặc định
-                          </span>
-                        )}
+                            <span className="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold">
+                              Mặc định
+                            </span>
+                          )}
                       </p>
                       <p className="text-sm font-medium text-gray-600">
                         {addr.so_dien_thoai}

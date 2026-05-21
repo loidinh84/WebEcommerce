@@ -278,9 +278,9 @@ const Header = () => {
               <span
                 onClick={() => {
                   if (user) {
-                    navigate('/profile', { state: { activeTab: 'orders' } });
+                    navigate("/profile", { state: { activeTab: "orders" } });
                   } else {
-                    navigate('/login');
+                    navigate("/login");
                   }
                 }}
                 className="cursor-pointer text-sm hover:text-gray-200 flex items-center gap-1.5 text-white/90 transition-colors whitespace-nowrap"
@@ -418,7 +418,7 @@ const Header = () => {
                 </button>
 
                 {showCategories && (
-                  <div className="hidden md:block absolute top-full -left-49 mt-7 w-[246px] bg-white rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 py-2 text-gray-800 animate-fade-in z-[1001]">
+                  <div className="hidden md:block absolute top-full -left-47 mt-7 w-[246px] bg-white rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-gray-100 py-2 text-gray-800 animate-fade-in z-[1001]">
                     <div className="relative px-2 flex flex-col">
                       <Link
                         onClick={() => setShowCategories(false)}

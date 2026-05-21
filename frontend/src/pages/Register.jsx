@@ -108,7 +108,7 @@ const Register = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Đăng nhập Google thất bại!");
     } finally {
       setLoading(false);

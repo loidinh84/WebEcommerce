@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/api";
 import { useReactToPrint } from "react-to-print";
 import DynamicPrintTemplate from "../../components/DynamicPrintTemplate";
+import toast, { Toaster } from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n || 0);
 
@@ -92,7 +94,7 @@ const Inventory = () => {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         const res = await fetch(`${BASE_URL}/api/store-settings`, { headers: { Authorization: `Bearer ${token}` } });
         setStoreInfo(await res.json());
-      } catch {}
+      } catch { }
     };
     fetchStore();
   }, []);
@@ -117,16 +119,41 @@ const Inventory = () => {
   // ── Cancel phiếu ──────────────────────────────────────
   const handleCancel = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm("Bạn có chắc muốn hủy phiếu nhập này?")) return;
-    try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      await fetch(`${BASE_URL}/api/phieu-nhap/${id}/cancel`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchData(page);
-      if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); }
-    } catch { alert("Lỗi khi hủy phiếu!"); }
+    Swal.fire({
+      title: "Hủy phiếu nhập",
+      text: "Bạn có chắc chắn muốn hủy phiếu nhập này? Hành động này không thể hoàn tác.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Đồng ý",
+      cancelButtonText: "Hủy bỏ",
+      customClass: {
+        popup: 'rounded-xl font-sans',
+        title: 'text-lg font-bold text-gray-800',
+        htmlContainer: 'text-sm text-gray-600',
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          const res = await fetch(`${BASE_URL}/api/phieu-nhap/${id}/cancel`, {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const json = await res.json();
+          if (res.ok) {
+            toast.success("Đã hủy phiếu nhập thành công!");
+            fetchData(page);
+            if (expandedId === id) { setExpandedId(null); setExpandedDetail(null); }
+          } else {
+            toast.error(json.message || "Lỗi khi hủy phiếu!");
+          }
+        } catch {
+          toast.error("Lỗi khi hủy phiếu!");
+        }
+      }
+    });
   };
 
   const handlePrint = useReactToPrint({
@@ -436,12 +463,13 @@ const Inventory = () => {
         </div>
       </div>
       <div style={{ display: "none" }}>
-        <DynamicPrintTemplate 
-          ref={printRef} 
-          templateCode="IMPORT_RECEIPT" 
-          data={preparePrintData()} 
+        <DynamicPrintTemplate
+          ref={printRef}
+          templateCode="IMPORT_RECEIPT"
+          data={preparePrintData()}
         />
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 };

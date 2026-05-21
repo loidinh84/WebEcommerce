@@ -5,6 +5,7 @@ import * as Icons from "../../assets/icons/index";
 import ConfirmModal from "./ConfirmModal";
 import { useReactToPrint } from "react-to-print";
 import DynamicPrintTemplate from "../../components/DynamicPrintTemplate";
+import toast, { Toaster } from "react-hot-toast";
 
 const STATUS_MAP = {
   balanced: { label: "Đã cân bằng kho", color: "bg-green-100 text-green-700 border-green-200" },
@@ -47,13 +48,7 @@ const InventoryCheck = () => {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, checkId: null });
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 2500);
-  };
 
   // ── Fetch list ─────────────────────────────────────────────────────────
   const fetchData = useCallback(async (p = 1) => {
@@ -84,7 +79,7 @@ const InventoryCheck = () => {
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         const res = await fetch(`${BASE_URL}/api/store-settings`, { headers: { Authorization: `Bearer ${token}` } });
         setStoreInfo(await res.json());
-      } catch {}
+      } catch { }
     };
     fetchStore();
   }, []);
@@ -111,10 +106,10 @@ const InventoryCheck = () => {
         method: "PATCH",
         headers: { Authorization: `Bearer ${getToken()}` },
       });
-      showToast("Đã hủy phiếu kiểm kho!");
+      toast.success("Đã hủy phiếu kiểm kho!");
       fetchData(page);
       if (expandedId === confirmModal.checkId) { setExpandedId(null); setExpandedDetail(null); }
-    } catch { showToast("Lỗi khi hủy phiếu!", "error"); }
+    } catch { toast.error("Lỗi khi hủy phiếu!"); }
     setConfirmModal({ isOpen: false, checkId: null });
   };
 
@@ -376,16 +371,12 @@ const InventoryCheck = () => {
         onConfirm={handleCancel}
       />
 
-      {toast.show && (
-        <div className={`fixed top-5 right-5 z-[200] px-6 py-3.5 rounded-lg shadow-xl font-medium text-white ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-          {toast.message}
-        </div>
-      )}
+      <Toaster position="top-right" />
       <div style={{ display: "none" }}>
-        <DynamicPrintTemplate 
-          ref={printRef} 
-          templateCode="CHECK_REPORT" 
-          data={preparePrintData()} 
+        <DynamicPrintTemplate
+          ref={printRef}
+          templateCode="CHECK_REPORT"
+          data={preparePrintData()}
         />
       </div>
     </div>
