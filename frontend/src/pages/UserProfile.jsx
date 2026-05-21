@@ -60,6 +60,10 @@ const UserProfile = () => {
           ho_ten: data.userInfo.ho_ten,
           so_dien_thoai: data.userInfo.so_dien_thoai,
           anh_dai_dien: data.userInfo.anh_dai_dien,
+          diem_tich_luy: data.userInfo.diem_tich_luy || 0,
+          mau_the: data.userInfo.hang_thanh_vien?.mau_the || "#9ca3af",
+          ty_le_giam_gia: data.userInfo.hang_thanh_vien?.ty_le_giam_gia || 0,
+          ten_hang: data.userInfo.hang_thanh_vien?.ten_hang,
         });
       }
     } catch (error) {
@@ -267,10 +271,10 @@ const UserProfile = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm lg:text-xl font-bold text-gray-800 leading-none truncate">
-                    {formatPrice(totalSpent)}
+                    {new Intl.NumberFormat("vi-VN").format(profileData?.userInfo?.diem_tich_luy || 0)}
                   </p>
                   <p className="text-xs lg:text-sm text-gray-500 font-medium truncate">
-                    Tiền tích lũy
+                    Điểm tích lũy
                   </p>
                 </div>
               </div>
@@ -314,11 +318,10 @@ const UserProfile = () => {
                 <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  className={`w-full text-left px-3.5 py-3 rounded-lg items-center justify-between cursor-pointer transition-all mb-1 ${item.className || "flex"} ${
-                    activeTab === item.id
-                      ? "lg:text-blue-600 lg:bg-blue-50/80 lg:font-bold lg:shadow-sm text-gray-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`w-full text-left px-3.5 py-3 rounded-lg items-center justify-between cursor-pointer transition-all mb-1 ${item.className || "flex"} ${activeTab === item.id
+                    ? "lg:text-blue-600 lg:bg-blue-50/80 lg:font-bold lg:shadow-sm text-gray-600"
+                    : "text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <span

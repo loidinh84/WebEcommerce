@@ -504,7 +504,7 @@ exports.getAdminOrders = async (req, res) => {
         paymentMethod: phuongThuc.ten_phuong_thuc || "COD",
         paymentStatus:
           giaoDich.trang_thai === "success" ||
-          ["delivered", "completed"].includes(order.trang_thai)
+            ["delivered", "completed"].includes(order.trang_thai)
             ? "Đã thanh toán"
             : "Chưa thanh toán",
         orderStatus: order.trang_thai,

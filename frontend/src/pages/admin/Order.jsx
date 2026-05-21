@@ -644,6 +644,14 @@ const Order = () => {
                                         {order.address}
                                       </span>
                                     </div>
+                                    <div className="flex">
+                                      <span className="text-gray-500 w-28 font-medium">
+                                        Cập nhật cuối:
+                                      </span>
+                                      <span className="font-bold text-gray-900">
+                                        {order.updatedAt || "Chưa cập nhật"}
+                                      </span>
+                                    </div>
                                     <div className="mt-4 pt-4 border-t border-dashed border-gray-100">
                                       <span className="text-gray-500 block mb-1 font-medium">
                                         Ghi chú khách hàng:

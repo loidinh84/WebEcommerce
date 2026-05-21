@@ -11,7 +11,7 @@ import { StoreContext } from "../context/StoreContext";
 const Checkout = () => {
   const navigate = useNavigate();
   const { storeConfig } = useContext(StoreContext);
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
   const [checkoutItems, setCheckoutItems] = useState([]);
@@ -66,6 +66,24 @@ const Checkout = () => {
     setCheckoutItems(selected);
 
     if (user) {
+      // Lấy thông tin tài khoản mới nhất để đồng bộ điểm tích lũy và hạng thẻ thực tế
+      fetch(`${BASE_URL}/api/taiKhoan/dashboard/${user.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.userInfo && updateUser) {
+            updateUser({
+              diem_tich_luy: data.userInfo.diem_tich_luy || 0,
+              mau_the: data.userInfo.hang_thanh_vien?.mau_the || "#9ca3af",
+              ty_le_giam_gia: data.userInfo.hang_thanh_vien?.ty_le_giam_gia || 0,
+              ten_hang: data.userInfo.hang_thanh_vien?.ten_hang,
+              ho_ten: data.userInfo.ho_ten,
+              so_dien_thoai: data.userInfo.so_dien_thoai,
+              anh_dai_dien: data.userInfo.anh_dai_dien,
+            });
+          }
+        })
+        .catch((err) => console.error("Lỗi cập nhật thông tin tài khoản:", err));
+
       // Lấy địa chỉ
       fetch(`${BASE_URL}/api/taiKhoan/diachi/${user.id}`)
         .then((res) => res.json())
@@ -96,7 +114,7 @@ const Checkout = () => {
           }
         });
     }
-  }, [user, navigate]);
+  }, [user?.id, navigate]);
 
   // Lấy tên ngân hàng từ BIN code qua VietQR API
   useEffect(() => {
