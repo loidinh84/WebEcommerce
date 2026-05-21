@@ -47,147 +47,147 @@ const CompIcon = ({ name }) => {
 const CATEGORIES = [
   {
     key: "cpu",
-    label: "CPU - BỘ VI XỬ LÝ",
+    label: "CPU - Bộ vi xử lý",
     dbId: "32",
     sub: "Vi xử lý",
     icon: <CompIcon name="cpu" />,
   },
   {
     key: "mainboard",
-    label: "MAIN - BO MẠCH CHỦ",
+    label: "MAIN - Bo mạch chủ",
     dbId: "33,56",
     sub: "Bo mạch chủ",
     icon: <CompIcon name="mainboard" />,
   },
   {
     key: "ram",
-    label: "RAM - BỘ NHỚ TRONG",
+    label: "RAM - Bộ nhớ trong",
     dbId: "34",
     sub: "Bộ nhớ trong",
     icon: <CompIcon name="ram" />,
   },
   {
     key: "ssd1",
-    label: "Ổ CỨNG SSD 1",
+    label: "Ổ cứng SSD 1",
     dbId: "35,57",
     sub: "Ổ cứng SSD",
     icon: <CompIcon name="ssd" />,
   },
   {
     key: "ssd2",
-    label: "Ổ CỨNG SSD 2",
+    label: "Ổ cứng SSD 2",
     dbId: "35,57",
     sub: "Ổ cứng SSD",
     icon: <CompIcon name="ssd" />,
   },
   {
     key: "hdd",
-    label: "Ổ CỨNG HDD",
+    label: "Ổ cứng HDD",
     dbId: "35",
     sub: "Ổ cứng HDD",
     icon: <CompIcon name="hdd" />,
   },
   {
     key: "vga",
-    label: "VGA - CARD MÀN HÌNH",
+    label: "VGA - CARD màn hình",
     dbId: "37",
     sub: "Card đồ họa",
     icon: <CompIcon name="vga" />,
   },
   {
     key: "psu",
-    label: "PSU - NGUỒN MÁY TÍNH",
+    label: "PSU - Nguồn máy tính",
     dbId: "36,58",
     sub: "Nguồn điện",
     icon: <CompIcon name="psu" />,
   },
   {
     key: "case",
-    label: "CASE - VỎ MÁY TÍNH",
+    label: "CASE - Vỏ máy tính",
     dbId: "39",
     sub: "Vỏ máy tính",
     icon: <CompIcon name="case" />,
   },
   {
     key: "cooler_air",
-    label: "TẢN NHIỆT KHÍ",
+    label: "Tản nhiệt khí",
     dbId: "38,59",
     sub: "Tản nhiệt khí",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "cooler_aio",
-    label: "TẢN NHIỆT NƯỚC AIO",
+    label: "Tản nhiệt nước AIO",
     dbId: "38,59",
     sub: "Tản nhiệt AIO",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "cooler_custom",
-    label: "TẢN NHIỆT NƯỚC CUSTOM",
+    label: "Tản nhiệt nước CUSTOM",
     dbId: "38,59",
     sub: "Tản nhiệt Custom",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "fan",
-    label: "FAN TẢN NHIỆT",
+    label: "FAN tản nhiệt",
     dbId: "38,59",
     sub: "Quạt làm mát",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "monitor1",
-    label: "MONITOR - MÀN HÌNH",
+    label: "MONITOR - Màn hình 1",
     dbId: 20,
     sub: "Màn hình",
     icon: <CompIcon name="monitor" />,
   },
   {
     key: "monitor2",
-    label: "MONITOR - MÀN HÌNH 2",
+    label: "MONITOR - Màn hình 2",
     dbId: 20,
     sub: "Màn hình phụ",
     icon: <CompIcon name="monitor" />,
   },
   {
     key: "keyboard",
-    label: "BÀN PHÍM",
+    label: "Bàn phím",
     dbId: 27,
     sub: "Bàn phím",
     icon: <CompIcon name="keyboard" />,
   },
   {
     key: "mouse",
-    label: "MOUSE - CHUỘT",
+    label: "Mouse - Chuột",
     dbId: 21,
     sub: "Chuột",
     icon: <CompIcon name="mouse" />,
   },
   {
     key: "pad",
-    label: "PAD - BÀN DI CHUỘT",
+    label: "PAD - Bàn di chuột",
     dbId: 6,
     sub: "Bàn di chuột",
     icon: <CompIcon name="mouse" />,
   },
   {
     key: "headphone",
-    label: "TAI NGHE",
+    label: "Tai nghe",
     dbId: 26,
     sub: "Tai nghe",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "speaker",
-    label: "LOA",
+    label: "Loa",
     dbId: 6,
     sub: "Thiết bị âm thanh",
     icon: <CompIcon name="cooler" />,
   },
   {
     key: "chair",
-    label: "GHẾ GAMING",
+    label: "Ghế gaming",
     dbId: 6,
     sub: "Ghế chơi game",
     icon: <CompIcon name="case" />,
@@ -214,6 +214,286 @@ const formatPrice = (p) =>
         currency: "VND",
       }).format(p)
     : "0đ";
+
+// Hàm thông minh kiểm tra độ tương thích của linh kiện trước khi thêm vào cấu hình
+const checkBuildCompatibility = (item, currentBuild) => {
+  const newType = (item.type || "").toLowerCase();
+  const newName = (item.name || "").toUpperCase();
+
+  const hasKeyword = (str, keywords) => {
+    return keywords.some((kw) => str.includes(kw.toUpperCase()));
+  };
+
+  const getCpuSocket = (name) => {
+    const n = name.toUpperCase();
+    if (
+      hasKeyword(n, [
+        "LGA1700",
+        "LGA 1700",
+        "I3-12",
+        "I5-12",
+        "I7-12",
+        "I9-12",
+        "I3-13",
+        "I5-13",
+        "I7-13",
+        "I9-13",
+        "I3-14",
+        "I5-14",
+        "I7-14",
+        "I9-14",
+        "12400",
+        "12100",
+        "13400",
+        "13600",
+        "14700",
+        "12700",
+        "12900",
+        "13700",
+        "13900",
+        "14900",
+      ])
+    )
+      return "LGA1700";
+    if (
+      hasKeyword(n, [
+        "LGA1200",
+        "LGA 1200",
+        "I3-10",
+        "I5-10",
+        "I7-10",
+        "I9-10",
+        "I3-11",
+        "I5-11",
+        "I7-11",
+        "I9-11",
+        "10400",
+        "10100",
+        "11400",
+        "11700",
+        "10700",
+      ])
+    )
+      return "LGA1200";
+    if (
+      hasKeyword(n, [
+        "AM5",
+        "7500F",
+        "7600",
+        "7700",
+        "7800X3D",
+        "Ryzen 5 7",
+        "Ryzen 7 7",
+        "Ryzen 9 7",
+      ])
+    )
+      return "AM5";
+    if (
+      hasKeyword(n, [
+        "AM4",
+        "3600",
+        "5600",
+        "5700",
+        "5900",
+        "3000 Series",
+        "5000 Series",
+        "Ryzen 3 3",
+        "Ryzen 5 3",
+        "Ryzen 7 3",
+        "Ryzen 5 5",
+        "Ryzen 7 5",
+        "Ryzen 9 5",
+      ])
+    )
+      return "AM4";
+    return null;
+  };
+
+  const getMotherboardSocket = (name) => {
+    const n = name.toUpperCase();
+    if (
+      hasKeyword(n, [
+        "H610",
+        "B660",
+        "B760",
+        "H670",
+        "H770",
+        "Z690",
+        "Z790",
+        "LGA1700",
+        "LGA 1700",
+      ])
+    )
+      return "LGA1700";
+    if (
+      hasKeyword(n, [
+        "H410",
+        "H510",
+        "B460",
+        "B560",
+        "Z490",
+        "Z590",
+        "LGA1200",
+        "LGA 1200",
+      ])
+    )
+      return "LGA1200";
+    if (hasKeyword(n, ["A620", "B650", "X670", "AM5"])) return "AM5";
+    if (hasKeyword(n, ["A320", "B450", "B550", "X570", "A520", "AM4"]))
+      return "AM4";
+    return null;
+  };
+
+  const getMotherboardRamType = (name) => {
+    const n = name.toUpperCase();
+    if (n.includes("D4") || n.includes("DDR4")) return "DDR4";
+    if (
+      n.includes("D5") ||
+      n.includes("DDR5") ||
+      getMotherboardSocket(name) === "AM5" ||
+      n.includes("Z790") ||
+      n.includes("B650")
+    )
+      return "DDR5";
+    if (hasKeyword(n, ["H410", "H510", "B460", "B560", "A320", "B450", "B550"]))
+      return "DDR4";
+    return "DDR4";
+  };
+
+  const getRamType = (name) => {
+    const n = name.toUpperCase();
+    // Ưu tiên: từ khóa DDR5/DDR4 rõ ràng trong tên
+    if (
+      n.includes("DDR5") ||
+      n.includes(" D5 ") ||
+      n.endsWith(" D5") ||
+      n.includes("6000MHZ") ||
+      n.includes("5600MHZ") ||
+      n.includes("6400MHZ") ||
+      n.includes("7200MHZ")
+    )
+      return "DDR5";
+    if (
+      n.includes("DDR4") ||
+      n.includes(" D4 ") ||
+      n.endsWith(" D4") ||
+      n.includes("3200MHZ") ||
+      n.includes("3600MHZ") ||
+      n.includes("2666MHZ") ||
+      n.includes("2400MHZ")
+    )
+      return "DDR4";
+    // Mặc định: DDR4 nếu không xác định được
+    return "DDR4";
+  };
+
+  const getPsuWattage = (name) => {
+    const n = name.toUpperCase();
+    const match = n.match(/(\d{3,4})\s*W/);
+    if (match) return parseInt(match[1]);
+    const numbers = [1200, 1000, 850, 750, 650, 600, 550, 500, 450, 400, 350];
+    for (const num of numbers) {
+      if (n.includes(num.toString())) return num;
+    }
+    return null;
+  };
+
+  const getMinPsuForGpu = (name) => {
+    const n = name.toUpperCase();
+    if (hasKeyword(n, ["4090", "3090", "7900 XTX"])) return 850;
+    if (hasKeyword(n, ["4080", "3080", "7900 XT"])) return 750;
+    if (hasKeyword(n, ["4070", "3070", "7800 XT", "6800 XT"])) return 650;
+    if (hasKeyword(n, ["4060", "3060", "7600 XT", "6700 XT"])) return 550;
+    if (hasKeyword(n, ["1660", "1650", "RX 580", "RX 570"])) return 450;
+    return 400;
+  };
+
+  // 1. RULE: CPU vs Mainboard Socket Compatibility
+  if (newType === "cpu") {
+    const cpuSocket = getCpuSocket(newName);
+    const mainboard = currentBuild.mainboard;
+    if (cpuSocket && mainboard) {
+      const mbSocket = getMotherboardSocket(mainboard.name);
+      if (mbSocket && cpuSocket !== mbSocket) {
+        return {
+          compatible: false,
+          reason: `CPU này sử dụng Socket **${cpuSocket}**, không tương thích với Bo mạch chủ **${mainboard.name}** (sử dụng Socket **${mbSocket}**).`,
+        };
+      }
+    }
+  }
+  if (newType === "mainboard") {
+    const mbSocket = getMotherboardSocket(newName);
+    const cpu = currentBuild.cpu;
+    if (mbSocket && cpu) {
+      const cpuSocket = getCpuSocket(cpu.name);
+      if (cpuSocket && cpuSocket !== mbSocket) {
+        return {
+          compatible: false,
+          reason: `Bo mạch chủ này sử dụng Socket **${mbSocket}**, không tương thích với CPU **${cpu.name}** đã chọn (sử dụng Socket **${cpuSocket}**).`,
+        };
+      }
+    }
+  }
+
+  // 2. RULE: Motherboard vs RAM type (DDR4 vs DDR5) Compatibility
+  if (newType === "ram") {
+    const ramType = getRamType(newName);
+    const mainboard = currentBuild.mainboard;
+    if (mainboard) {
+      const mbRamType = getMotherboardRamType(mainboard.name);
+      if (ramType !== mbRamType) {
+        return {
+          compatible: false,
+          reason: `RAM bạn chọn là **${ramType}**, không tương thích với Bo mạch chủ **${mainboard.name}** chỉ hỗ trợ khe cắm **${mbRamType}**.`,
+        };
+      }
+    }
+  }
+  if (newType === "mainboard") {
+    const mbRamType = getMotherboardRamType(newName);
+    const ram = currentBuild.ram;
+    if (ram) {
+      const ramType = getRamType(ram.name);
+      if (ramType !== mbRamType) {
+        return {
+          compatible: false,
+          reason: `Bo mạch chủ này chỉ hỗ trợ RAM **${mbRamType}**, không tương thích với RAM **${ram.name}** bạn đã chọn trước đó (**${ramType}**).`,
+        };
+      }
+    }
+  }
+
+  // 3. RULE: GPU (VGA) vs PSU (Nguồn) watt requirements
+  if (newType === "vga") {
+    const minPsu = getMinPsuForGpu(newName);
+    const psu = currentBuild.psu;
+    if (psu) {
+      const psuWatt = getPsuWattage(psu.name);
+      if (psuWatt && psuWatt < minPsu) {
+        return {
+          compatible: false,
+          reason: `Card đồ họa **${item.name}** yêu cầu nguồn công suất thực tối thiểu **${minPsu}W**, trong khi bộ nguồn bạn đã chọn chỉ có **${psuWatt}W**. Điều này có thể gây sập nguồn khi tải nặng.`,
+        };
+      }
+    }
+  }
+  if (newType === "psu") {
+    const psuWatt = getPsuWattage(newName);
+    const vga = currentBuild.vga;
+    if (vga && psuWatt) {
+      const minPsu = getMinPsuForGpu(vga.name);
+      if (psuWatt < minPsu) {
+        return {
+          compatible: false,
+          reason: `Bộ nguồn **${item.name}** (${psuWatt}W) có công suất thấp hơn yêu cầu tối thiểu **${minPsu}W** của Card đồ họa **${vga.name}** đã chọn. Hãy chọn nguồn từ **${minPsu}W** trở lên.`,
+        };
+      }
+    }
+  }
+
+  return { compatible: true };
+};
 
 export default function AiBuilder() {
   const navigate = useNavigate();
@@ -332,6 +612,33 @@ export default function AiBuilder() {
     if (typeKey === "monitor")
       typeKey = build.monitor1 ? "monitor2" : "monitor1";
     if (typeKey === "cooler") typeKey = "cooler_air";
+
+    const normalizedItem = { ...item, type: typeKey };
+
+    // Kiểm tra tính tương thích trước khi thêm vào cấu hình
+    const compCheck = checkBuildCompatibility(normalizedItem, build);
+    if (!compCheck.compatible) {
+      const htmlReason = compCheck.reason.replace(
+        /\*\*(.*?)\*\*/g,
+        "<b>$1</b>",
+      );
+
+      Swal.fire({
+        title: "Không tương thích!",
+        html: `<div class="text-left text-sm leading-relaxed text-slate-600">${htmlReason}</div>`,
+        icon: "warning",
+        confirmButtonColor: "#7c3aed",
+        confirmButtonText: "Tôi đã hiểu",
+        background: "#ffffff",
+        color: "#0f172a",
+        customClass: {
+          title: "text-lg font-bold text-slate-800",
+          confirmButton:
+            "px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg shadow-purple-100",
+        },
+      });
+      return;
+    }
 
     setBuild((p) => ({ ...p, [typeKey]: item }));
     setOpenCat(null);
@@ -485,6 +792,7 @@ export default function AiBuilder() {
     try {
       const url = new URL(`${BASE_URL}/api/sanPham/search`);
       url.searchParams.append("q", search);
+      url.searchParams.append("limit", "20");
       if (cat?.dbId) {
         url.searchParams.append("danhMucId", cat.dbId);
       }
@@ -492,8 +800,42 @@ export default function AiBuilder() {
       const res = await fetch(url);
       const data = await res.json();
 
-      if (data.hits) {
-        setModalProducts(data.hits.slice(0, 15));
+      if (data.hits && data.hits.length > 0) {
+        // Chuẩn hoá URL ảnh cho cả Meilisearch và SQL fallback
+        const normalizedHits = data.hits.map((product) => {
+          let imgUrl = null;
+
+          // Trường hợp SQL fallback: hinh_anh là array object từ DB
+          if (Array.isArray(product.hinh_anh) && product.hinh_anh.length > 0) {
+            const mainImg =
+              product.hinh_anh.find((a) => a.la_anh_chinh) ||
+              product.hinh_anh[0];
+            imgUrl = mainImg?.url_anh;
+          }
+          // Trường hợp Meilisearch: hinh_anh_list hoặc string
+          else if (
+            Array.isArray(product.hinh_anh_list) &&
+            product.hinh_anh_list.length > 0
+          ) {
+            const mainImg =
+              product.hinh_anh_list.find((a) => a.la_anh_chinh) ||
+              product.hinh_anh_list[0];
+            imgUrl = mainImg?.url_anh;
+          } else if (typeof product.hinh_anh === "string") {
+            imgUrl = product.hinh_anh;
+          }
+
+          // Thêm BASE_URL nếu là relative path
+          if (imgUrl && imgUrl.startsWith("/")) {
+            imgUrl = `${BASE_URL}${imgUrl}`;
+          }
+
+          return {
+            ...product,
+            _imgUrl: imgUrl,
+          };
+        });
+        setModalProducts(normalizedHits.slice(0, 20));
       } else {
         setModalProducts([]);
       }
@@ -566,6 +908,243 @@ export default function AiBuilder() {
     () => Object.values(build).reduce((s, i) => s + (i?.price || 0), 0),
     [build],
   );
+
+  // Kiểm tra tàn bộ các cảnh báo tương thích trong build hiện tại
+  const compatibilityIssues = useMemo(() => {
+    const issues = {}; // { [catKey]: reasonString }
+
+    const hasKeyword = (str, keywords) =>
+      keywords.some((kw) => str.toUpperCase().includes(kw.toUpperCase()));
+
+    const getCpuSocket = (name) => {
+      const n = name.toUpperCase();
+      if (
+        hasKeyword(n, [
+          "LGA1700",
+          "LGA 1700",
+          "I3-12",
+          "I5-12",
+          "I7-12",
+          "I9-12",
+          "I3-13",
+          "I5-13",
+          "I7-13",
+          "I9-13",
+          "I3-14",
+          "I5-14",
+          "I7-14",
+          "I9-14",
+          "12400",
+          "12100",
+          "13400",
+          "13600",
+          "14700",
+          "12700",
+          "12900",
+          "13700",
+          "13900",
+          "14900",
+        ])
+      )
+        return "LGA1700";
+      if (
+        hasKeyword(n, [
+          "LGA1200",
+          "LGA 1200",
+          "I3-10",
+          "I5-10",
+          "I7-10",
+          "I9-10",
+          "I3-11",
+          "I5-11",
+          "I7-11",
+          "I9-11",
+          "10400",
+          "10100",
+          "11400",
+          "11700",
+          "10700",
+        ])
+      )
+        return "LGA1200";
+      if (
+        hasKeyword(n, [
+          "AM5",
+          "7500F",
+          "7600",
+          "7700",
+          "7800X3D",
+          "Ryzen 5 7",
+          "Ryzen 7 7",
+          "Ryzen 9 7",
+        ])
+      )
+        return "AM5";
+      if (
+        hasKeyword(n, [
+          "AM4",
+          "3600",
+          "5600",
+          "5700",
+          "5900",
+          "Ryzen 3 3",
+          "Ryzen 5 3",
+          "Ryzen 7 3",
+          "Ryzen 5 5",
+          "Ryzen 7 5",
+          "Ryzen 9 5",
+        ])
+      )
+        return "AM4";
+      return null;
+    };
+    const getMotherboardSocket = (name) => {
+      const n = name.toUpperCase();
+      if (
+        hasKeyword(n, [
+          "H610",
+          "B660",
+          "B760",
+          "H670",
+          "H770",
+          "Z690",
+          "Z790",
+          "LGA1700",
+          "LGA 1700",
+        ])
+      )
+        return "LGA1700";
+      if (
+        hasKeyword(n, [
+          "H410",
+          "H510",
+          "B460",
+          "B560",
+          "Z490",
+          "Z590",
+          "LGA1200",
+          "LGA 1200",
+        ])
+      )
+        return "LGA1200";
+      if (hasKeyword(n, ["A620", "B650", "X670", "AM5"])) return "AM5";
+      if (hasKeyword(n, ["A320", "B450", "B550", "X570", "A520", "AM4"]))
+        return "AM4";
+      return null;
+    };
+    const getMotherboardRamType = (name) => {
+      const n = name.toUpperCase();
+      if (
+        n.includes("D5") ||
+        n.includes("DDR5") ||
+        getMotherboardSocket(name) === "AM5" ||
+        n.includes("Z790") ||
+        n.includes("B650")
+      )
+        return "DDR5";
+      if (
+        hasKeyword(n, [
+          "H410",
+          "H510",
+          "B460",
+          "B560",
+          "A320",
+          "B450",
+          "B550",
+          "D4",
+          "DDR4",
+        ])
+      )
+        return "DDR4";
+      return "DDR4";
+    };
+    const getRamType = (name) => {
+      const n = name.toUpperCase();
+      if (
+        n.includes("DDR5") ||
+        n.includes(" D5 ") ||
+        n.endsWith(" D5") ||
+        n.includes("6000MHZ") ||
+        n.includes("5600MHZ") ||
+        n.includes("6400MHZ") ||
+        n.includes("7200MHZ")
+      )
+        return "DDR5";
+      if (
+        n.includes("DDR4") ||
+        n.includes(" D4 ") ||
+        n.endsWith(" D4") ||
+        n.includes("3200MHZ") ||
+        n.includes("3600MHZ") ||
+        n.includes("2666MHZ") ||
+        n.includes("2400MHZ")
+      )
+        return "DDR4";
+      return null; // Không xác định được
+    };
+    const getPsuWattage = (name) => {
+      const n = name.toUpperCase();
+      const match = n.match(/(\d{3,4})\s*W/);
+      if (match) return parseInt(match[1]);
+      for (const num of [
+        1200, 1000, 850, 750, 650, 600, 550, 500, 450, 400, 350,
+      ]) {
+        if (n.includes(num.toString())) return num;
+      }
+      return null;
+    };
+    const getMinPsuForGpu = (name) => {
+      const n = name.toUpperCase();
+      if (hasKeyword(n, ["4090", "3090", "7900 XTX"])) return 850;
+      if (hasKeyword(n, ["4080", "3080", "7900 XT"])) return 750;
+      if (hasKeyword(n, ["4070", "3070", "7800 XT", "6800 XT"])) return 650;
+      if (hasKeyword(n, ["4060", "3060", "7600 XT", "6700 XT"])) return 550;
+      if (hasKeyword(n, ["1660", "1650", "RX 580", "RX 570"])) return 450;
+      return 400;
+    };
+
+    const cpu = build.cpu;
+    const mb = build.mainboard;
+    const ram = build.ram;
+    const vga = build.vga;
+    const psu = build.psu;
+
+    // Socket CPU vs Mainboard
+    if (cpu && mb) {
+      const cpuSock = getCpuSocket(cpu.name);
+      const mbSock = getMotherboardSocket(mb.name);
+      if (cpuSock && mbSock && cpuSock !== mbSock) {
+        issues["cpu"] = `Socket ${cpuSock} ≠ ${mbSock} (Main)`;
+        issues["mainboard"] = `Socket ${mbSock} ≠ ${cpuSock} (CPU)`;
+      }
+    }
+
+    // RAM type vs Mainboard
+    if (ram && mb) {
+      const ramType = getRamType(ram.name);
+      const mbRamType = getMotherboardRamType(mb.name);
+      if (ramType && ramType !== mbRamType) {
+        issues["ram"] =
+          `RAM ${ramType} ≠ ${mbRamType} (Main hỗ trợ ${mbRamType})`;
+        if (!issues["mainboard"])
+          issues["mainboard"] = `Main hỗ trợ ${mbRamType} ≠ RAM ${ramType}`;
+      }
+    }
+
+    // VGA vs PSU wattage
+    if (vga && psu) {
+      const psuWatt = getPsuWattage(psu.name);
+      const minPsu = getMinPsuForGpu(vga.name);
+      if (psuWatt && psuWatt < minPsu) {
+        issues["vga"] = `VGA cần tối thiểu ${minPsu}W, PSU chỉ có ${psuWatt}W`;
+        issues["psu"] = `${psuWatt}W không đủ cho VGA (cần ${minPsu}W)`;
+      }
+    }
+
+    return issues;
+  }, [build]);
+
+  const hasIssues = Object.keys(compatibilityIssues).length > 0;
 
   return (
     <div
@@ -819,6 +1398,22 @@ export default function AiBuilder() {
                 </span>
               </div>
 
+              {/* Banner cảnh báo tương thích */}
+              {hasIssues && (
+                <div className="mx-3 mt-2 mb-1 px-3 py-2 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2">
+                  <span className="text-red-500 text-base mt-0.5">⚠️</span>
+                  <div>
+                    <p className="text-xs font-bold text-red-600">
+                      Phát hiện xung đột tương thích!
+                    </p>
+                    <p className="text-[10px] text-red-400 mt-0.5">
+                      Các linh kiện có dấu ⚠️ bên dưới không tương thích với
+                      nhau. Vui lòng đổi lại.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Table Body */}
               <div
                 className="divide-y divide-slate-100 overflow-y-auto"
@@ -831,7 +1426,11 @@ export default function AiBuilder() {
                     <div
                       key={cat.key}
                       className={`flex items-center p-3 hover:bg-slate-50/50 transition-all group ${
-                        isActive ? "bg-purple-50 border-l-4 border-purple-500 shadow-sm" : "border-l-4 border-transparent"
+                        compatibilityIssues[cat.key]
+                          ? "bg-red-50/60 border-l-4 border-red-400"
+                          : isActive
+                            ? "bg-purple-50 border-l-4 border-purple-500 shadow-sm"
+                            : "border-l-4 border-transparent"
                       }`}
                     >
                       <div className="w-8 text-slate-300 font-bold text-xs">
@@ -861,6 +1460,12 @@ export default function AiBuilder() {
                               <p className="text-[10px] text-red-500 font-bold mt-0.5">
                                 {formatPrice(selected.price)}
                               </p>
+                              {/* Badge cảnh báo tương thích */}
+                              {compatibilityIssues[cat.key] && (
+                                <p className="text-[10px] text-orange-600 font-bold mt-0.5 flex items-center gap-1">
+                                  <span>⚠️</span> {compatibilityIssues[cat.key]}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -1171,49 +1776,74 @@ export default function AiBuilder() {
                   <div
                     key={product.id}
                     className="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 hover:border-purple-200 hover:bg-purple-50/30 transition-all group cursor-pointer"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       try {
-                        let imgUrl = product.hinh_anh;
-                        if (Array.isArray(product.hinh_anh)) {
-                          imgUrl =
-                            product.hinh_anh.find((a) => a.la_anh_chinh)
-                              ?.url_anh || product.hinh_anh[0]?.url_anh;
-                        } else if (
-                          product.hinh_anh_list &&
-                          product.hinh_anh_list.length > 0
-                        ) {
-                          imgUrl =
-                            product.hinh_anh_list.find((a) => a.la_anh_chinh)
-                              ?.url_anh || product.hinh_anh_list[0]?.url_anh;
-                        }
-
-                        handleSelect({
+                        const selectedItem = {
                           id: product.id,
                           variantId: product.bien_the?.[0]?.id || product.id,
                           name: product.ten_san_pham,
                           price:
                             product.gia_ban || product.bien_the?.[0]?.gia_ban,
-                          image: imgUrl || PLACEHOLDER_IMG,
+                          image: product._imgUrl || PLACEHOLDER_IMG,
                           type: modalCat?.key,
                           desc: product.mo_ta_ngan,
-                        });
+                        };
+
+                        // Kiểm tra tương thích TRƯỚC khi đóng modal
+                        let typeKey = (
+                          selectedItem.type || "cpu"
+                        ).toLowerCase();
+                        if (typeKey === "ssd")
+                          typeKey = build.ssd1 ? "ssd2" : "ssd1";
+                        if (typeKey === "monitor")
+                          typeKey = build.monitor1 ? "monitor2" : "monitor1";
+                        if (typeKey === "cooler") typeKey = "cooler_air";
+                        const normalizedItem = {
+                          ...selectedItem,
+                          type: typeKey,
+                        };
+                        const compCheck = checkBuildCompatibility(
+                          normalizedItem,
+                          build,
+                        );
+
+                        if (!compCheck.compatible) {
+                          // Modal đóng sau khi cảnh báo được đóng
+                          setIsModalOpen(false);
+                          const htmlReason = compCheck.reason.replace(
+                            /\*\*(.*?)\*\*/g,
+                            "<b>$1</b>",
+                          );
+                          Swal.fire({
+                            title: "⚠️ Không tương thích!",
+                            html: `<div class="text-left text-sm leading-relaxed text-slate-600">${htmlReason}</div>`,
+                            icon: "warning",
+                            confirmButtonColor: "#7c3aed",
+                            confirmButtonText: "Tôi đã hiểu",
+                            background: "#ffffff",
+                            color: "#0f172a",
+                            customClass: {
+                              title: "text-lg font-bold text-slate-800",
+                              confirmButton:
+                                "px-6 py-2.5 rounded-xl font-bold text-sm text-white shadow-lg shadow-purple-100",
+                            },
+                          });
+                          return;
+                        }
+
+                        // Tương thích: đóng modal rồi gọi handleSelect bình thường
+                        setIsModalOpen(false);
+                        handleSelect(selectedItem);
                       } catch (error) {
                         console.error("Lỗi khi chọn sản phẩm:", error);
-                      } finally {
                         setIsModalOpen(false);
                       }
                     }}
                   >
                     <img
-                      src={
-                        (Array.isArray(product.hinh_anh)
-                          ? product.hinh_anh.find((a) => a.la_anh_chinh)
-                              ?.url_anh || product.hinh_anh[0]?.url_anh
-                          : product.hinh_anh_list?.[0]?.url_anh ||
-                            product.hinh_anh) || PLACEHOLDER_IMG
-                      }
+                      src={product._imgUrl || PLACEHOLDER_IMG}
                       alt={product.ten_san_pham}
                       onError={(e) => {
                         e.target.onerror = null;

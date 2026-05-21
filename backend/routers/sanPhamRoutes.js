@@ -9,7 +9,7 @@ const { verifyToken, isAdmin, verifyTokenOptional } = require("../middlewares/au
 
 router.get("/search", async (req, res) => {
   try {
-    const { q = "", limit = 10, danhMucId } = req.query;
+    const { q = "", limit = 30, danhMucId } = req.query;
 
     const filter = danhMucId ? `danh_muc_id IN (${danhMucId})` : null;
 

@@ -449,6 +449,14 @@ exports.getAdminOrders = async (req, res) => {
           model: TaiKhoan,
           as: "nguoi_mua",
         },
+        {
+          model: LichSuGiaoHang,
+          as: "lich_su_giao_hang",
+          attributes: ["id", "tieu_de", "mo_ta", "thoi_gian"],
+          required: false,
+          separate: true,
+          order: [["thoi_gian", "DESC"]],
+        },
       ],
       order: [["created_at", "DESC"]],
       limit: parseInt(limit),
@@ -500,6 +508,17 @@ exports.getAdminOrders = async (req, res) => {
             ? "Đã thanh toán"
             : "Chưa thanh toán",
         orderStatus: order.trang_thai,
+        lichSu: (order.lich_su_giao_hang || [])
+          .sort((a, b) => new Date(b.thoi_gian) - new Date(a.thoi_gian))
+          .map((ls) => {
+            const t = new Date(ls.thoi_gian);
+            return {
+              id: ls.id,
+              tieuDe: ls.tieu_de,
+              moTa: ls.mo_ta,
+              thoiGian: `${t.getDate().toString().padStart(2, "0")}/${(t.getMonth() + 1).toString().padStart(2, "0")}/${t.getFullYear()} ${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`,
+            };
+          }),
         items: order.chi_tiet.map((item) => ({
           name: item.ten_sp_luc_mua,
           variant: item.sku_luc_mua,
@@ -600,26 +619,26 @@ exports.updateOrderStatus = async (req, res) => {
         include: [
           {
             model: TaiKhoan,
-            as: "tai_khoan",
-            include: [{ model: TheThanhVien, as: "the_thanh_vien" }],
+            as: "nguoi_mua",
+            include: [{ model: TheThanhVien, as: "hang_thanh_vien" }],
           },
         ],
       });
 
-      if (orderInfo && orderInfo.tai_khoan) {
+      if (orderInfo && orderInfo.nguoi_mua) {
         // Công thức: 1000đ = 1 điểm. Cộng thêm % thưởng từ hạng thẻ
         const basePoints = Math.floor(orderInfo.tong_thanh_toan / 1000);
         const bonusRate =
-          orderInfo.tai_khoan.the_thanh_vien?.diem_thuong_them || 0;
+          orderInfo.nguoi_mua.hang_thanh_vien?.diem_thuong_them || 0;
         const totalBonusPoints = Math.round(basePoints * (1 + bonusRate / 100));
 
-        await orderInfo.tai_khoan.update({
+        await orderInfo.nguoi_mua.update({
           diem_tich_luy:
-            (orderInfo.tai_khoan.diem_tich_luy || 0) + totalBonusPoints,
+            (orderInfo.nguoi_mua.diem_tich_luy || 0) + totalBonusPoints,
         });
 
         console.log(
-          `Đã cộng ${totalBonusPoints} điểm cho khách hàng ${orderInfo.tai_khoan.id}`,
+          `Đã cộng ${totalBonusPoints} điểm cho khách hàng ${orderInfo.nguoi_mua.id}`,
         );
       }
 

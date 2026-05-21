@@ -5,7 +5,7 @@ const SpecsModal = ({ isOpen, onClose, specs }) => {
 
   return (
     // Lớp overlay làm mờ nền
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/50 p-4">
       {/* Khối Modal chính */}
       <div className="bg-white rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in-up overflow-hidden">
         {/* Header Modal */}
@@ -13,7 +13,7 @@ const SpecsModal = ({ isOpen, onClose, specs }) => {
           <h3 className="font-bold text-lg text-gray-800">Thông số kỹ thuật</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-red-500 text-2xl leading-none transition-colors"
+            className="text-gray-400 hover:text-red-500 text-2xl leading-none transition-colors cursor-pointer"
           >
             &times;
           </button>

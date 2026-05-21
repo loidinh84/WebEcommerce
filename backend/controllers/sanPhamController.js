@@ -503,36 +503,49 @@ exports.deleteSanPham = async (req, res) => {
     if (!sanPham || sanPham.trang_thai === "deleted") {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm!" });
     }
+
+    // Kiểm tra chủ động: tìm đơn hàng chưa hoàn tất có chứa biến thể của sản phẩm này
+    const donHangDangXuLy = await ChiTietDonHang.findAll({
+      include: [
+        {
+          model: BienTheSanPham,
+          as: "bien_the",
+          where: { san_pham_id: id },
+          required: true,
+        },
+        {
+          model: DonHang,
+          as: "don_hang",
+          where: {
+            trang_thai: { [Op.in]: ["pending", "confirmed", "processing", "shipping"] },
+          },
+          required: true,
+          attributes: ["id", "ma_don_hang", "trang_thai"],
+        },
+      ],
+    });
+
+    if (donHangDangXuLy.length > 0) {
+      // Lấy danh sách mã đơn hàng duy nhất
+      const maDonHangs = [...new Set(
+        donHangDangXuLy.map((ct) => ct.don_hang?.ma_don_hang).filter(Boolean)
+      )];
+      return res.status(409).json({
+        message: `Không thể xóa! Sản phẩm "${sanPham.ten_san_pham}" đang có trong ${donHangDangXuLy.length} đơn hàng chưa hoàn tất.`,
+        so_don_hang: donHangDangXuLy.length,
+        ma_don_hangs: maDonHangs.slice(0, 5),
+        ten_san_pham: sanPham.ten_san_pham,
+        san_pham_id: id,
+        trang_thai_hien_tai: sanPham.trang_thai,
+      });
+    }
+
+    // Không có đơn hàng đang xử lý → soft delete
     sanPham.trang_thai = "deleted";
     await sanPham.save();
     res.status(200).json({ message: "Đã xóa sản phẩm thành công!" });
   } catch (error) {
     console.error("Lỗi khi xóa sản phẩm:", error);
-    if (error.name === "SequelizeForeignKeyConstraintError") {
-      const errDetail = error.parent ? error.parent.message : "";
-
-      if (errDetail.includes("DanhGiaSP")) {
-        return res.status(400).json({
-          message:
-            "Không thể xóa! Sản phẩm này đang có đánh giá từ khách hàng.",
-        });
-      }
-      if (errDetail.includes("ChiTietDonHang")) {
-        return res.status(400).json({
-          message: "Không thể xóa! Sản phẩm này đã phát sinh đơn hàng.",
-        });
-      }
-      if (errDetail.includes("GioHang")) {
-        return res.status(400).json({
-          message: "Không thể xóa! Sản phẩm đang nằm trong giỏ hàng của khách.",
-        });
-      }
-
-      return res.status(400).json({
-        message:
-          "Không thể xóa vì sản phẩm đang liên kết với dữ liệu khác (Đơn hàng/Đánh giá)!",
-      });
-    }
     res.status(500).json({ message: "Lỗi server khi xóa sản phẩm." });
   }
 };

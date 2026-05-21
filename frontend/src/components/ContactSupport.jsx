@@ -3,6 +3,7 @@ import * as Images from "../assets/images/index";
 import * as Icons from "../assets/icons/index";
 import BASE_URL from "../config/api";
 import { StoreContext } from "../context/StoreContext";
+import { AuthContext } from "../context/AuthContext";
 import ShopFeedbackModal from "./ShopFeedbackModal";
 
 const ContactSupport = () => {
@@ -26,13 +27,18 @@ const ContactSupport = () => {
   const [moved, setMoved] = useState(false);
 
   const { storeConfig } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const tenShop = storeConfig?.ten_cua_hang || "LTLShop";
-  const STORAGE_KEY = "chat_history";
+  
+  // Tách biệt lịch sử trò chuyện theo từng tài khoản (hoặc khách vãng lai)
+  const userSuffix = user ? `_${user.ma_tai_khoan || user.id || user.email || "user"}` : "_guest";
+  const STORAGE_KEY = `chat_history${userSuffix}`;
+  
   const DEFAULT_MSG = { role: "bot", text: `Chào bạn nhé! Tôi là trợ lý của ${tenShop} đây. Bạn đang cần tôi tư vấn món đồ công nghệ nào không?` };
 
   useEffect(() => {
@@ -45,14 +51,14 @@ const ContactSupport = () => {
     } catch {
       setMessages([DEFAULT_MSG]);
     }
-  }, [storeConfig?.ten_cua_hang]);
+  }, [storeConfig?.ten_cua_hang, STORAGE_KEY]);
 
   // Đồng bộ messages vào localStorage mỗi khi thay đổi
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
-  }, [messages]);
+  }, [messages, STORAGE_KEY]);
 
   const handleClearHistory = () => {
     localStorage.removeItem(STORAGE_KEY);

@@ -660,7 +660,6 @@ const ProductDetail = () => {
     window.dispatchEvent(new Event("cartUpdated"));
 
     toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
-    navigate("/cart");
   };
 
   if (isLoading) {
@@ -977,7 +976,7 @@ const ProductDetail = () => {
                   onClick={handleAddToCart}
                   className={`flex-1 text-white h-12 rounded-lg cursor-pointer font-bold transition flex items-center justify-center ${!selectedVariant || selectedVariant.ton_kho === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
                 >
-                  <span className="text-[16px]">Thêm vào giỏ</span>
+                  <span className="text-[16px]">Thêm vào giỏ hàng</span>
                 </button>
               </div>
             </div>
@@ -1293,7 +1292,7 @@ const ProductDetail = () => {
 
       {/* ================= MODAL CHIA SẺ ================= */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-0 z-1000 flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-xl w-full max-w-sm p-6 flex flex-col shadow-2xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-lg text-gray-800">

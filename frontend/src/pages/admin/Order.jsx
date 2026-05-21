@@ -486,11 +486,10 @@ const Order = () => {
               <button
                 key={tab.id}
                 onClick={() => setOrderTab(tab.id)}
-                className={`py-3 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                  orderTab === tab.id
+                className={`py-3 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${orderTab === tab.id
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-800"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -552,11 +551,10 @@ const Order = () => {
                         {/* Dòng chính */}
                         <tr
                           onClick={() => toggleRow(order.id)}
-                          className={`cursor-pointer transition-colors border-b border-gray-200 ${
-                            isExpanded
+                          className={`cursor-pointer transition-colors border-b border-gray-200 ${isExpanded
                               ? "bg-blue-50/50"
                               : "hover:bg-blue-50/30 bg-white"
-                          } ${order.orderStatus === "cancelled" ? "opacity-60" : ""}`}
+                            } ${order.orderStatus === "cancelled" ? "opacity-60" : ""}`}
                         >
                           <td className="py-4 px-6 font-bold text-blue-600">
                             {order.id}
@@ -613,12 +611,11 @@ const Order = () => {
                                         Trạng thái:
                                       </span>
                                       <span
-                                        className={`font-bold text-xs ${
-                                          order.paymentStatus ===
-                                          "Đã thanh toán"
+                                        className={`font-bold text-xs ${order.paymentStatus ===
+                                            "Đã thanh toán"
                                             ? "text-green-600"
                                             : "text-amber-600"
-                                        }`}
+                                          }`}
                                       >
                                         {order.paymentStatus}
                                       </span>
@@ -657,6 +654,35 @@ const Order = () => {
                                       </div>
                                     </div>
                                   </div>
+                                </div>
+
+                                {/* Panel lịch sử trạng thái */}
+                                <div className="flex-1 bg-white p-5 rounded-lg border border-gray-200 shadow-sm min-w-[220px]">
+                                  <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-1 mb-4 text-sm tracking-wider">
+                                    Lịch sử trạng thái
+                                  </h4>
+                                  {!order.lichSu || order.lichSu.length === 0 ? (
+                                    <p className="text-sm text-gray-400 italic text-center py-4">Chưa có lịch sử.</p>
+                                  ) : (
+                                    <ol className="relative border-l-2 border-gray-200 ml-2 space-y-0">
+                                      {order.lichSu.map((ls, idx) => (
+                                        <li key={ls.id} className="mb-4 ml-4">
+                                          <span className={`absolute -left-[9px] flex items-center justify-center w-4 h-4 rounded-full border-2 ${idx === 0 ? "bg-blue-500 border-blue-300" : "bg-white border-gray-300"}`} />
+                                          <div className={`p-2.5 rounded-lg border text-xs ${idx === 0 ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-100"}`}>
+                                            <p className={`font-bold mb-0.5 ${idx === 0 ? "text-blue-700" : "text-gray-700"}`}>
+                                              {ls.tieuDe}
+                                            </p>
+                                            {ls.moTa && (
+                                              <p className="text-gray-500 leading-snug mb-1">{ls.moTa}</p>
+                                            )}
+                                            <p className={`font-mono text-[10px] ${idx === 0 ? "text-blue-500" : "text-gray-400"}`}>
+                                              {ls.thoiGian}
+                                            </p>
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ol>
+                                  )}
                                 </div>
 
                                 <div className="flex-1 bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
@@ -712,12 +738,12 @@ const Order = () => {
                                       <span className="font-medium text-gray-800">
                                         {formatPrice(
                                           order.shippingFee ||
-                                            order.total -
-                                              order.items?.reduce(
-                                                (total, item) =>
-                                                  total + item.price * item.qty,
-                                                0,
-                                              ),
+                                          order.total -
+                                          order.items?.reduce(
+                                            (total, item) =>
+                                              total + item.price * item.qty,
+                                            0,
+                                          ),
                                         )}
                                       </span>
                                     </div>
@@ -777,11 +803,10 @@ const Order = () => {
                                             : `Duyệt và chuyển đơn hàng ${order.id} sang trạng thái Đang giao?`,
                                         })
                                       }
-                                      className={`w-full py-2.5 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer ${
-                                        order.paymentMethod?.toLowerCase().includes("chuyển khoản")
+                                      className={`w-full py-2.5 text-white rounded-lg font-bold text-xs uppercase tracking-wide transition-colors shadow-sm cursor-pointer ${order.paymentMethod?.toLowerCase().includes("chuyển khoản")
                                           ? "bg-amber-500 hover:bg-amber-600"
                                           : "bg-blue-600 hover:bg-blue-700"
-                                      }`}
+                                        }`}
                                     >
                                       {order.paymentMethod?.toLowerCase().includes("chuyển khoản")
                                         ? "Đã nhận tiền – Duyệt đơn"
@@ -879,22 +904,22 @@ const Order = () => {
                                   )}
                                   {(order.orderStatus === "pending" ||
                                     order.orderStatus === "confirmed") && (
-                                    <button
-                                      onClick={() =>
-                                        setConfirmModal({
-                                          isOpen: true,
-                                          actionType: "cancel",
-                                          orderId: order.id,
-                                          newStatus: "cancelled",
-                                          title: "Cảnh báo hủy đơn",
-                                          message: `Bạn có chắc chắn hủy đơn hàng ${order.id} không?`,
-                                        })
-                                      }
-                                      className="w-full py-2.5 bg-white border border-red-300 text-red-600 hover:bg-red-50 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
-                                    >
-                                      Hủy đơn hàng
-                                    </button>
-                                  )}
+                                      <button
+                                        onClick={() =>
+                                          setConfirmModal({
+                                            isOpen: true,
+                                            actionType: "cancel",
+                                            orderId: order.id,
+                                            newStatus: "cancelled",
+                                            title: "Cảnh báo hủy đơn",
+                                            message: `Bạn có chắc chắn hủy đơn hàng ${order.id} không?`,
+                                          })
+                                        }
+                                        className="w-full py-2.5 bg-white border border-red-300 text-red-600 hover:bg-red-50 rounded-lg font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer"
+                                      >
+                                        Hủy đơn hàng
+                                      </button>
+                                    )}
                                   <button
                                     onClick={() => {
                                       setSelectedOrderForPrint(order);

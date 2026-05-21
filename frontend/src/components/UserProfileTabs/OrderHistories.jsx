@@ -278,10 +278,8 @@ const OrdersTab = ({ profileData, navigate }) => {
         ))}
       </div>
 
-      {/* Bộ lọc ngày tháng - Shopee Style (Chỉ Icon mới mở lịch) */}
       <div className="bg-white py-2 lg:p-2 md:hidden">
         <div className="border border-gray-300 rounded-lg p-2.5 flex justify-between items-center bg-white shadow-sm relative">
-          {/* Hiển thị ngày Bắt đầu (Tĩnh) */}
           <div className="flex-1 flex items-center justify-center">
             <span className="text-sm font-medium text-gray-700">
               {startDate ? displayDate(startDate) : "Từ ngày"}
@@ -292,14 +290,12 @@ const OrdersTab = ({ profileData, navigate }) => {
             <Icons.ArrowRightLong />
           </span>
 
-          {/* Hiển thị ngày Kết thúc (Tĩnh) */}
           <div className="flex-1 flex items-center justify-center">
             <span className="text-sm font-medium text-gray-700">
               {endDate ? displayDate(endDate) : "Đến ngày"}
             </span>
           </div>
 
-          {/* Icon Lịch - Duy nhất chỗ này mở được lịch để chỉnh sửa startDate */}
           <div className="pl-3 border-l border-gray-200 ml-1">
             <DatePicker
               selected={startDate}

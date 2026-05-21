@@ -69,7 +69,8 @@ GiaoDichThanhToan.belongsTo(PhuongThucThanhToan, {
   foreignKey: "phuong_thuc_id",
   as: "phuong_thuc",
 });
-ChiTietDonHang.belongsTo(DonHang, { foreignKey: "don_hang_id" });
+ChiTietDonHang.belongsTo(DonHang, { foreignKey: "don_hang_id", as: "don_hang" });
+
 
 SanPham.belongsTo(DanhMuc, { foreignKey: "danh_muc_id", as: "danh_muc" });
 DanhMuc.hasMany(SanPham, {

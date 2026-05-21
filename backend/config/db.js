@@ -9,10 +9,17 @@ const sequelize = new Sequelize(
     host: process.env.DB_SERVER,
     dialect: "mssql",
     dialectOptions: {
-      option: {
+      options: {
         encrypt: false,
-        trustSeverCertificate: true,
+        trustServerCertificate: true,
+        requestTimeout: 60000,
       },
+    },
+    pool: {
+      max: 30,
+      min: 2,
+      acquire: 60000,
+      idle: 10000,
     },
     logging: false,
   },

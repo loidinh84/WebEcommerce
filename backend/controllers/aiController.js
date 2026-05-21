@@ -4,6 +4,57 @@ const BienTheSanPham = require("../models/BienTheSanPham");
 const HinhAnhSanPham = require("../models/HinhAnhSanPham");
 const ChatHistory = require("../models/ChatHistory");
 
+async function callGeminiWithRetry(fn, retries = 3, delay = 1500) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const errorStr = String(error.message || error);
+      const isRateLimitOrOverload = 
+        error.status === 429 || 
+        error.status === 503 || 
+        errorStr.includes("503") || 
+        errorStr.includes("429") ||
+        errorStr.includes("high demand") ||
+        errorStr.includes("Service Unavailable");
+
+      if (isRateLimitOrOverload && i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2;
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+async function callGeminiWithFallbackAndRetry(genAI, modelName, systemInstruction, history, message, isChat = true, prompt = "") {
+  const modelsToTry = [modelName, "gemini-2.0-flash"];
+  let lastError = null;
+
+  for (const modelId of modelsToTry) {
+    try {
+      const modelConfig = { model: modelId };
+      if (systemInstruction) {
+        modelConfig.systemInstruction = systemInstruction;
+      }
+      const modelObj = genAI.getGenerativeModel(modelConfig);
+
+      return await callGeminiWithRetry(async () => {
+        if (isChat) {
+          const chatSession = modelObj.startChat({ history: history || [] });
+          return await chatSession.sendMessage(message);
+        } else {
+          return await modelObj.generateContent(prompt);
+        }
+      }, 3, 1500);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
+}
+
 exports.getChatHistory = async (req, res) => {
   try {
     const history = await ChatHistory.findAll({
@@ -31,7 +82,6 @@ exports.chatWithAI = async (req, res) => {
     const email = config?.email || "";
     const chinhSachDoiTra = config?.chinh_sach_doi_tra || "Đổi trả trong 7 ngày nếu sản phẩm lỗi nhà sản xuất, còn nguyên hộp, đầy đủ phụ kiện.";
 
-    // Lấy danh sách sản phẩm đang bán (kèm giá) để AI tư vấn chính xác
     const listSP = await SanPham.findAll({
       where: { trang_thai: "active" },
       attributes: ["ten_san_pham", "thuong_hieu", "slug"],
@@ -117,20 +167,42 @@ CÁC TÌNH HUỐNG THƯỜNG GẶP:
 - Nếu khách hỏi điều không liên quan đến mua sắm/cửa hàng, lịch sự từ chối và chuyển hướng: "Mình chỉ có thể hỗ trợ các vấn đề liên quan đến sản phẩm và dịch vụ tại ${tenCuaHang}. Bạn cần mình hỗ trợ gì về cửa hàng không?"
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: systemInstruction,
-    });
-
     // Dùng lịch sử do client gửi lên (localStorage), không cần đọc DB
     const clientHistory = Array.isArray(req.body.history) ? req.body.history : [];
-    const historyForGemini = clientHistory.slice(0, -1).map((msg) => ({
+    let historyForGemini = clientHistory.slice(0, -1).map((msg) => ({
       role: msg.role === "user" ? "user" : "model",
       parts: [{ text: msg.text }],
     }));
 
-    const chatSession = model.startChat({ history: historyForGemini });
-    const result = await chatSession.sendMessage(message);
+    // Thuật toán lọc lịch sử hội thoại chuẩn chỉ cho Gemini API:
+    // 1. Phải bắt đầu bằng tin nhắn của 'user'.
+    // 2. Các tin nhắn tiếp theo phải xen kẽ nhau (user -> model -> user -> model...).
+    // 3. Tin nhắn cuối cùng của mảng history phải là 'model' (vì tin nhắn mới gửi tiếp theo là 'user').
+    let cleanHistory = [];
+    let expectedRole = "user"; // Cần tin nhắn đầu tiên bắt đầu bằng 'user'
+
+    for (const msg of historyForGemini) {
+      if (msg.role === expectedRole) {
+        cleanHistory.push(msg);
+        // Xen kẽ vai trò tiếp theo
+        expectedRole = expectedRole === "user" ? "model" : "user";
+      }
+    }
+
+    // Nếu tin nhắn cuối cùng của lịch sử là 'user', ta cắt bỏ nó đi
+    // để tránh trùng lặp 2 tin nhắn 'user' liên tiếp khi sendMessage gửi lên.
+    if (cleanHistory.length > 0 && cleanHistory[cleanHistory.length - 1].role === "user") {
+      cleanHistory.pop();
+    }
+
+    const result = await callGeminiWithFallbackAndRetry(
+      genAI,
+      "gemini-2.5-flash",
+      systemInstruction,
+      cleanHistory,
+      message,
+      true
+    );
     const botReply = result.response.text();
 
     res.status(200).json({ reply: botReply });
@@ -173,14 +245,11 @@ exports.buildPcWithAI = async (req, res) => {
         ? Number(sp.bien_the[0].gia_ban) 
         : 0;
       
-      // Ưu tiên lấy ảnh chính, nếu không có thì lấy ảnh đầu tiên
-      const mainImage = sp.hinh_anh?.find(img => img.la_anh_chinh) || sp.hinh_anh?.[0];
-      const imageUrl = mainImage ? mainImage.url_anh : "https://placehold.co/150";
-
+      // Tối ưu hóa: Không truyền url_anh vào Prompt để giảm cực lớn số lượng tokens gửi đi, tránh lỗi 503 quá tải từ Google.
+      // Backend sẽ tự động map lại ảnh từ listSP dựa trên tên sản phẩm khi AI trả về kết quả.
       return {
         name: sp.ten_san_pham,
         price: price,
-        image: imageUrl,
       };
     });
 
@@ -207,7 +276,7 @@ exports.buildPcWithAI = async (req, res) => {
             "type": "MÃ LOẠI LINH KIỆN", // CHỈ ĐƯỢC DÙNG 1 TRONG CÁC MÃ SAU: cpu, mainboard, ram, ssd1, ssd2, hdd, vga, psu, case, cooler_air, cooler_aio, cooler_custom, fan, monitor1, monitor2, keyboard, mouse, pad, headphone, speaker, chair
             "name": "Tên linh kiện LẤY TỪ KHO HÀNG",
             "price": 1000000, // Số nguyên
-            "image": "Link ảnh LẤY TỪ KHO HÀNG",
+            "image": "", // Bạn hãy để trống trường này, hệ thống backend của cửa hàng sẽ tự bổ sung
             "desc": "Ưu điểm ngắn gọn"
           }
         ]
@@ -216,16 +285,17 @@ exports.buildPcWithAI = async (req, res) => {
       LƯU Ý: Nếu khách hàng chưa chọn xong các linh kiện trước đó (CPU, Mainboard...), hãy nhắc nhở họ chọn các bước quan trọng đó trước để có thể tư vấn PSU/VGA chính xác nhất.
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: systemInstruction,
-    });
-
-    const chatSession = model.startChat({ history: [] });
-    const result = await chatSession.sendMessage(message);
+    const result = await callGeminiWithFallbackAndRetry(
+      genAI,
+      "gemini-2.5-flash",
+      systemInstruction,
+      [],
+      message,
+      true
+    );
     const rawReply = result.response.text();
 
-    console.log("AI Raw Reply:", rawReply); // LOG ĐỂ KIỂM TRA DỮ LIỆU THỰC TẾ
+    // console.log("AI Raw Reply:", rawReply); // LOG ĐỂ KIỂM TRA DỮ LIỆU THỰC TẾ
 
     let botResponseData;
     try {
@@ -235,12 +305,21 @@ exports.buildPcWithAI = async (req, res) => {
       
       botResponseData = JSON.parse(cleanJson);
       
-      // Ép kiểu giá tiền về Number cho tất cả options
+      // Ép kiểu giá tiền về Number và tự động điền lại url_anh cho tất cả options
       if (botResponseData.options) {
-        botResponseData.options = botResponseData.options.map(opt => ({
-          ...opt,
-          price: Number(opt.price) || 0
-        }));
+        botResponseData.options = botResponseData.options.map(opt => {
+          const matchedProd = listSP.find(sp => sp.ten_san_pham === opt.name);
+          let imageUrl = opt.image || "";
+          if (matchedProd) {
+            const mainImage = matchedProd.hinh_anh?.find(img => img.la_anh_chinh) || matchedProd.hinh_anh?.[0];
+            imageUrl = mainImage ? mainImage.url_anh : "https://placehold.co/150";
+          }
+          return {
+            ...opt,
+            price: Number(opt.price) || 0,
+            image: imageUrl
+          };
+        });
       }
     } catch (e) {
       console.error("Lỗi parse JSON AI:", e.message);
@@ -318,11 +397,6 @@ exports.compareProductsAI = async (req, res) => {
       }
     `;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: systemInstruction,
-    });
-
     const prompt = `
       Sản phẩm 1:
       - Tên: ${product1.name}
@@ -335,7 +409,15 @@ exports.compareProductsAI = async (req, res) => {
       - Thông số: ${JSON.stringify(product2.specs)}
     `;
 
-    const result = await model.generateContent(prompt);
+    const result = await callGeminiWithFallbackAndRetry(
+      genAI,
+      "gemini-2.5-flash",
+      systemInstruction,
+      null,
+      null,
+      false,
+      prompt
+    );
     const rawReply = result.response.text();
 
     let botResponseData;
@@ -366,7 +448,6 @@ exports.checkProductType = async (req, res) => {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       Nhiệm vụ của bạn là kiểm tra xem 2 sản phẩm sau đây có cùng chủng loại (ví dụ: cùng là điện thoại, cùng là laptop, cùng là chuột, cùng là máy tính bảng, v.v) hay không.
@@ -381,7 +462,15 @@ exports.checkProductType = async (req, res) => {
       }
     `;
 
-    const result = await model.generateContent(prompt);
+    const result = await callGeminiWithFallbackAndRetry(
+      genAI,
+      "gemini-2.5-flash",
+      null,
+      null,
+      null,
+      false,
+      prompt
+    );
     const rawReply = result.response.text();
     let cleanJson = rawReply
       .replace(/```json/gi, "")

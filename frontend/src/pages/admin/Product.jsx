@@ -138,6 +138,15 @@ const Product = () => {
     message: "",
   });
 
+  const [blockedDeleteModal, setBlockedDeleteModal] = useState({
+    isOpen: false,
+    message: "",
+    detail: null,
+    productId: null,
+    tenSanPham: "",
+    trangThaiHienTai: "",
+  });
+
   const emptyFormData = {
     ten_san_pham: "",
     thuong_hieu: "",
@@ -478,6 +487,18 @@ const Product = () => {
   };
 
   const executeConfirmAction = async () => {
+    const closeConfirm = () => {
+      setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      if (confirmModal.product) {
+        setExpandedRows((prev) =>
+          prev.filter((r) => r !== confirmModal.product.id),
+        );
+      }
+    };
+
+    // Khai báo pid NGOÀI try để catch block có thể truy cập
+    const pid = confirmModal.product?.id ?? null;
+
     try {
       if (confirmModal.actionType === "delete_supplier") {
         const sid = confirmModal.supplier.id;
@@ -487,11 +508,10 @@ const Product = () => {
         );
         toast.success("Đã xóa nhà cung cấp thành công!");
         setSuppliers(suppliers.filter((s) => s.id !== sid));
-        setConfirmModal({ ...confirmModal, isOpen: false });
+        closeConfirm();
         return;
       }
 
-      const pid = confirmModal.product.id;
       if (confirmModal.actionType === "delete") {
         await axios.delete(`${API_BASE}/api/sanPham/${pid}`, getAuthHeader());
         toast.success("Xóa thành công!");
@@ -505,16 +525,59 @@ const Product = () => {
         toast.success("Cập nhật trạng thái thành công!");
       }
       fetchProducts();
+      closeConfirm();
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Thao tác thất bại!");
-    } finally {
-      setConfirmModal({ ...confirmModal, isOpen: false });
-      if (confirmModal.product) {
-        setExpandedRows((prev) =>
-          prev.filter((r) => r !== confirmModal.product.id),
-        );
+      // Bắt lỗi 409: sản phẩm đang có trong đơn hàng chưa hoàn tất
+      if (error.response?.status === 409) {
+        const data = error.response.data;
+        const maDonHangs = data.ma_don_hangs || [];
+        closeConfirm();
+        setBlockedDeleteModal({
+          isOpen: true,
+          message: data.message,
+          detail:
+            maDonHangs.length > 0
+              ? `Mã đơn hàng liên quan: ${maDonHangs.join(", ")}${data.so_don_hang > maDonHangs.length
+                ? ` và ${data.so_don_hang - maDonHangs.length} đơn khác`
+                : ""
+              }`
+              : null,
+          productId: pid,
+          tenSanPham: data.ten_san_pham || confirmModal.product?.name || "",
+          trangThaiHienTai: data.trang_thai_hien_tai,
+        });
+      } else {
+        toast.error(error.response?.data?.message || "Thao tác thất bại!");
+        closeConfirm();
       }
+    }
+  };
+
+
+  // Đổi trạng thái sang inactive từ modal cảnh báo
+  const handleForceSetInactive = async () => {
+    const pid = blockedDeleteModal.productId;
+    if (!pid) return;
+    try {
+      // Nếu đang active thì mới cần toggle, nếu đã inactive thì thôi
+      if (blockedDeleteModal.trangThaiHienTai !== "inactive") {
+        await axios.put(
+          `${API_BASE}/api/sanPham/${pid}/status`,
+          {},
+          getAuthHeader(),
+        );
+        toast.success(
+          `Đã chuyển "${blockedDeleteModal.tenSanPham}" sang Ngừng kinh doanh!`,
+        );
+        fetchProducts();
+      } else {
+        toast.info(`"${blockedDeleteModal.tenSanPham}" đã ở trạng thái Ngừng kinh doanh.`);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Không thể đổi trạng thái!");
+    } finally {
+      setBlockedDeleteModal((prev) => ({ ...prev, isOpen: false }));
     }
   };
 
@@ -870,10 +933,9 @@ const Product = () => {
                                       }))
                                     }
                                     className={`cursor-pointer px-4 py-2 text-sm font-semibold border-b-2 transition-colors
-                                      ${
-                                        currentDetailTab === tab.key
-                                          ? "border-blue-600 text-blue-600 bg-white"
-                                          : "border-transparent text-gray-500 hover:text-gray-800"
+                                      ${currentDetailTab === tab.key
+                                        ? "border-blue-600 text-blue-600 bg-white"
+                                        : "border-transparent text-gray-500 hover:text-gray-800"
                                       }`}
                                   >
                                     {tab.label}
@@ -1353,8 +1415,9 @@ const Product = () => {
       )}
       {isAddSupplierOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-gray-900/50 p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="px-6 py-3 border-b border-gray-200 flex justify-between items-center bg-gray-50 shrink-0">
               <h3 className="font-medium text-gray-800 text-xl">
                 Thêm Nhà Cung Cấp
               </h3>
@@ -1370,6 +1433,7 @@ const Product = () => {
               </button>
             </div>
 
+            {/* Form thêm/sửa */}
             <form
               onSubmit={handleQuickSaveSupplier}
               className="p-5 border-b border-gray-100 shrink-0"
@@ -1406,7 +1470,7 @@ const Product = () => {
               </div>
             </form>
 
-            {/* Danh sách hiện tại */}
+            {/* Danh sách hiện tại — có thể scroll */}
             <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
               <h4 className="text-sm font-medium text-gray-600 mb-2">
                 Danh sách hiện tại
@@ -1446,17 +1510,53 @@ const Product = () => {
             </div>
           </div>
         </div>
+
       )}
 
+      {/* Modal xác nhận thao tác thông thường */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}
         message={confirmModal.message}
+        confirmLabel="Xác nhận"
         type={
           confirmModal.actionType?.includes("delete") ? "danger" : "warning"
         }
         onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
         onConfirm={executeConfirmAction}
+      />
+
+      {/* Modal cảnh báo: không thể xóa vì có đơn hàng đang xử lý */}
+      <ConfirmModal
+        isOpen={blockedDeleteModal.isOpen}
+        type="warning"
+        title="Không thể xóa sản phẩm"
+        message={blockedDeleteModal.message}
+        detail={
+          blockedDeleteModal.detail ? (
+            <span>{blockedDeleteModal.detail}</span>
+          ) : undefined
+        }
+        onCancel={() =>
+          setBlockedDeleteModal((prev) => ({ ...prev, isOpen: false }))
+        }
+        onConfirm={null}
+        extraButton={
+          blockedDeleteModal.trangThaiHienTai !== "inactive"
+            ? {
+              label: "Ngừng kinh doanh",
+              onClick: handleForceSetInactive,
+              className:
+                "px-4 py-2 text-orange-700 bg-orange-50 border border-orange-200 cursor-pointer rounded-lg hover:bg-orange-500 hover:text-white transition font-medium text-sm",
+            }
+            : {
+              label: "Đã ngừng kinh doanh",
+              onClick: () =>
+                setBlockedDeleteModal((prev) => ({ ...prev, isOpen: false })),
+              className:
+                "px-4 py-2 text-gray-500 bg-gray-100 border border-gray-200 cursor-pointer rounded-lg font-medium text-sm",
+            }
+        }
       />
 
     </div>
