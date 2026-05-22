@@ -40,6 +40,7 @@ import PrintTemplateBuilder from "./pages/admin/PrintTemplateBuilder";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import ContactSupport from "./components/ContactSupport";
 import AiBuilder from "./pages/AiBuilder";
+import ResetPassword from "./pages/ResetPassword";
 const API_URL = BASE_URL;
 
 function App() {
@@ -94,6 +95,7 @@ function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/so-sanh" element={<ComparePage />} />
         <Route path="/build-pc" element={<AiBuilder />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Nhánh Admin */}
         <Route path="/admin" element={<PrivateRoute />}>

@@ -17,6 +17,9 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -27,7 +30,7 @@ const Login = () => {
       const response = await fetch(`${BASE_URL}/api/taikhoan/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, mat_khau: password }),
+        body: JSON.stringify({ email: email, mat_khau: password, rememberMe: rememberMe }),
       });
 
       const data = await response.json();
@@ -74,6 +77,7 @@ const Login = () => {
           email: googleUser.email,
           ho_ten: googleUser.displayName,
           anh_dai_dien: googleUser.photoURL,
+          rememberMe: rememberMe,
         }),
       });
 
@@ -81,7 +85,7 @@ const Login = () => {
 
       if (response.ok) {
         login(data.user, data.token, rememberMe);
-        
+
         // Đồng bộ giỏ hàng từ localStorage lên DB
         await syncLocalCartWithDb();
 
@@ -90,10 +94,40 @@ const Login = () => {
       } else {
         toast.error(data.message);
       }
-    } catch  {
+    } catch {
       toast.error("Đăng nhập Google thất bại!");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast.error("Vui lòng nhập địa chỉ email!");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/taikhoan/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || "Đã gửi liên kết khôi phục!");
+        setShowForgotModal(false);
+        setForgotEmail("");
+      } else {
+        toast.error(data.message || "Lỗi khi yêu cầu đặt lại mật khẩu!");
+      }
+    } catch {
+      toast.error("Không thể kết nối đến máy chủ!");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -157,12 +191,13 @@ const Login = () => {
                 </span>
               </label>
 
-              <a
-                href="#"
-                className="text-base text-blue-600 hover:text-blue-800 hover:underline italic font-medium transition-colors"
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-base text-blue-600 hover:text-blue-800 hover:underline italic font-medium transition-colors bg-transparent border-none cursor-pointer p-0"
               >
                 Quên mật khẩu?
-              </a>
+              </button>
             </div>
 
             <div className="pt-4">
@@ -228,6 +263,96 @@ const Login = () => {
           </div>
         </div>
       </main>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4 bg-black/60 transition-all duration-300 animate-fadeIn">
+          <div className="relative w-full max-w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transform transition-all scale-100 animate-slideUp">
+            {/* Top color accent strip */}
+            <div className="h-2 bg-gradient-to-r from-[#e31e24] to-[#b91c1c]" />
+
+            <button
+              onClick={() => {
+                setShowForgotModal(false);
+                setForgotEmail("");
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="p-8 sm:p-10">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-8 h-8 text-[#e31e24]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+
+              <h3 className="text-2xl font-bold text-gray-800 text-center mb-2">
+                Khôi phục mật khẩu
+              </h3>
+              <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed font-medium">
+                Nhập địa chỉ email đã đăng ký của bạn. Chúng tôi sẽ gửi một liên kết an toàn để đặt lại mật khẩu mới.
+              </p>
+
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Địa chỉ Email <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                    <input
+                      type="email"
+                      required
+                      placeholder="example@domain.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#e31e24]/20 focus:border-[#e31e24] text-base transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotModal(false);
+                      setForgotEmail("");
+                    }}
+                    className="flex-1 py-3.5 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-center text-base"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="flex-1 py-3.5 bg-[#e31e24] text-white rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-base shadow-lg shadow-red-500/10 disabled:opacity-75"
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Đang gửi...
+                      </>
+                    ) : (
+                      "Gửi liên kết"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

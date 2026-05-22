@@ -1,6 +1,7 @@
 const TaiKhoan = require("../models/TaiKhoan");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const emailService = require("../services/emailService");
 const { Op } = require("sequelize");
 const TheThanhVien = require("../models/TheThanhVien");
 const DonHang = require("../models/DonHang");
@@ -179,10 +180,14 @@ exports.loginTaiKhoan = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Mật khẩu không chính xác!" });
     }
+
+    const { rememberMe } = req.body;
+    const expireTime = rememberMe ? "30d" : "1d";
+
     const token = jwt.sign(
       { id: user.id, email: user.email, vai_tro: user.vai_tro },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: expireTime },
     );
 
     res.status(200).json({
@@ -233,10 +238,13 @@ exports.loginWithGoogle = async (req, res) => {
     }
 
     // Tạo token
+    const { rememberMe } = req.body;
+    const expireTime = rememberMe ? "30d" : "1d";
+
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, vai_tro: user.vai_tro },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: expireTime },
     );
 
     // Lấy thông tin thẻ thành viên
@@ -263,6 +271,135 @@ exports.loginWithGoogle = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi đăng nhập Google!" });
+  }
+};
+
+// Quên mật khẩu
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Vui lòng nhập địa chỉ email!" });
+    }
+
+    const user = await TaiKhoan.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: "Email này chưa được đăng ký trong hệ thống!" });
+    }
+
+    if (user.trang_thai === "banned" || user.trang_thai === "deleted") {
+      return res.status(403).json({ message: "Tài khoản này đã bị khóa hoặc bị hủy!" });
+    }
+
+    // Ký reset token trong 15 phút
+    const resetToken = jwt.sign(
+      { id: user.id, email: user.email, purpose: "reset-password" },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const origin = req.get("origin") || "http://localhost:5173";
+    const resetLink = `${origin}/reset-password?token=${resetToken}`;
+
+    // Lấy thiết lập tên cửa hàng từ database
+    const thietLap = await ThietLapCuaHang.findOne();
+    const tenCuaHang = thietLap?.ten_cua_hang || "WebEcommerce";
+
+    // Soạn email
+    const subject = `Khôi phục mật khẩu tài khoản của bạn — ${tenCuaHang}`;
+    const htmlMessage = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 550px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+        <!-- Thin brand accent line -->
+        <div style="height: 4px; background-color: #dc2626;"></div>
+        
+        <div style="padding: 40px 35px;">
+          <!-- Brand Logo Header -->
+          <div style="margin-bottom: 30px; text-align: center;">
+            <h2 style="color: #0f172a; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
+              ${tenCuaHang}
+            </h2>
+          </div>
+
+          <h3 style="color: #1e293b; font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px; text-align: center;">
+            Yêu cầu Đặt lại Mật khẩu
+          </h3>
+
+          <p style="color: #334155; font-size: 15px; line-height: 1.6; margin-top: 0; margin-bottom: 12px;">
+            Xin chào <b>${user.ho_ten}</b>,
+          </p>
+          <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+            Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản của bạn. Vui lòng nhấn vào nút bên dưới để tiến hành thiết lập mật khẩu mới.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 15px; font-weight: 600; border-radius: 6px; display: inline-block;">
+              Đặt lại mật khẩu
+            </a>
+          </div>
+
+          <div style="color: #475569; font-size: 13px; line-height: 1.5; padding: 15px; background-color: #f8fafc; border-left: 3px solid #cbd5e1; border-radius: 4px; margin-top: 30px;">
+            <b>Lưu ý bảo mật:</b> Liên kết này chỉ có hiệu lực trong vòng <b>15 phút</b>. Nếu bạn không gửi yêu cầu này, bạn có thể an tâm bỏ qua email này, mật khẩu của bạn sẽ được giữ nguyên an toàn.
+          </div>
+
+          <div style="color: #94a3b8; font-size: 13px; margin-top: 35px; border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; line-height: 1.5;">
+            Trân trọng,<br>
+            <span style="color: #64748b; font-weight: 600;">Đội ngũ hỗ trợ ${tenCuaHang}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    await emailService.sendCustomEmail(user.email, subject, htmlMessage);
+
+    res.status(200).json({ success: true, message: "Liên kết đặt lại mật khẩu đã được gửi đến email của bạn!" });
+  } catch (error) {
+    console.error("Lỗi yêu cầu quên mật khẩu:", error);
+    res.status(500).json({ message: "Lỗi hệ thống khi gửi email khôi phục!" });
+  }
+};
+
+// Đặt lại mật khẩu mới
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Thiếu thông tin yêu cầu!" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu mới phải chứa ít nhất 6 ký tự!" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "Liên kết khôi phục đã hết hạn hoặc không hợp lệ!" });
+    }
+
+    if (decoded.purpose !== "reset-password") {
+      return res.status(400).json({ message: "Token không đúng mục đích khôi phục!" });
+    }
+
+    const user = await TaiKhoan.findByPk(decoded.id);
+    if (!user) {
+      return res.status(404).json({ message: "Tài khoản không tồn tại!" });
+    }
+
+    if (user.trang_thai === "banned" || user.trang_thai === "deleted") {
+      return res.status(403).json({ message: "Tài khoản này đã bị khóa hoặc bị hủy!" });
+    }
+
+    // Mã hóa mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.mat_khau = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới." });
+  } catch (error) {
+    console.error("Lỗi đặt lại mật khẩu:", error);
+    res.status(500).json({ message: "Lỗi hệ thống khi cập nhật mật khẩu!" });
   }
 };
 

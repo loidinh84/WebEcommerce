@@ -19,4 +19,7 @@ router.put("/cancel-account/:id", taiKhoanController.cancelAccount);
 router.put("/diachi/:addressId", taiKhoanController.updateAddress);
 router.delete("/diachi/:addressId", taiKhoanController.deleteAddress);
 
+router.post("/forgot-password", taiKhoanController.forgotPassword);
+router.post("/reset-password", taiKhoanController.resetPassword);
+
 module.exports = router;
