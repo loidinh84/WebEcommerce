@@ -15,6 +15,11 @@ const ThietLapCuaHang = require("../models/ThietLapCuaHang");
 const DanhGiaSanPham = require("../models/DanhGiaSanPham");
 const GiaoDichThanhToan = require("../models/GiaoDichThanhToan");
 const PhuongThucThanhToan = require("../models/PhuongThucThanhToan");
+const PhieuNhapHang = require("../models/PhieuNhapHang");
+const PhieuKiemKho = require("../models/PhieuKiemKho");
+const YeuThich = require("../models/YeuThich");
+const DanhGiaCuaHang = require("../models/DanhGiaCuaHang");
+const ThichDanhGia = require("../models/ThichDanhGia");
 
 // Lấy danh sách tất cả tài khoản
 exports.getAllRTaiKhoan = async (req, res) => {
@@ -317,7 +322,7 @@ exports.getOrderDetail = async (req, res) => {
       return res
         .status(404)
         .json({ message: "Không tìm thấy thông tin đơn hàng!" });
-    
+
     // Attach shop settings to the response if needed
     const orderData = order.toJSON();
     orderData.cua_hang = thietLap;
@@ -498,5 +503,40 @@ exports.deleteAddress = async (req, res) => {
   } catch (error) {
     console.error("Lỗi xóa địa chỉ:", error);
     res.status(500).json({ message: "Lỗi server khi xóa địa chỉ!" });
+  }
+};
+
+exports.cancelAccount = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Kiểm tra các ràng buộc giao dịch kinh doanh quan trọng (không thể xóa)
+    const hasOrders = await DonHang.findOne({ where: { tai_khoan_id: id } });
+    const hasPurchaseInvoices = await PhieuNhapHang.findOne({ where: { nguoi_tao: id } });
+    const hasInventoryAudits = await PhieuKiemKho.findOne({ where: { nguoi_tao: id } });
+
+    if (hasOrders || hasPurchaseInvoices || hasInventoryAudits) {
+      await TaiKhoan.update({ trang_thai: "deleted" }, { where: { id } });
+      return res.status(200).json({
+        success: true,
+        type: "soft",
+        message: "Hủy tài khoản thành công!",
+      });
+    } else {
+      await DiaChiGiaoHang.destroy({ where: { tai_khoan_id: id } });
+      await YeuThich.destroy({ where: { tai_khoan_id: id } });
+      await DanhGiaCuaHang.destroy({ where: { tai_khoan_id: id } });
+      await ThichDanhGia.destroy({ where: { tai_khoan_id: id } });
+
+      await TaiKhoan.destroy({ where: { id } });
+      return res.status(200).json({
+        success: true,
+        type: "hard",
+        message: "Hủy tài khoản thành công!",
+      });
+    }
+  } catch (error) {
+    console.error("Lỗi khi hủy tài khoản:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi hủy tài khoản!" });
   }
 };

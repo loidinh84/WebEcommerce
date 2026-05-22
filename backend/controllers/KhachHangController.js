@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const TaiKhoan = require("../models/TaiKhoan");
 const DonHang = require("../models/DonHang");
 const DiaChiGiaoHang = require("../models/DiaChiGiaoHang");
@@ -23,7 +24,10 @@ const getCustomers = async (req, res) => {
     }));
 
     const customersRaw = await TaiKhoan.findAll({
-      where: { vai_tro: "customer" },
+      where: {
+        vai_tro: "customer",
+        trang_thai: { [Op.ne]: "deleted" }
+      },
       include: [
         {
           model: DiaChiGiaoHang,

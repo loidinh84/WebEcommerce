@@ -4,6 +4,7 @@ import BASE_URL from "../config/api";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import SimilarProducts from "../components/SimilarProducts";
+import { addToCart as addToCartHelper } from "../utils/cartHelper";
 import { toast } from "react-toastify";
 import * as Icons from "../assets/icons/index";
 import SpecsModal from "../components/SpecsModal";
@@ -56,7 +57,6 @@ const getReviewVariant = (rv) => {
   return parts.length > 0 ? parts.join(", ") : null;
 };
 
-// Sub-component hiển thị từng đánh giá (Định nghĩa ngoài để tránh re-render mất focus)
 const ReviewItem = ({
   rv,
   user,
@@ -630,12 +630,7 @@ const ProductDetail = () => {
     setIsShareModalOpen(false);
   };
 
-  const handleAddToCart = (shouldRedirect = false) => {
-    if (!user) {
-      toast.error("Vui lòng đăng nhập!");
-      navigate("/login");
-      return;
-    }
+  const handleAddToCart = async (shouldRedirect = false) => {
     if (!selectedVariant) {
       return toast.error("Vui lòng chọn phân loại sản phẩm!");
     }
@@ -647,10 +642,11 @@ const ProductDetail = () => {
       variantId: selectedVariant.id,
       ten_san_pham: product.ten_san_pham,
       hinh_anh: mainImage,
-      gia_ban: selectedVariant.gia_ban || selectedVariant.gia_goc,
-      dung_luong: selectedVariant.dung_luong,
-      mau_sac: selectedVariant.mau_sac,
-      so_luong: quantity,
+      gia_ban: Number(selectedVariant.gia_ban || selectedVariant.gia_goc || 0),
+      dung_luong: selectedVariant.dung_luong || "",
+      mau_sac: selectedVariant.mau_sac || "",
+      ram: selectedVariant.ram || "",
+      sku: selectedVariant.sku || "",
     };
 
     const existingIndex = currentCart.findIndex(
@@ -666,13 +662,7 @@ const ProductDetail = () => {
       );
     }
 
-    if (existingIndex > -1) {
-      currentCart[existingIndex].so_luong += quantity;
-    } else {
-      currentCart.push(cartItem);
-    }
-    localStorage.setItem("cart", JSON.stringify(currentCart));
-    window.dispatchEvent(new Event("cartUpdated"));
+    await addToCartHelper(cartItem, quantity);
 
     toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`);
 

@@ -8,6 +8,7 @@ import { AuthContext } from "../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
 import { auth, googleProvider } from "../config/firebase";
 import { signInWithPopup } from "firebase/auth";
+import { syncLocalCartWithDb } from "../utils/cartHelper";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -40,6 +41,9 @@ const Login = () => {
           sessionStorage.setItem("token", data.token);
           sessionStorage.setItem("user", JSON.stringify(data.user));
         }
+
+        // Đồng bộ giỏ hàng từ localStorage lên DB
+        await syncLocalCartWithDb();
 
         if (data.user.vai_tro === "admin") {
           navigate("/admin");
@@ -77,6 +81,10 @@ const Login = () => {
 
       if (response.ok) {
         login(data.user, data.token, rememberMe);
+        
+        // Đồng bộ giỏ hàng từ localStorage lên DB
+        await syncLocalCartWithDb();
+
         toast.success("Đăng nhập Google thành công!");
         navigate(data.user.vai_tro === "admin" ? "/admin" : "/");
       } else {

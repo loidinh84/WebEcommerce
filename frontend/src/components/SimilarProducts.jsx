@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import BASE_URL from "../config/api";
+import { addToCart as addToCartHelper } from "../utils/cartHelper";
 
 // Import Swiper
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -139,29 +140,22 @@ const SimilarProducts = ({ products, user }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (!user) {
-                        toast.error("Vui lòng đăng nhập!");
-                        return;
-                      }
                       const v = sp.bien_the?.[0];
                       if (!v) return;
-                      const cart =
-                        JSON.parse(localStorage.getItem("cart")) || [];
-                      const idx = cart.findIndex((i) => i.variantId === v.id);
-                      if (idx > -1) cart[idx].so_luong += 1;
-                      else
-                        cart.push({
-                          id: sp.id,
-                          variantId: v.id,
-                          ten_san_pham: sp.ten_san_pham,
-                          hinh_anh: imgUrl,
-                          gia_ban: v.gia_ban || v.gia_goc,
-                          dung_luong: v.dung_luong,
-                          mau_sac: v.mau_sac,
-                          so_luong: 1,
-                        });
-                      localStorage.setItem("cart", JSON.stringify(cart));
-                      window.dispatchEvent(new Event("cartUpdated"));
+
+                      const cartItem = {
+                        id: sp.id,
+                        variantId: v.id,
+                        ten_san_pham: sp.ten_san_pham,
+                        hinh_anh: imgUrl,
+                        gia_ban: Number(v.gia_ban || v.gia_goc || 0),
+                        dung_luong: v.dung_luong || "",
+                        mau_sac: v.mau_sac || "",
+                        ram: v.ram || "",
+                        sku: v.sku || "",
+                      };
+
+                      addToCartHelper(cartItem, 1);
                       toast.success("Đã thêm vào giỏ hàng!");
                     }}
                     className="w-full py-1.5 border border-gray-200 rounded-lg text-[11px] font-medium text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-500 transition cursor-pointer"

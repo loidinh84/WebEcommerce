@@ -15,6 +15,7 @@ router.post("/google", taiKhoanController.loginWithGoogle);
 router.put("/updateProfile/:id", upload.single("anh_dai_dien"), taiKhoanController.updateProfile);
 router.post("/addAddress", taiKhoanController.addAddress);
 router.put("/change-password/:id", taiKhoanController.changePassword);
+router.put("/cancel-account/:id", taiKhoanController.cancelAccount);
 router.put("/diachi/:addressId", taiKhoanController.updateAddress);
 router.delete("/diachi/:addressId", taiKhoanController.deleteAddress);
 

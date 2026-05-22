@@ -7,6 +7,7 @@ const sequelize = new Sequelize(
   process.env.DB_PWD,
   {
     host: process.env.DB_SERVER,
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 1433,
     dialect: "mssql",
     dialectOptions: {
       options: {

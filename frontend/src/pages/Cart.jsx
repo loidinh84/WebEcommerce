@@ -7,6 +7,11 @@ import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import BASE_URL from "../config/api";
 import { StoreContext } from "../context/StoreContext";
+import {
+  updateQuantity as updateQuantityHelper,
+  removeFromCart as removeFromCartHelper,
+  fetchCartFromDb
+} from "../utils/cartHelper";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -20,10 +25,28 @@ const Cart = () => {
   });
 
   useEffect(() => {
-    if (cartItems.length > 0) {
-      localStorage.setItem("cart", JSON.stringify(cartItems));
-      window.dispatchEvent(new Event("cartUpdated"));
-    }
+    // Tải giỏ hàng từ DB khi khởi tạo trang giỏ hàng (nếu đăng nhập)
+    fetchCartFromDb();
+  }, []);
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+      setCartItems((prevItems) => {
+        return savedCart.map((item) => {
+          const prevItem = prevItems.find((p) => p.variantId === item.variantId);
+          return {
+            ...item,
+            selected: prevItem ? prevItem.selected : true,
+          };
+        });
+      });
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdated);
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+    };
   }, []);
 
   const [variantStocks, setVariantStocks] = useState({});
@@ -119,36 +142,43 @@ const Cart = () => {
     saveCartToLocal(newCart);
   };
 
-  const updateQuantity = (variantId, delta) => {
-    const newCart = cartItems.map((item) => {
-      if (item.variantId === variantId) {
-        const newQuantity = item.so_luong + delta;
-        const maxStock = variantStocks[variantId];
+  const updateQuantity = async (variantId, delta) => {
+    const item = cartItems.find((i) => i.variantId === variantId);
+    if (!item) return;
 
-        if (maxStock !== undefined) {
-          if (newQuantity > maxStock) {
-            toast.error(`Chỉ còn ${maxStock} sản phẩm!`);
-            return { ...item, so_luong: maxStock };
-          }
-        }
-        return { ...item, so_luong: newQuantity > 0 ? newQuantity : 1 };
+    const newQuantity = item.so_luong + delta;
+    if (newQuantity <= 0) {
+      await removeFromCartHelper(variantId);
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      return;
+    }
+
+    const maxStock = variantStocks[variantId];
+    if (maxStock !== undefined) {
+      if (newQuantity > maxStock) {
+        toast.error(`Chỉ còn ${maxStock} sản phẩm!`);
+        await updateQuantityHelper(variantId, maxStock);
+        return;
       }
-      return item;
-    });
-    saveCartToLocal(newCart);
+    }
+
+    await updateQuantityHelper(variantId, newQuantity);
   };
 
-  const handleRemoveItem = (variantId) => {
-    const newCart = cartItems.filter((item) => item.variantId !== variantId);
-    saveCartToLocal(newCart);
+  const handleRemoveItem = async (variantId) => {
+    await removeFromCartHelper(variantId);
     toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
   };
 
-  const handleRemoveSelected = () => {
+  const handleRemoveSelected = async () => {
     if (selectedCount === 0)
       return toast.error("Vui lòng chọn sản phẩm cần xóa!");
-    const newCart = cartItems.filter((item) => !item.selected);
-    saveCartToLocal(newCart);
+    
+    const selectedVariantIds = selectedItems.map((item) => item.variantId);
+    for (const variantId of selectedVariantIds) {
+      await removeFromCartHelper(variantId);
+    }
+    toast.success("Đã xóa các sản phẩm được chọn");
   };
 
   const handleCheckout = () => {

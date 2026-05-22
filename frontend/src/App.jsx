@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import React, { useContext, useEffect } from "react";
 import { StoreContext } from "./context/StoreContext";
+import { AuthContext } from "./context/AuthContext";
+import { fetchCartFromDb } from "./utils/cartHelper";
 import PrivateRoute from "./components/PrivateRoute";
 import Maintenance from "./pages/Maintenance";
 import BASE_URL from "./config/api";
@@ -42,9 +44,16 @@ const API_URL = BASE_URL;
 
 function App() {
   const { storeConfig } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
   const location = useLocation();
 
   const isAdminPath = location.pathname.startsWith("/admin");
+
+  useEffect(() => {
+    if (user) {
+      fetchCartFromDb();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (storeConfig) {

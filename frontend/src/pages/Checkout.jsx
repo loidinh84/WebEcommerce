@@ -6,6 +6,7 @@ import { AuthContext } from "../context/AuthContext";
 import BASE_URL from "../config/api";
 import * as Icons from "../assets/icons/index";
 import { StoreContext } from "../context/StoreContext";
+import { clearSelectedItems } from "../utils/cartHelper";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -315,9 +316,8 @@ const Checkout = () => {
           toast.success("Đặt hàng thành công!");
         }
 
-        const fullCart = JSON.parse(localStorage.getItem("cart")) || [];
-        const remainingCart = fullCart.filter((item) => !item.selected);
-        localStorage.setItem("cart", JSON.stringify(remainingCart));
+        const selectedVariantIds = checkoutItems.map((item) => item.variantId);
+        await clearSelectedItems(selectedVariantIds);
 
         setTimeout(() => navigate("/profile"), 1800);
       } else {

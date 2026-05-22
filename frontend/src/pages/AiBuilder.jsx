@@ -8,6 +8,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Swal from "sweetalert2";
 import { AuthContext } from "../context/AuthContext";
+import { addToCart as addToCartHelper } from "../utils/cartHelper";
 import NO_IMAGE from "../assets/images/NoImage.webp";
 import Logo from "../assets/images/logo.png";
 import * as XLSX from "xlsx";
@@ -861,40 +862,30 @@ export default function AiBuilder() {
     setIsModalOpen(true);
   };
 
-  const handleAddAllToCart = () => {
+  const handleAddAllToCart = async () => {
     const selectedItems = Object.values(build).filter(Boolean);
     if (selectedItems.length === 0) {
       toast.warning("Vui lòng chọn ít nhất một linh kiện!");
       return;
     }
 
-    const currentCart = JSON.parse(localStorage.getItem("cart")) || [];
-
-    selectedItems.forEach((item) => {
-      // Bug 2: Phân biệt các linh kiện khác nhau kể cả khi cùng sản phẩm (Vd: 2 thanh RAM giống hệt nhau)
-      // Dùng key là categoryKey để phân biệt trong giỏ hàng nếu cần,
-      // hoặc đơn giản là cộng dồn số lượng nếu đã tồn tại cùng variantId.
+    // Thêm tuần tự các linh kiện vào giỏ hàng
+    for (const item of selectedItems) {
       const variantId = item.variantId || item.id;
-      const existingIdx = currentCart.findIndex(
-        (c) => c.variantId === variantId,
-      );
+      const cartItem = {
+        id: item.id,
+        variantId: variantId,
+        ten_san_pham: item.name,
+        hinh_anh: item.image,
+        gia_ban: Number(item.price || 0),
+        dung_luong: item.dung_luong || "",
+        mau_sac: item.mau_sac || "",
+        ram: item.ram || "",
+        sku: item.sku || "",
+      };
+      await addToCartHelper(cartItem, 1);
+    }
 
-      if (existingIdx > -1) {
-        currentCart[existingIdx].so_luong += 1;
-      } else {
-        currentCart.push({
-          id: item.id,
-          variantId: variantId,
-          ten_san_pham: item.name,
-          hinh_anh: item.image,
-          gia_ban: item.price,
-          so_luong: 1,
-        });
-      }
-    });
-
-    localStorage.setItem("cart", JSON.stringify(currentCart));
-    window.dispatchEvent(new Event("cartUpdated"));
     toast.success(`Đã thêm ${selectedItems.length} linh kiện vào giỏ!`);
     navigate("/cart");
   };

@@ -37,17 +37,15 @@ const CustomSelect = ({
       )}
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full p-2.5 border border-gray-200 rounded-xl flex items-center justify-between cursor-pointer text-sm ${
-          disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"
-        }`}
+        className={`w-full p-2.5 border border-gray-200 rounded-xl flex items-center justify-between cursor-pointer text-sm ${disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"
+          }`}
       >
         <span className={!selectedOption ? "text-gray-400" : ""}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <Icons.ArrowDown
-          className={`w-4 h-4 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </div>
       {isOpen && (
@@ -59,11 +57,10 @@ const CustomSelect = ({
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`p-2.5 hover:bg-blue-50 cursor-pointer text-sm transition-colors ${
-                value === opt.value
-                  ? "bg-blue-50 text-blue-600 font-bold"
-                  : "text-gray-700"
-              }`}
+              className={`p-2.5 hover:bg-blue-50 cursor-pointer text-sm transition-colors ${value === opt.value
+                ? "bg-blue-50 text-blue-600 font-bold"
+                : "text-gray-700"
+                }`}
             >
               {opt.label}
             </div>
@@ -106,6 +103,9 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
 
   const [ngaySinh, setNgaySinh] = useState(null);
   const [gioiTinh, setGioiTinh] = useState("");
+
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelAccountLoading, setCancelAccountLoading] = useState(false);
 
   useEffect(() => {
     if (userInfo.id) {
@@ -408,6 +408,36 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
     }
   };
 
+  const handleCancelAccount = async () => {
+    setCancelAccountLoading(true);
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/taiKhoan/cancel-account/${userInfo.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || "Hủy tài khoản thành công!");
+        setIsCancelModalOpen(false);
+        if (onLogout) {
+          setTimeout(() => {
+            onLogout();
+          }, 1500);
+        }
+      } else {
+        toast.error(data.message || "Lỗi khi hủy tài khoản!");
+      }
+    } catch (error) {
+      console.error("Lỗi hủy tài khoản:", error);
+      toast.error("Lỗi kết nối Server!");
+    } finally {
+      setCancelAccountLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3 pb-24 md:pb-0">
       {/* Khối 1: Thông tin cá nhân */}
@@ -502,11 +532,10 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
             {diaChiList.map((diaChi, index) => (
               <div
                 key={index}
-                className={`p-4 rounded-xl border ${
-                  diaChi.la_mac_dinh === 1 || diaChi.la_mac_dinh === true
-                    ? "border-blue-100 bg-blue-50/30"
-                    : "border-gray-100 bg-white"
-                } flex justify-between items-start`}
+                className={`p-4 rounded-xl border ${diaChi.la_mac_dinh === 1 || diaChi.la_mac_dinh === true
+                  ? "border-blue-100 bg-blue-50/30"
+                  : "border-gray-100 bg-white"
+                  } flex justify-between items-start`}
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -519,18 +548,17 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                     </span>
                     {(diaChi.la_mac_dinh === 1 ||
                       diaChi.la_mac_dinh === true) && (
-                      <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2">
-                        Mặc định
-                      </span>
-                    )}
+                        <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2">
+                          Mặc định
+                        </span>
+                      )}
                   </div>
                   <p className="text-sm text-gray-600">
                     {diaChi.dia_chi_cu_the}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {`${diaChi.phuong_xa || ""}, ${diaChi.quan_huyen || ""}, ${
-                      diaChi.tinh_thanh || ""
-                    }`.replace(/^,\s*|,\s*$/g, "")}
+                    {`${diaChi.phuong_xa || ""}, ${diaChi.quan_huyen || ""}, ${diaChi.tinh_thanh || ""
+                      }`.replace(/^,\s*|,\s*$/g, "")}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -582,6 +610,27 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
             </p>
           </div>
         </div>
+
+        {/* Hủy tài khoản */}
+        <div className="bg-white rounded-xl shadow-sm border border-red-100 p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-md font-bold text-red-600 flex items-center gap-2">
+                Hủy tài khoản
+              </h2>
+            </div>
+            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+              Tài khoản của bạn sẽ bị xóa vĩnh viễn và Hành động này không thể hoàn tác.
+            </p>
+          </div>
+          <div className="flex justify-end mt-auto">
+            <button
+              onClick={() => setIsCancelModalOpen(true)}
+              className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-600 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+            >Hủy tài khoản
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Modal Cập nhật profile */}
@@ -612,7 +661,7 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                           : userInfo.anh_dai_dien
                             ? `${BASE_URL}${userInfo.anh_dai_dien}`
                             : "https://ui-avatars.com/api/?name=" +
-                              encodeURIComponent(userInfo.ho_ten || "U")
+                            encodeURIComponent(userInfo.ho_ten || "U")
                     }
                     alt="Avatar"
                     className="w-full h-full object-cover"
@@ -965,6 +1014,51 @@ const ProfileTab = ({ profileData, onProfileUpdated, onLogout }) => {
                 className="flex-1 py-2 bg-[#4A44F2] text-white rounded-xl font-bold cursor-pointer"
               >
                 Cập nhật
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác nhận hủy tài khoản */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-1000 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-up">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icons.Trash className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">
+                Hủy tài khoản của bạn?
+              </h3>
+              <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                Tài khoản sẽ bị vô hiệu hóa ngay lập tức và bạn sẽ đăng xuất khỏi hệ thống.
+                <br />
+                <span className="font-bold text-red-600">Chú ý:</span> Hãy đảm bảo chắc chắn với quyết định này trước khi bấm <strong>"Xác nhận hủy!"</strong>. Vì đây là hành động không thể hoàn tác.
+              </p>
+            </div>
+            <div className="flex border-t border-gray-100">
+              <button
+                onClick={() => setIsCancelModalOpen(false)}
+                disabled={cancelAccountLoading}
+                className="flex-1 py-3 text-gray-600 font-medium hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <div className="w-px bg-gray-100"></div>
+              <button
+                onClick={handleCancelAccount}
+                disabled={cancelAccountLoading}
+                className="flex-1 py-3 text-red-600 font-bold hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {cancelAccountLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></span>
+                    Đang xử lý...
+                  </>
+                ) : (
+                  "Xác nhận hủy!"
+                )}
               </button>
             </div>
           </div>
