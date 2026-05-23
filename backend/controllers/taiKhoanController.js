@@ -332,7 +332,7 @@ exports.forgotPassword = async (req, res) => {
           </p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetLink}" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 15px; font-weight: 600; border-radius: 6px; display: inline-block;">
+            <a href="${resetLink}" style="background-color: #1446bdff; color: #ffffff; text-decoration: none; padding: 12px 28px; font-size: 15px; font-weight: 600; border-radius: 6px; display: inline-block;">
               Đặt lại mật khẩu
             </a>
           </div>

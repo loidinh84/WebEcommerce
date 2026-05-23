@@ -179,17 +179,21 @@ const Login = () => {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center cursor-pointer group">
+              <div className="flex items-center">
                 <input
+                  id="rememberMe"
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-5 h-5 text-[#e31e24] border-gray-300 rounded focus:ring-[#e31e24] cursor-pointer"
                 />
-                <span className="ml-3 text-base text-gray-600 font-medium group-hover:text-gray-800 transition-colors">
+                <label
+                  htmlFor="rememberMe"
+                  className="ml-3 text-base text-gray-600 font-medium hover:text-gray-800 transition-colors cursor-pointer select-none"
+                >
                   Duy trì đăng nhập
-                </span>
-              </label>
+                </label>
+              </div>
 
               <button
                 type="button"
