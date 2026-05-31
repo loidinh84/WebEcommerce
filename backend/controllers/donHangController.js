@@ -155,12 +155,15 @@ exports.createDonHang = async (req, res) => {
       { transaction: t },
     );
 
+    const maGiaoDich = `GD-${Date.now()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
     await GiaoDichThanhToan.create(
       {
         don_hang_id: newOrder.id,
         phuong_thuc_id: phuong_thuc_tt,
+        ma_giao_dich: maGiaoDich,
         so_tien: final_thanh_toan,
-        trang_thai: "pending", // CHECK constraint: pending | success | failed | refunded
+        trang_thai: "pending",
       },
       { transaction: t },
     );
