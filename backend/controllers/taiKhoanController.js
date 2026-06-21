@@ -274,6 +274,107 @@ exports.loginWithGoogle = async (req, res) => {
   }
 };
 
+// Đăng nhập bằng Facebook
+exports.loginWithFacebook = async (req, res) => {
+  try {
+    const { accessToken, rememberMe } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: "Thiếu access token Facebook!" });
+    }
+
+    // Xác minh token với Facebook Graph API
+    const appId = process.env.FACEBOOK_APP_ID;
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+
+    // Lấy thông tin user từ Graph API
+    const graphUrl = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
+    const graphRes = await fetch(graphUrl);
+    const fbUser = await graphRes.json();
+
+    if (fbUser.error) {
+      return res.status(401).json({ message: "Token Facebook không hợp lệ hoặc đã hết hạn!" });
+    }
+
+    // Xác minh token thực sự thuộc về app này (chống giả mạo)
+    const debugUrl = `https://graph.facebook.com/debug_token?input_token=${accessToken}&access_token=${appId}|${appSecret}`;
+    const debugRes = await fetch(debugUrl);
+    const debugData = await debugRes.json();
+
+    if (!debugData.data?.is_valid || debugData.data?.app_id !== appId) {
+      return res.status(401).json({ message: "Token Facebook không hợp lệ!" });
+    }
+
+    // Facebook không phải lúc nào cũng trả về email (user chọn số điện thoại)
+    const email = fbUser.email || `fb_${fbUser.id}@facebook.com`;
+    const ho_ten = fbUser.name;
+    const anh_dai_dien = fbUser.picture?.data?.url || null;
+
+    // Tìm hoặc tạo user
+    let user = await TaiKhoan.findOne({ where: { email } });
+
+    if (!user) {
+      const hangMacDinh = await TheThanhVien.findOne({
+        order: [["muc_chi_tieu_tu", "ASC"]],
+      });
+
+      user = await TaiKhoan.create({
+        ho_ten,
+        email,
+        mat_khau: "FACEBOOK_AUTH_NO_PASSWORD",
+        anh_dai_dien,
+        vai_tro: "customer",
+        the_thanh_vien_id: hangMacDinh?.id,
+        tong_chi_tieu: 0,
+      });
+    } else {
+      // Cập nhật ảnh nếu chưa có
+      if (!user.anh_dai_dien && anh_dai_dien) {
+        await user.update({ anh_dai_dien });
+      }
+    }
+
+    if (user.trang_thai === "banned") {
+      return res.status(403).json({
+        message: "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản lý để biết thêm chi tiết!",
+      });
+    }
+
+    // Tạo JWT token
+    const expireTime = rememberMe ? "30d" : "1d";
+    const token = jwt.sign(
+      { id: user.id, email: user.email, vai_tro: user.vai_tro },
+      process.env.JWT_SECRET,
+      { expiresIn: expireTime }
+    );
+
+    // Lấy thông tin thẻ thành viên
+    const userWithCard = await TaiKhoan.findByPk(user.id, {
+      include: [{ model: TheThanhVien, as: "hang_thanh_vien" }],
+    });
+
+    res.status(200).json({
+      message: "Đăng nhập Facebook thành công!",
+      token,
+      user: {
+        id: user.id,
+        ho_ten: user.ho_ten,
+        email: user.email,
+        vai_tro: user.vai_tro,
+        anh_dai_dien: user.anh_dai_dien,
+        so_dien_thoai: user.so_dien_thoai,
+        diem_tich_luy: user.diem_tich_luy || 0,
+        mau_the: userWithCard.hang_thanh_vien?.mau_the || "#9ca3af",
+        ty_le_giam_gia: userWithCard.hang_thanh_vien?.ty_le_giam_gia || 0,
+        ten_hang: userWithCard.hang_thanh_vien?.ten_hang,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi đăng nhập Facebook:", error);
+    res.status(500).json({ message: "Lỗi đăng nhập Facebook!" });
+  }
+};
+
 // Quên mật khẩu
 exports.forgotPassword = async (req, res) => {
   try {

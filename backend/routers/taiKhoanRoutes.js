@@ -12,6 +12,7 @@ router.get("/diachi/:id", taiKhoanController.getDiaChiByUser);
 router.get("/:id", taiKhoanController.getProfile);
 router.get("/order-detail/:id", taiKhoanController.getOrderDetail);
 router.post("/google", taiKhoanController.loginWithGoogle);
+router.post("/facebook", taiKhoanController.loginWithFacebook);
 router.put("/updateProfile/:id", upload.single("anh_dai_dien"), taiKhoanController.updateProfile);
 router.post("/addAddress", taiKhoanController.addAddress);
 router.put("/change-password/:id", taiKhoanController.changePassword);
